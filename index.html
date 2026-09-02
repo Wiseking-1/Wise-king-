@@ -4,16 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
     <title>Wise King AI — IBRAHIM ABDULLAHI 🇳🇬</title>
-    <!-- Firebase SDK (compat) -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-app-compat.js">
-    </script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.2/firebase-auth-compat.js">
-    </script>
     <script src="https://cdn.tailwindcss.com">
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <style>
-        /* ===== Same Royal Theme (unchanged) ===== */
         :root {
             --bg-gradient-start: #0d021f;
             --bg-gradient-end: #1b0836;
@@ -102,7 +96,6 @@
         .new-chat-btn:hover {
             background: var(--accent-hover);
         }
-        /* Auth button in sidebar header */
         .auth-btn {
             width: 100%;
             padding: 8px 12px;
@@ -178,11 +171,27 @@
             gap: 6px;
             min-width: 0;
         }
+        .chat-item-title .edit-title-input {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+            padding: 2px 8px;
+            color: var(--text-main);
+            font-size: 0.85rem;
+            outline: none;
+            width: 100%;
+            min-width: 80px;
+        }
+        .chat-item-title .edit-title-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.2);
+        }
         .chat-item-actions {
             display: flex;
             align-items: center;
             gap: 2px;
             flex-shrink: 0;
+            position: relative;
         }
         .chat-item-actions .more-btn {
             background: transparent;
@@ -198,7 +207,7 @@
             background: rgba(255, 255, 255, 0.1);
             color: var(--accent);
         }
-        /* Dropdown menu for 3-dot */
+        /* Dropdown menu */
         .chat-item .dropdown-menu {
             display: none;
             position: absolute;
@@ -208,14 +217,15 @@
             border: 1px solid var(--border);
             border-radius: 10px;
             padding: 6px 0;
-            min-width: 140px;
-            z-index: 30;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            min-width: 180px;
+            z-index: 50;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+            margin-top: 4px;
         }
         .chat-item .dropdown-menu.show {
             display: block;
         }
-        .chat-item .dropdown-menu button {
+        .chat-item .dropdown-menu .menu-item {
             background: transparent;
             border: none;
             color: var(--text-main);
@@ -226,18 +236,27 @@
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             transition: 0.15s;
         }
-        .chat-item .dropdown-menu button:hover {
+        .chat-item .dropdown-menu .menu-item:hover {
             background: var(--surface-alt);
             color: var(--accent);
         }
-        .chat-item .dropdown-menu button.danger {
+        .chat-item .dropdown-menu .menu-item.danger {
             color: #f87171;
         }
-        .chat-item .dropdown-menu button.danger:hover {
+        .chat-item .dropdown-menu .menu-item.danger:hover {
             background: rgba(248, 113, 113, 0.1);
+        }
+        .chat-item .dropdown-menu .divider {
+            border-top: 1px solid var(--border);
+            margin: 4px 10px;
+        }
+        .chat-item .dropdown-menu .menu-item i {
+            width: 18px;
+            text-align: center;
+            font-size: 0.9rem;
         }
 
         .sidebar-footer {
@@ -606,16 +625,6 @@
             background: var(--accent);
             color: white;
         }
-        /* Image loading placeholder */
-        .image-loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 30px 0;
-            color: var(--text-light);
-            font-size: 0.9rem;
-            gap: 10px;
-        }
         .typing-row {
             display: flex;
             gap: 12px;
@@ -810,7 +819,6 @@
             align-items: center;
             justify-content: center;
         }
-
         .modal-backdrop {
             position: fixed;
             inset: 0;
@@ -840,10 +848,16 @@
             font-size: 1.1rem;
             font-weight: 700;
             color: var(--accent);
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             display: flex;
             align-items: center;
             gap: 10px;
+        }
+        .modal p {
+            color: var(--text-light);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 16px;
         }
         .form-group {
             margin-bottom: 16px;
@@ -910,6 +924,13 @@
         }
         .btn-primary:hover {
             background: var(--accent-hover);
+        }
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #b91c1c;
         }
         .toast {
             position: fixed;
@@ -1063,6 +1084,10 @@
             font-size: 0.9rem;
             outline: none;
         }
+        .edit-input-wrap input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.15);
+        }
         .edit-input-wrap button {
             background: var(--accent);
             border: none;
@@ -1110,6 +1135,17 @@
         .rename-input:focus {
             border-color: var(--accent);
         }
+        /* Delete confirmation modal */
+        .delete-modal .modal {
+            max-width: 380px;
+        }
+        .delete-modal .modal .icon-warning {
+            font-size: 48px;
+            color: #f87171;
+            text-align: center;
+            display: block;
+            margin-bottom: 12px;
+        }
     </style>
 </head>
 <body>
@@ -1122,7 +1158,6 @@
                 <button class="new-chat-btn" id="newChatBtn">
                     <i class="fas fa-plus"></i> New Chat
                 </button>
-                <!-- Google Sign-In Button -->
                 <button class="auth-btn" id="authBtn">
                     <i class="fas fa-sign-in-alt"></i>
                     <span id="authText">Sign in with Google</span>
@@ -1136,7 +1171,6 @@
                     <i class="fas fa-chevron-right text-xs text-gray-400"></i>
                 </div>
                 <button class="sidebar-btn" id="settingsBtn"><i class="fas fa-cog"></i> Settings</button>
-                <!-- "Clear All Chats" removed -->
                 <button class="sidebar-btn danger" id="signOutBtn"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
             </div>
         </aside>
@@ -1160,15 +1194,13 @@
                 </div>
             </div>
 
-            <!-- Chat container with disclaimer -->
+            <!-- Chat container -->
             <div class="chat-container" id="chatContainer">
-                <!-- DISCLAIMER — Always visible -->
                 <div class="disclaimer-bar" id="disclaimerBar">
                     <i class="fas fa-info-circle"></i>
                     <strong>Wise King AI</strong> is an AI. Please double‑check important information.
                 </div>
 
-                <!-- Welcome Screen -->
                 <div class="welcome-screen" id="welcomeScreen">
                     <div class="welcome-icon" id="welcomeIcon">👑</div>
                     <h2 class="welcome-title" id="welcomeTitle">Sannu! Welcome to Wise King AI</h2>
@@ -1178,10 +1210,8 @@
                     </p>
                 </div>
 
-                <!-- Messages target -->
                 <div id="messagesTarget" class="messages-area"></div>
 
-                <!-- Typing Indicator -->
                 <div class="typing-row hidden" id="typingIndicator">
                     <div class="msg-avatar">WK</div>
                     <div class="typing-bubble">
@@ -1190,7 +1220,7 @@
                 </div>
             </div>
 
-            <!-- Image preview area (for upload) -->
+            <!-- Image preview area -->
             <div class="preview-area" id="previewArea"></div>
 
             <!-- Input area -->
@@ -1283,9 +1313,9 @@
             <div class="share-grid" id="shareGrid">
                 <button class="share-btn" data-platform="whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</button>
                 <button class="share-btn" data-platform="facebook"><i class="fab fa-facebook"></i> Facebook</button>
-                <button class="share-btn" data-platform="instagram"><i class="fab fa-instagram"></i> Instagram</button>
+                <button class="share-btn" data-platform="x"><i class="fab fa-x-twitter"></i> X</button>
                 <button class="share-btn" data-platform="tiktok"><i class="fab fa-tiktok"></i> TikTok</button>
-                <button class="share-btn" data-platform="copy"><i class="fas fa-copy"></i> Copy Text</button>
+                <button class="share-btn" data-platform="copy"><i class="fas fa-copy"></i> Copy Link</button>
                 <button class="share-btn" data-platform="native"><i class="fas fa-share-alt"></i> More...</button>
             </div>
             <div class="modal-actions">
@@ -1294,14 +1324,15 @@
         </div>
     </div>
 
-    <!-- Rename Chat Modal (custom) -->
-    <div class="modal-backdrop" id="renameModal">
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-backdrop delete-modal" id="deleteModal">
         <div class="modal">
-            <h2><i class="fas fa-pen"></i> Rename Chat</h2>
-            <input type="text" id="renameInput" class="rename-input" placeholder="New chat title..." />
-            <div class="modal-actions" style="margin-top:16px;">
-                <button class="btn btn-secondary" id="closeRename">Cancel</button>
-                <button class="btn btn-primary" id="saveRename">Save</button>
+            <i class="fas fa-exclamation-triangle icon-warning"></i>
+            <h2 style="text-align:center;justify-content:center;">Delete Chat?</h2>
+            <p style="text-align:center;">Are you sure you want to delete this chat? This action cannot be undone.</p>
+            <div class="modal-actions" style="justify-content:center;gap:12px;">
+                <button class="btn btn-secondary" id="cancelDelete">Cancel</button>
+                <button class="btn btn-danger" id="confirmDelete">Delete</button>
             </div>
         </div>
     </div>
@@ -1310,51 +1341,6 @@
     <div class="toast" id="toast"></div>
 
     <script>
-        // ================================================================
-        // FIREBASE CONFIG — REPLACE WITH YOUR OWN
-        // ================================================================
-        const firebaseConfig = {
-            // ⬇️ PASTE YOUR FIREBASE CONFIG HERE ⬇️
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
-
-        // Initialize Firebase (if config is filled)
-        let firebaseApp = null;
-        let firebaseAuth = null;
-        let currentUser = null;
-
-        try {
-            if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
-                firebaseApp = firebase.initializeApp(firebaseConfig);
-                firebaseAuth = firebase.auth();
-                // Auth state listener
-                firebaseAuth.onAuthStateChanged(user => {
-                    currentUser = user;
-                    updateAuthUI();
-                    if (user) {
-                        // Update profile with Firebase data
-                        state.userName = user.displayName || state.userName;
-                        state.userAvatar = user.photoURL || state.userAvatar;
-                        localStorage.setItem('wk_user_name', state.userName);
-                        if (state.userAvatar) localStorage.setItem('wk_user_avatar', state.userAvatar);
-                        loadProfile();
-                        showToast('✅ Signed in as ' + (user.displayName || user.email));
-                    } else {
-                        // Not signed in, keep local profile
-                    }
-                });
-            } else {
-                console.warn('Firebase not configured — Google Sign-In disabled.');
-            }
-        } catch (e) {
-            console.warn('Firebase init error:', e);
-        }
-
         // ================================================================
         // STATE
         // ================================================================
@@ -1366,14 +1352,14 @@
         let isRecording = false;
         let isImageMode = false;
         let shareTextCache = '';
-        let pendingRenameChatId = null;
+        let pendingDeleteChatId = null;
+        let editingChatId = null;
 
         const OWNER_NAME = 'IBRAHIM ABDULLAHI';
 
         const PROVIDERS = {
             gemini: {
                 label: 'Gemini',
-                endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}',
                 models: ['gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash'],
                 defaultModel: 'gemini-3.5-flash',
                 keyLink: 'https://aistudio.google.com/app/apikey',
@@ -1381,7 +1367,6 @@
             },
             deepseek: {
                 label: 'DeepSeek',
-                endpoint: 'https://api.deepseek.com/chat/completions',
                 models: ['deepseek-chat', 'deepseek-v4-flash'],
                 defaultModel: 'deepseek-chat',
                 keyLink: 'https://platform.deepseek.com/api_keys',
@@ -1389,7 +1374,6 @@
             },
             grok: {
                 label: 'Grok',
-                endpoint: 'https://api.x.ai/v1/chat/completions',
                 models: ['grok-2', 'grok-2-latest'],
                 defaultModel: 'grok-2',
                 keyLink: 'https://console.x.ai',
@@ -1397,7 +1381,6 @@
             },
             openai: {
                 label: 'OpenAI',
-                endpoint: 'https://api.openai.com/v1/chat/completions',
                 models: ['gpt-4o-mini', 'gpt-4o', 'gpt-3.5-turbo'],
                 defaultModel: 'gpt-4o-mini',
                 keyLink: 'https://platform.openai.com/api-keys',
@@ -1469,6 +1452,9 @@
         const providerBadge = document.getElementById('providerBadge');
         const authBtn = document.getElementById('authBtn');
         const authText = document.getElementById('authText');
+        const deleteModal = document.getElementById('deleteModal');
+        const cancelDelete = document.getElementById('cancelDelete');
+        const confirmDelete = document.getElementById('confirmDelete');
 
         // ================================================================
         // UTILITY
@@ -1543,71 +1529,7 @@
             }
             updateOwnerBadge();
             updateProviderUI();
-            updateAuthUI();
         }
-
-        // ================================================================
-        // AUTH UI
-        // ================================================================
-        function updateAuthUI() {
-            if (currentUser) {
-                const name = currentUser.displayName || currentUser.email || 'User';
-                const photo = currentUser.photoURL || '';
-                authText.innerHTML = `
-                    <div class="user-info">
-                        ${photo ? `<img src="${photo}" alt="avatar" />` : `<i class="fas fa-user-circle"></i>`}
-                        <span class="user-name">${name}</span>
-                    </div>
-                    <i class="fas fa-sign-out-alt" style="font-size:0.8rem;"></i>
-                `;
-                authBtn.title = 'Sign out';
-                // Update local profile with Firebase data
-                if (currentUser.displayName) {
-                    state.userName = currentUser.displayName;
-                    localStorage.setItem('wk_user_name', state.userName);
-                }
-                if (currentUser.photoURL) {
-                    state.userAvatar = currentUser.photoURL;
-                    localStorage.setItem('wk_user_avatar', state.userAvatar);
-                }
-                loadProfile();
-            } else {
-                authText.innerHTML = `
-                    <i class="fas fa-sign-in-alt"></i> Sign in with Google
-                `;
-                authBtn.title = 'Sign in';
-            }
-        }
-
-        // Auth button click
-        authBtn.addEventListener('click', async () => {
-            if (!firebaseAuth) {
-                showToast('⚠️ Firebase not configured. Please set up Firebase.');
-                return;
-            }
-            if (currentUser) {
-                // Sign out
-                try {
-                    await firebaseAuth.signOut();
-                    showToast('✅ Signed out');
-                } catch (e) {
-                    showToast('❌ Sign out failed: ' + e.message);
-                }
-            } else {
-                // Sign in with Google
-                try {
-                    const provider = new firebase.auth.GoogleAuthProvider();
-                    const result = await firebaseAuth.signInWithPopup(provider);
-                    showToast('✅ Signed in as ' + result.user.displayName);
-                } catch (e) {
-                    if (e.code === 'auth/popup-blocked') {
-                        showToast('⚠️ Popup blocked. Please allow popups for this site.');
-                    } else {
-                        showToast('❌ Sign in failed: ' + e.message);
-                    }
-                }
-            }
-        });
 
         // ================================================================
         // IDENTITY INTERCEPTOR
@@ -1657,9 +1579,10 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
         }
 
         // ================================================================
-        // API CALL — Multi-Provider
+        // API CALL — Multi-Provider with FULL CONTEXT HISTORY
         // ================================================================
-        async function callAI(userText) {
+        async function callAI(userText, history = []) {
+            // Identity interceptor
             if (detectIdentityQuestion(userText)) {
                 const baseReply = getHardcodedIdentityResponse();
                 if (isOwner()) {
@@ -1676,21 +1599,63 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
             const model = state.model;
             const systemPrompt = buildWisdomSystemPrompt();
 
+            // Build conversation history for the LLM
+            // history contains messages in order: [{role: 'user', content: '...'}, {role: 'assistant', content: '...'}]
+            const conversationMessages = [];
+
+            // Add system prompt (as system role or as first user message depending on provider)
+            // For Gemini we use a different format, for others we use chat/completions format
+
             try {
                 let response;
                 let data;
 
                 switch (provider) {
                     case 'gemini': {
+                        // Gemini uses a different format: contents array with parts
                         const url =
                             `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${state.apiKey}`;
-                        const parts = [{ text: systemPrompt + "\n\nUser: " + userText }];
+
+                        // Build contents array: system prompt as first user message, then history, then current user message
+                        const contents = [];
+                        // Add system prompt as a user message (Gemini doesn't have system role)
+                        contents.push({
+                            role: 'user',
+                            parts: [{ text: systemPrompt }]
+                        });
+                        // Add assistant acknowledgment
+                        contents.push({
+                            role: 'model',
+                            parts: [{ text: "Understood. I'll follow these guidelines." }]
+                        });
+
+                        // Add history (skip system prompt and assistant acknowledgment from history)
+                        for (const msg of history) {
+                            if (msg.role === 'user') {
+                                contents.push({
+                                    role: 'user',
+                                    parts: [{ text: msg.content }]
+                                });
+                            } else if (msg.role === 'assistant') {
+                                contents.push({
+                                    role: 'model',
+                                    parts: [{ text: msg.content }]
+                                });
+                            }
+                        }
+
+                        // Add current user message
+                        contents.push({
+                            role: 'user',
+                            parts: [{ text: userText }]
+                        });
+
                         response = await fetch(url, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 generationConfig: { temperature: 0.75, maxOutputTokens: 4096, topP: 0.95 },
-                                contents: [{ parts: parts }]
+                                contents: contents
                             })
                         });
                         data = await response.json();
@@ -1711,8 +1676,29 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                         return reply;
                     }
 
-                    case 'deepseek': {
-                        response = await fetch('https://api.deepseek.com/chat/completions', {
+                    case 'deepseek':
+                    case 'grok':
+                    case 'openai': {
+                        // OpenAI-compatible format
+                        const endpoint = provider === 'deepseek' ? 'https://api.deepseek.com/chat/completions' :
+                            provider === 'grok' ? 'https://api.x.ai/v1/chat/completions' :
+                            'https://api.openai.com/v1/chat/completions';
+
+                        const messages = [
+                            { role: 'system', content: systemPrompt }
+                        ];
+
+                        // Add history
+                        for (const msg of history) {
+                            if (msg.role === 'user' || msg.role === 'assistant') {
+                                messages.push({ role: msg.role, content: msg.content });
+                            }
+                        }
+
+                        // Add current user message
+                        messages.push({ role: 'user', content: userText });
+
+                        response = await fetch(endpoint, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -1720,10 +1706,7 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                             },
                             body: JSON.stringify({
                                 model: model,
-                                messages: [
-                                    { role: 'system', content: systemPrompt },
-                                    { role: 'user', content: userText }
-                                ],
+                                messages: messages,
                                 temperature: 0.75,
                                 max_tokens: 4096,
                                 top_p: 0.95
@@ -1732,69 +1715,12 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                         data = await response.json();
                         if (!response.ok) {
                             let errMsg = data.error?.message || 'Unknown error';
-                            if (errMsg.toLowerCase().includes('insufficient balance')) {
+                            if (provider === 'deepseek' && errMsg.toLowerCase().includes('insufficient balance')) {
                                 errMsg = 'Insufficient balance. Please add credits at platform.deepseek.com';
                             }
-                            if (isOwner()) return "Yah Maigida Na! 👑 ❌ DeepSeek Error: " + errMsg;
-                            return "❌ DeepSeek Error: " + errMsg;
-                        }
-                        let reply = data.choices[0].message.content.trim();
-                        if (isOwner()) reply = "Yah Maigida Na! 👑 " + reply;
-                        return reply;
-                    }
-
-                    case 'grok': {
-                        response = await fetch('https://api.x.ai/v1/chat/completions', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': 'Bearer ' + state.apiKey
-                            },
-                            body: JSON.stringify({
-                                model: model,
-                                messages: [
-                                    { role: 'system', content: systemPrompt },
-                                    { role: 'user', content: userText }
-                                ],
-                                temperature: 0.75,
-                                max_tokens: 4096,
-                                top_p: 0.95
-                            })
-                        });
-                        data = await response.json();
-                        if (!response.ok) {
-                            let errMsg = data.error?.message || 'Unknown error';
-                            if (isOwner()) return "Yah Maigida Na! 👑 ❌ Grok Error: " + errMsg;
-                            return "❌ Grok Error: " + errMsg;
-                        }
-                        let reply = data.choices[0].message.content.trim();
-                        if (isOwner()) reply = "Yah Maigida Na! 👑 " + reply;
-                        return reply;
-                    }
-
-                    case 'openai': {
-                        response = await fetch('https://api.openai.com/v1/chat/completions', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': 'Bearer ' + state.apiKey
-                            },
-                            body: JSON.stringify({
-                                model: model,
-                                messages: [
-                                    { role: 'system', content: systemPrompt },
-                                    { role: 'user', content: userText }
-                                ],
-                                temperature: 0.75,
-                                max_tokens: 4096,
-                                top_p: 0.95
-                            })
-                        });
-                        data = await response.json();
-                        if (!response.ok) {
-                            let errMsg = data.error?.message || 'Unknown error';
-                            if (isOwner()) return "Yah Maigida Na! 👑 ❌ OpenAI Error: " + errMsg;
-                            return "❌ OpenAI Error: " + errMsg;
+                            if (isOwner()) return "Yah Maigida Na! 👑 ❌ " + provider.charAt(0).toUpperCase() + provider
+                                .slice(1) + " Error: " + errMsg;
+                            return "❌ " + provider.charAt(0).toUpperCase() + provider.slice(1) + " Error: " + errMsg;
                         }
                         let reply = data.choices[0].message.content.trim();
                         if (isOwner()) reply = "Yah Maigida Na! 👑 " + reply;
@@ -1813,13 +1739,12 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
         }
 
         // ================================================================
-        // IMAGE GENERATION — Pollinations (FIXED)
+        // IMAGE GENERATION — Pollinations
         // ================================================================
         async function generateImagesPollinations(prompt) {
             const baseUrl = 'https://image.pollinations.ai/prompt/';
             const encoded = encodeURIComponent(prompt);
             const imageUrls = [];
-            // Generate 4 images with different seeds (capped at 2147483647)
             for (let i = 0; i < 4; i++) {
                 const seed = Math.floor(Math.random() * 2147483647);
                 const url =
@@ -1830,7 +1755,7 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
         }
 
         // ================================================================
-        // RENDER MESSAGES (with Edit/Delete/Copy)
+        // RENDER MESSAGES
         // ================================================================
         function renderMessage(role, content, extra = {}, msgIndex) {
             const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -2058,7 +1983,7 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
         });
 
         // ================================================================
-        // VOICE INPUT (webkitSpeechRecognition)
+        // VOICE INPUT
         // ================================================================
         voiceBtn.addEventListener('click', () => {
             if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
@@ -2141,6 +2066,15 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
             });
         }
 
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
         // ================================================================
         // CHAT MANAGEMENT
         // ================================================================
@@ -2160,37 +2094,92 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
             const ids = Object.keys(chats).sort((a, b) => new Date(chats[b].createdAt) - new Date(chats[a].createdAt));
             ids.forEach(id => {
                 const chat = chats[id];
+                const isEditing = editingChatId === id;
                 const el = document.createElement('div');
                 el.className = `chat-item ${id === currentChatId ? 'active' : ''}`;
                 el.dataset.chatId = id;
+
+                let titleHtml;
+                if (isEditing) {
+                    titleHtml = `
+                        <input type="text" class="edit-title-input" id="renameInput_${id}" value="${escapeHtml(chat.title)}" />
+                        <button class="save-rename-btn" data-id="${id}" style="background:transparent;border:none;color:var(--accent);cursor:pointer;padding:0 4px;"><i class="fas fa-check"></i></button>
+                        <button class="cancel-rename-btn" data-id="${id}" style="background:transparent;border:none;color:var(--text-light);cursor:pointer;padding:0 4px;"><i class="fas fa-times"></i></button>
+                    `;
+                } else {
+                    titleHtml = `<span>${escapeHtml(chat.title)}</span>`;
+                }
+
                 el.innerHTML = `
-                    <span class="chat-item-title" title="${escapeHtml(chat.title)}">
-                        <i class="fas fa-comment-dots text-amber-500 text-xs"></i> ${escapeHtml(chat.title)}
+                    <span class="chat-item-title">
+                        <i class="fas fa-comment-dots text-amber-500 text-xs"></i>
+                        ${titleHtml}
                     </span>
                     <div class="chat-item-actions">
                         <button class="more-btn" data-chatid="${id}"><i class="fas fa-ellipsis-v"></i></button>
                         <div class="dropdown-menu" data-chatid="${id}">
-                            <button class="rename-chat" data-id="${id}"><i class="fas fa-pen"></i> Rename</button>
-                            <button class="delete-chat" data-id="${id}"><i class="fas fa-trash-alt"></i> Delete</button>
-                            <button class="share-chat" data-id="${id}"><i class="fas fa-share-alt"></i> Share</button>
+                            <button class="menu-item rename-chat" data-id="${id}"><i class="fas fa-pen"></i> Rename</button>
+                            <button class="menu-item delete-chat" data-id="${id}"><i class="fas fa-trash-alt"></i> Delete</button>
+                            <div class="divider"></div>
+                            <button class="menu-item share-chat-wa" data-id="${id}"><i class="fab fa-whatsapp" style="color:#25d366;"></i> Share to WhatsApp</button>
+                            <button class="menu-item share-chat-fb" data-id="${id}"><i class="fab fa-facebook" style="color:#1877f2;"></i> Share to Facebook</button>
+                            <button class="menu-item share-chat-x" data-id="${id}"><i class="fab fa-x-twitter"></i> Share to X</button>
+                            <button class="menu-item share-chat-tiktok" data-id="${id}"><i class="fab fa-tiktok"></i> Share to TikTok</button>
+                            <div class="divider"></div>
+                            <button class="menu-item copy-chat-link" data-id="${id}"><i class="fas fa-link"></i> Copy Link</button>
                         </div>
                     </div>
                 `;
                 el.addEventListener('click', (e) => {
-                    if (!e.target.closest('.more-btn') && !e.target.closest('.dropdown-menu')) {
+                    if (!e.target.closest('.more-btn') && !e.target.closest('.dropdown-menu') &&
+                        !e.target.closest('.save-rename-btn') && !e.target.closest('.cancel-rename-btn') &&
+                        !e.target.closest('.edit-title-input')) {
                         switchToChat(id);
                     }
                 });
                 chatList.appendChild(el);
+
+                // Rename handlers
+                if (isEditing) {
+                    const input = el.querySelector('.edit-title-input');
+                    const saveBtn = el.querySelector('.save-rename-btn');
+                    const cancelBtn = el.querySelector('.cancel-rename-btn');
+
+                    const finishRename = (save) => {
+                        if (save) {
+                            const newTitle = input.value.trim();
+                            if (newTitle && chats[id]) {
+                                chats[id].title = newTitle;
+                                saveChats();
+                                showToast('✅ Chat renamed');
+                            }
+                        }
+                        editingChatId = null;
+                        renderChatList();
+                    };
+
+                    saveBtn.addEventListener('click', (e) => { e.stopPropagation();
+                        finishRename(true); });
+                    cancelBtn.addEventListener('click', (e) => { e.stopPropagation();
+                        finishRename(false); });
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') { e.preventDefault();
+                            finishRename(true); }
+                        if (e.key === 'Escape') { e.preventDefault();
+                            finishRename(false); }
+                    });
+                    input.addEventListener('click', (e) => e.stopPropagation());
+                    setTimeout(() => { input.focus();
+                        input.select(); }, 50);
+                }
             });
 
-            // Attach dropdown toggle events
+            // Dropdown toggle
             document.querySelectorAll('.more-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const parent = btn.closest('.chat-item');
                     const menu = parent.querySelector('.dropdown-menu');
-                    // Close all others
                     document.querySelectorAll('.dropdown-menu').forEach(m => {
                         if (m !== menu) m.classList.remove('show');
                     });
@@ -2198,63 +2187,100 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                 });
             });
 
-            // Attach rename, delete, share from dropdown
+            // Dropdown actions
             document.querySelectorAll('.rename-chat').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const id = btn.dataset.id;
-                    openRenameModal(id);
+                    editingChatId = id;
+                    renderChatList();
+                    document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
                 });
             });
+
             document.querySelectorAll('.delete-chat').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const id = btn.dataset.id;
-                    if (confirm('Delete this chat?')) {
-                        deleteChat(id);
-                    }
-                });
-            });
-            document.querySelectorAll('.share-chat').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const id = btn.dataset.id;
-                    const chat = chats[id];
-                    if (chat) {
-                        const text = `Wise King AI Chat: ${chat.title}\n\n${chat.messages.map(m => m.role + ': ' + m.content).join('\n')}`;
-                        openShareModal(text);
-                    }
+                    pendingDeleteChatId = id;
+                    deleteModal.classList.add('active');
+                    document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
                 });
             });
 
-            // Close dropdowns when clicking elsewhere
+            document.querySelectorAll('.share-chat-wa, .share-chat-fb, .share-chat-x, .share-chat-tiktok, .copy-chat-link')
+                .forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const id = btn.dataset.id;
+                        const chat = chats[id];
+                        if (!chat) return;
+                        const text = `Wise King AI Chat: ${chat.title}\n\n${chat.messages.map(m => m.role + ': ' + m.content).join('\n')}`;
+                        const encoded = encodeURIComponent(text);
+                        const url = window.location.href;
+
+                        let shareUrl = '';
+                        if (btn.classList.contains('share-chat-wa')) {
+                            shareUrl = `https://wa.me/?text=${encoded}`;
+                        } else if (btn.classList.contains('share-chat-fb')) {
+                            shareUrl = `https://www.facebook.com/sharer/sharer.php?quote=${encoded}`;
+                        } else if (btn.classList.contains('share-chat-x')) {
+                            shareUrl = `https://twitter.com/intent/tweet?text=${encoded}`;
+                        } else if (btn.classList.contains('share-chat-tiktok')) {
+                            navigator.clipboard.writeText(text).then(() => {
+                                showToast('📋 Text copied! Open TikTok and paste it.');
+                            }).catch(() => {
+                                const ta = document.createElement('textarea');
+                                ta.value = text;
+                                document.body.appendChild(ta);
+                                ta.select();
+                                document.execCommand('copy');
+                                document.body.removeChild(ta);
+                                showToast('📋 Text copied! Open TikTok and paste it.');
+                            });
+                            document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+                            return;
+                        } else if (btn.classList.contains('copy-chat-link')) {
+                            navigator.clipboard.writeText(url + '?chat=' + id).then(() => {
+                                showToast('✅ Chat link copied!');
+                            }).catch(() => {
+                                const ta = document.createElement('textarea');
+                                ta.value = url + '?chat=' + id;
+                                document.body.appendChild(ta);
+                                ta.select();
+                                document.execCommand('copy');
+                                document.body.removeChild(ta);
+                                showToast('✅ Chat link copied!');
+                            });
+                            document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+                            return;
+                        }
+
+                        if (shareUrl) {
+                            window.open(shareUrl, '_blank');
+                        }
+                        document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+                    });
+                });
+
+            // Close dropdowns on outside click
             document.addEventListener('click', () => {
                 document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
             });
         }
 
-        function openRenameModal(chatId) {
-            pendingRenameChatId = chatId;
-            const chat = chats[chatId];
-            if (!chat) return;
-            document.getElementById('renameInput').value = chat.title;
-            document.getElementById('renameModal').classList.add('active');
-        }
-
-        document.getElementById('closeRename').addEventListener('click', () => {
-            document.getElementById('renameModal').classList.remove('active');
-            pendingRenameChatId = null;
+        // Delete confirmation
+        cancelDelete.addEventListener('click', () => {
+            deleteModal.classList.remove('active');
+            pendingDeleteChatId = null;
         });
-        document.getElementById('saveRename').addEventListener('click', () => {
-            const newTitle = document.getElementById('renameInput').value.trim();
-            if (!newTitle) { showToast('⚠️ Title cannot be empty'); return; }
-            if (pendingRenameChatId && chats[pendingRenameChatId]) {
-                chats[pendingRenameChatId].title = newTitle;
-                saveChats();
-                showToast('✅ Chat renamed');
+
+        confirmDelete.addEventListener('click', () => {
+            if (pendingDeleteChatId) {
+                deleteChat(pendingDeleteChatId);
+                pendingDeleteChatId = null;
             }
-            document.getElementById('renameModal').classList.remove('active');
-            pendingRenameChatId = null;
+            deleteModal.classList.remove('active');
         });
 
         function createNewChat() {
@@ -2273,12 +2299,12 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
         }
 
         function deleteChat(id) {
-            if (!confirm('Delete this chat?')) return;
             delete chats[id];
             if (currentChatId === id) { currentChatId = null;
                 showWelcomeScreen(); }
             saveChats();
             updateBackButton();
+            showToast('🗑️ Chat deleted');
         }
 
         function showWelcomeScreen() {
@@ -2313,7 +2339,7 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
         });
 
         // ================================================================
-        // SEND MESSAGE
+        // SEND MESSAGE — WITH FULL CONTEXT HISTORY
         // ================================================================
         async function sendMessage() {
             const text = chatInput.value.trim();
@@ -2323,7 +2349,7 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                 chats[currentChatId].title = text.substring(0, 25) + (text.length > 25 ? '...' : '');
             }
 
-            // Convert uploaded images to base64 for API (only used for Gemini inline, but we'll keep for consistency)
+            // Convert uploaded images to base64
             const imagesForApi = [];
             for (const imgObj of uploadedImages) {
                 if (imgObj.file) {
@@ -2337,7 +2363,6 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
             const userMsg = { role: 'user', content: text, extra: { images: imagesForApi } };
             chats[currentChatId].messages.push(userMsg);
             chatInput.value = '';
-            const uploadedCopy = [...uploadedImages];
             uploadedImages = [];
             updateImagePreview();
             renderMessage('user', text, userMsg.extra, chats[currentChatId].messages.length - 1);
@@ -2346,9 +2371,7 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
             if (isImageMode) {
-                // Generate images via Pollinations
                 try {
-                    // Show loading indicator inside typing bubble
                     typingIndicator.querySelector('.typing-bubble').innerHTML =
                         '<div style="display:flex;align-items:center;gap:8px;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Generating images...</div>';
                     const imageUrls = await generateImagesPollinations(text);
@@ -2368,29 +2391,28 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                     renderMessage('assistant', aiMsg.content, {}, chats[currentChatId].messages.length - 1);
                 }
                 typingIndicator.classList.add('hidden');
-                // Restore typing dots
                 typingIndicator.querySelector('.typing-bubble').innerHTML =
                     `<div class="typing-dots"><span></span><span></span><span></span></div>`;
                 saveChats();
                 return;
             }
 
-            // Chat mode: call AI
-            const reply = await callAI(text);
+            // --- CHAT MODE: Pass full conversation history ---
+            // Build history from all messages before the current one (excluding the just-added user message)
+            const history = [];
+            const allMessages = chats[currentChatId].messages;
+            // Exclude the last message (which is the current user message) for history
+            for (let i = 0; i < allMessages.length - 1; i++) {
+                const msg = allMessages[i];
+                history.push({ role: msg.role, content: msg.content });
+            }
+
+            const reply = await callAI(text, history);
             typingIndicator.classList.add('hidden');
             const aiMsg = { role: 'assistant', content: reply, extra: {} };
             chats[currentChatId].messages.push(aiMsg);
             renderMessage('assistant', reply, {}, chats[currentChatId].messages.length - 1);
             saveChats();
-        }
-
-        function fileToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
         }
 
         // ================================================================
@@ -2489,14 +2511,10 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
             showToast('✅ Signed out');
             updateOwnerBadge();
             updateProviderUI();
-            // Also sign out from Firebase if logged in
-            if (firebaseAuth && currentUser) {
-                firebaseAuth.signOut().catch(() => {});
-            }
         });
 
         // ================================================================
-        // SHARE MODAL
+        // SHARE MODAL (for individual messages)
         // ================================================================
         function openShareModal(text) {
             shareTextCache = text;
@@ -2521,23 +2539,13 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                     window.open(`https://www.facebook.com/sharer/sharer.php?quote=${encoded}`, '_blank');
                     closeShareModal();
                     break;
-                case 'instagram':
-                    navigator.clipboard.writeText(text).then(() => {
-                        showToast('📋 Text copied! Open Instagram and paste it in your story or post.');
-                    }).catch(() => {
-                        const ta = document.createElement('textarea');
-                        ta.value = text;
-                        document.body.appendChild(ta);
-                        ta.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(ta);
-                        showToast('📋 Text copied! Open Instagram and paste it.');
-                    });
+                case 'x':
+                    window.open(`https://twitter.com/intent/tweet?text=${encoded}`, '_blank');
                     closeShareModal();
                     break;
                 case 'tiktok':
                     navigator.clipboard.writeText(text).then(() => {
-                        showToast('📋 Text copied! Open TikTok and paste it in your post or comment.');
+                        showToast('📋 Text copied! Open TikTok and paste it.');
                     }).catch(() => {
                         const ta = document.createElement('textarea');
                         ta.value = text;
@@ -2567,7 +2575,7 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                     if (navigator.share) {
                         navigator.share({ text: text }).catch(() => {});
                     } else {
-                        showToast('⚠️ Web Share API not supported. Use Copy Text instead.');
+                        showToast('⚠️ Web Share API not supported. Use Copy instead.');
                     }
                     closeShareModal();
                     break;
@@ -2632,6 +2640,11 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
         });
         newChatBtn.addEventListener('click', createNewChat);
 
+        // Simple auth placeholder (Google Sign-In UI only)
+        authBtn.addEventListener('click', () => {
+            showToast('🔐 Google Sign-In coming soon! Configure Firebase to enable.');
+        });
+
         // ================================================================
         // INIT
         // ================================================================
@@ -2644,14 +2657,13 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
             voiceLangSelect.value = state.voiceLang;
             updateBackButton();
             modelDisplay.textContent = state.model;
-            console.log('👑 Wise King AI — Fully Upgraded — Created by IBRAHIM ABDULLAHI');
+            console.log('👑 Wise King AI — Context & Memory FIXED!');
+            console.log('✅ Full conversation history now sent to LLM on every message.');
+            console.log('✅ 3-dot menu fully active: Rename (inline), Delete (modal), Share (WA/FB/X/TikTok/Copy)');
             console.log('🔄 Providers: Gemini, DeepSeek, Grok, OpenAI');
-            console.log('🖼️ Image generation: Pollinations (seed fixed)');
+            console.log('🖼️ Image generation: Pollinations');
             console.log('🎤 Voice input: Web Speech API');
             console.log('📎 File upload: working with preview');
-            console.log('⋮ 3‑dot menu per chat (rename, delete, share)');
-            console.log('🔐 Google Sign‑In (Firebase)');
-            console.log('⚠️ Disclaimer always visible');
         }
 
         init();
