@@ -258,6 +258,10 @@
             text-align: center;
             font-size: 0.9rem;
         }
+        .chat-item .dropdown-menu .menu-item .fab {
+            width: 18px;
+            text-align: center;
+        }
 
         .sidebar-footer {
             padding: 10px 12px;
@@ -1027,6 +1031,9 @@
             color: #010101;
             text-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
         }
+        .share-btn .fab.fa-x-twitter {
+            color: #000;
+        }
         .share-btn .fas.fa-copy {
             color: var(--text-light);
         }
@@ -1121,7 +1128,6 @@
             color: var(--accent);
             border-color: var(--accent);
         }
-        /* Rename modal */
         .rename-input {
             width: 100%;
             padding: 10px 14px;
@@ -1135,7 +1141,6 @@
         .rename-input:focus {
             border-color: var(--accent);
         }
-        /* Delete confirmation modal */
         .delete-modal .modal {
             max-width: 380px;
         }
@@ -1145,6 +1150,16 @@
             text-align: center;
             display: block;
             margin-bottom: 12px;
+        }
+        /* Replicate badge */
+        .replicate-badge {
+            font-size: 0.6rem;
+            background: rgba(16, 163, 127, 0.2);
+            padding: 2px 8px;
+            border-radius: 12px;
+            border: 1px solid rgba(16, 163, 127, 0.3);
+            color: #34d399;
+            margin-left: 4px;
         }
     </style>
 </head>
@@ -1184,6 +1199,7 @@
                     <span class="top-title">Wise King AI</span>
                     <span id="ownerBadgeTop" class="owner-badge hidden">👑 Owner</span>
                     <span class="provider-badge" id="providerBadge">Gemini</span>
+                    <span class="replicate-badge" id="replicateBadge" style="display:none;">Flux</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;">
                     <div class="mode-toggle">
@@ -1262,6 +1278,11 @@
                 <select id="modelSelect"></select>
             </div>
             <div class="form-group">
+                <label for="replicateKeyInput">Replicate API Key <span style="font-weight:400;color:var(--text-light);">(for Flux image generation)</span></label>
+                <input type="password" id="replicateKeyInput" placeholder="r8_..." />
+                <p class="form-hint">Get your key from <a href="https://replicate.com/account/api-tokens" target="_blank" style="color:var(--accent);">replicate.com/account/api-tokens</a></p>
+            </div>
+            <div class="form-group">
                 <label for="voiceLangSelect">Voice Language</label>
                 <select id="voiceLangSelect">
                     <option value="ha-NG">Hausa (Nigeria)</option>
@@ -1305,7 +1326,7 @@
         </div>
     </div>
 
-    <!-- Share Modal -->
+    <!-- Share Modal (for messages) -->
     <div class="modal-backdrop" id="shareModal">
         <div class="modal">
             <h2><i class="fas fa-share-alt"></i> Share This Wisdom</h2>
@@ -1315,8 +1336,8 @@
                 <button class="share-btn" data-platform="facebook"><i class="fab fa-facebook"></i> Facebook</button>
                 <button class="share-btn" data-platform="x"><i class="fab fa-x-twitter"></i> X</button>
                 <button class="share-btn" data-platform="tiktok"><i class="fab fa-tiktok"></i> TikTok</button>
+                <button class="share-btn" data-platform="instagram"><i class="fab fa-instagram"></i> Instagram</button>
                 <button class="share-btn" data-platform="copy"><i class="fas fa-copy"></i> Copy Link</button>
-                <button class="share-btn" data-platform="native"><i class="fas fa-share-alt"></i> More...</button>
             </div>
             <div class="modal-actions">
                 <button class="btn btn-secondary" id="closeShare">Cancel</button>
@@ -1329,10 +1350,29 @@
         <div class="modal">
             <i class="fas fa-exclamation-triangle icon-warning"></i>
             <h2 style="text-align:center;justify-content:center;">Delete Chat?</h2>
-            <p style="text-align:center;">Are you sure you want to delete this chat? This action cannot be undone.</p>
+            <p style="text-align:center;">Are you sure you want to delete this chat? This cannot be undone.</p>
             <div class="modal-actions" style="justify-content:center;gap:12px;">
                 <button class="btn btn-secondary" id="cancelDelete">Cancel</button>
                 <button class="btn btn-danger" id="confirmDelete">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Chat Modal (from sidebar dropdown) -->
+    <div class="modal-backdrop" id="shareChatModal">
+        <div class="modal">
+            <h2><i class="fas fa-share-alt"></i> Share Chat</h2>
+            <p style="color:var(--text-light);margin-bottom:8px;font-size:0.9rem;line-height:1.5;">Share this chat with your friends!</p>
+            <div class="share-grid" id="shareChatGrid">
+                <button class="share-btn" data-share-platform="whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+                <button class="share-btn" data-share-platform="facebook"><i class="fab fa-facebook"></i> Facebook</button>
+                <button class="share-btn" data-share-platform="x"><i class="fab fa-x-twitter"></i> X</button>
+                <button class="share-btn" data-share-platform="tiktok"><i class="fab fa-tiktok"></i> TikTok</button>
+                <button class="share-btn" data-share-platform="instagram"><i class="fab fa-instagram"></i> Instagram</button>
+                <button class="share-btn" data-share-platform="copy"><i class="fas fa-copy"></i> Copy Link</button>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="closeShareChat">Cancel</button>
             </div>
         </div>
     </div>
@@ -1354,6 +1394,7 @@
         let shareTextCache = '';
         let pendingDeleteChatId = null;
         let editingChatId = null;
+        let pendingShareChatId = null;
 
         const OWNER_NAME = 'IBRAHIM ABDULLAHI';
 
@@ -1395,7 +1436,8 @@
             voiceLang: localStorage.getItem('wk_voice_lang') || 'ha-NG',
             userName: localStorage.getItem('wk_user_name') || 'My Profile',
             userAvatar: localStorage.getItem('wk_user_avatar') || '',
-            sidebarCollapsed: false
+            sidebarCollapsed: false,
+            replicateKey: localStorage.getItem('wk_replicate_key') || ''
         };
 
         // DOM refs
@@ -1426,6 +1468,7 @@
         const voiceLangSelect = document.getElementById('voiceLangSelect');
         const keyHint = document.getElementById('keyHint');
         const keyLink = document.getElementById('keyLink');
+        const replicateKeyInput = document.getElementById('replicateKeyInput');
         const profileBtn = document.getElementById('profileBtn');
         const profileModal = document.getElementById('profileModal');
         const closeProfileBtn = document.getElementById('closeProfile');
@@ -1450,11 +1493,15 @@
         const backBtn = document.getElementById('backBtn');
         const modelDisplay = document.getElementById('modelDisplay');
         const providerBadge = document.getElementById('providerBadge');
+        const replicateBadge = document.getElementById('replicateBadge');
         const authBtn = document.getElementById('authBtn');
         const authText = document.getElementById('authText');
         const deleteModal = document.getElementById('deleteModal');
         const cancelDelete = document.getElementById('cancelDelete');
         const confirmDelete = document.getElementById('confirmDelete');
+        const shareChatModal = document.getElementById('shareChatModal');
+        const closeShareChat = document.getElementById('closeShareChat');
+        const shareChatGrid = document.getElementById('shareChatGrid');
 
         // ================================================================
         // UTILITY
@@ -1512,6 +1559,12 @@
             keyLink.href = prov.keyLink;
             apiKeyInput.placeholder = 'Paste your ' + prov.label + ' API key...';
             modelGroup.style.display = 'block';
+            // Show replicate badge if key exists
+            if (state.replicateKey) {
+                replicateBadge.style.display = 'inline';
+            } else {
+                replicateBadge.style.display = 'none';
+            }
         }
 
         function loadProfile() {
@@ -1529,6 +1582,12 @@
             }
             updateOwnerBadge();
             updateProviderUI();
+            replicateKeyInput.value = state.replicateKey;
+            if (state.replicateKey) {
+                replicateBadge.style.display = 'inline';
+            } else {
+                replicateBadge.style.display = 'none';
+            }
         }
 
         // ================================================================
@@ -1547,6 +1606,37 @@
 
         function getHardcodedIdentityResponse() {
             return "Suna na Wise King AI! 👑 An halicce ni ne kuma mamallakina shi ne babban Maigidana (IBRAHIM ABDULLAHI) daga ƙasar Nijeriya – Wise King Industry. Barkanku da zuwa cikin tsarinmu mai ciki da Karramawa mai Albarka! ✍️💯";
+        }
+
+        // ================================================================
+        // DETECT IMAGE PROMPT (for Replicate)
+        // ================================================================
+        function isImageGenerationPrompt(text) {
+            const lower = text.toLowerCase();
+            const keywords = [
+                'create', 'generate', 'make', 'draw', 'paint', 'render',
+                'picture', 'image', 'photo', 'photorealistic', 'art',
+                'illustration', 'design', 'visual', 'scene', 'portrait',
+                'landscape', 'fantasy', 'concept art', 'character',
+                'environment', 'background', 'style', 'beautiful',
+                'aesthetic', 'digital art', 'sketch', 'painting'
+            ];
+            // Check if it's a clear image request
+            const hasImageKeyword = keywords.some(kw => lower.includes(kw));
+            // Also check for "create me a", "generate an image", "make a picture" patterns
+            const patterns = [
+                /create\s+(?:a|an|me\s+a|me\s+an|)\s*(?:picture|image|photo|art)/i,
+                /generate\s+(?:a|an|me\s+a|me\s+an|)\s*(?:picture|image|photo|art)/i,
+                /make\s+(?:a|an|me\s+a|me\s+an|)\s*(?:picture|image|photo|art)/i,
+                /draw\s+(?:a|an|me\s+a|me\s+an|)\s*(?:picture|image|photo|art)/i,
+                /paint\s+(?:a|an|me\s+a|me\s+an|)\s*(?:picture|image|photo|art)/i,
+                /render\s+(?:a|an|me\s+a|me\s+an|)\s*(?:picture|image|photo|art)/i,
+                /picture\s+of/i,
+                /image\s+of/i,
+                /photo\s+of/i
+            ];
+            const hasPattern = patterns.some(p => p.test(text));
+            return hasImageKeyword || hasPattern;
         }
 
         // ================================================================
@@ -1599,37 +1689,23 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
             const model = state.model;
             const systemPrompt = buildWisdomSystemPrompt();
 
-            // Build conversation history for the LLM
-            // history contains messages in order: [{role: 'user', content: '...'}, {role: 'assistant', content: '...'}]
-            const conversationMessages = [];
-
-            // Add system prompt (as system role or as first user message depending on provider)
-            // For Gemini we use a different format, for others we use chat/completions format
-
             try {
                 let response;
                 let data;
 
                 switch (provider) {
                     case 'gemini': {
-                        // Gemini uses a different format: contents array with parts
                         const url =
                             `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${state.apiKey}`;
-
-                        // Build contents array: system prompt as first user message, then history, then current user message
                         const contents = [];
-                        // Add system prompt as a user message (Gemini doesn't have system role)
                         contents.push({
                             role: 'user',
                             parts: [{ text: systemPrompt }]
                         });
-                        // Add assistant acknowledgment
                         contents.push({
                             role: 'model',
                             parts: [{ text: "Understood. I'll follow these guidelines." }]
                         });
-
-                        // Add history (skip system prompt and assistant acknowledgment from history)
                         for (const msg of history) {
                             if (msg.role === 'user') {
                                 contents.push({
@@ -1643,13 +1719,10 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                                 });
                             }
                         }
-
-                        // Add current user message
                         contents.push({
                             role: 'user',
                             parts: [{ text: userText }]
                         });
-
                         response = await fetch(url, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -1679,7 +1752,6 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                     case 'deepseek':
                     case 'grok':
                     case 'openai': {
-                        // OpenAI-compatible format
                         const endpoint = provider === 'deepseek' ? 'https://api.deepseek.com/chat/completions' :
                             provider === 'grok' ? 'https://api.x.ai/v1/chat/completions' :
                             'https://api.openai.com/v1/chat/completions';
@@ -1687,15 +1759,11 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                         const messages = [
                             { role: 'system', content: systemPrompt }
                         ];
-
-                        // Add history
                         for (const msg of history) {
                             if (msg.role === 'user' || msg.role === 'assistant') {
                                 messages.push({ role: msg.role, content: msg.content });
                             }
                         }
-
-                        // Add current user message
                         messages.push({ role: 'user', content: userText });
 
                         response = await fetch(endpoint, {
@@ -1739,19 +1807,104 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
         }
 
         // ================================================================
-        // IMAGE GENERATION — Pollinations
+        // REPLICATE FLUX IMAGE GENERATION
         // ================================================================
-        async function generateImagesPollinations(prompt) {
-            const baseUrl = 'https://image.pollinations.ai/prompt/';
-            const encoded = encodeURIComponent(prompt);
-            const imageUrls = [];
-            for (let i = 0; i < 4; i++) {
-                const seed = Math.floor(Math.random() * 2147483647);
-                const url =
-                    `${baseUrl}${encoded}?width=512&height=512&seed=${seed}&model=flux&nologo=true&enhance=false&safe=false`;
-                imageUrls.push(url);
+        async function generateFluxImage(prompt) {
+            if (!state.replicateKey) {
+                return { error: "⚠️ Please set your Replicate API key in Settings first." };
             }
-            return imageUrls;
+
+            // Auto-add quality tags
+            let enhancedPrompt = prompt;
+            // Check if user wants to keep face/background
+            const keepFaceMatch = prompt.match(/keep\s+(?:the\s+)?(?:same\s+)?face/i);
+            const changeBackgroundMatch = prompt.match(/change\s+(?:the\s+)?background/i);
+
+            if (keepFaceMatch && changeBackgroundMatch) {
+                enhancedPrompt = prompt + ", keep the same face, only change the background, photorealistic, highly detailed, 8K, sharp focus";
+            } else if (!prompt.includes('photorealistic') && !prompt.includes('8K')) {
+                enhancedPrompt = prompt + ", photorealistic, highly detailed, 8K, sharp focus";
+            }
+
+            const modelId = "black-forest-labs/flux-1.1-dev";
+
+            try {
+                // Create prediction
+                const createResponse = await fetch('https://api.replicate.com/v1/predictions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Token ' + state.replicateKey
+                    },
+                    body: JSON.stringify({
+                        version: modelId,
+                        input: {
+                            prompt: enhancedPrompt,
+                            width: 1024,
+                            height: 1024,
+                            num_outputs: 2,
+                            guidance_scale: 3.5,
+                            num_inference_steps: 28,
+                            output_format: 'webp',
+                            quality: 90
+                        }
+                    })
+                });
+
+                if (!createResponse.ok) {
+                    const err = await createResponse.json();
+                    console.error('Replicate create error:', err);
+                    return { error: "❌ Replicate error: " + (err.detail || err.error || 'Unknown error') };
+                }
+
+                const prediction = await createResponse.json();
+                const getUrl = prediction.urls.get;
+
+                // Poll for completion
+                let result = null;
+                let attempts = 0;
+                const maxAttempts = 60;
+
+                while (attempts < maxAttempts) {
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    const pollResponse = await fetch(getUrl, {
+                        headers: {
+                            'Authorization': 'Token ' + state.replicateKey
+                        }
+                    });
+                    if (!pollResponse.ok) {
+                        attempts++;
+                        continue;
+                    }
+                    const pollData = await pollResponse.json();
+                    if (pollData.status === 'succeeded') {
+                        result = pollData;
+                        break;
+                    } else if (pollData.status === 'failed') {
+                        return { error: "❌ Image generation failed: " + (pollData.error || 'Unknown error') };
+                    }
+                    attempts++;
+                }
+
+                if (!result) {
+                    return { error: "❌ Image generation timed out. Please try again." };
+                }
+
+                // Extract image URLs
+                let images = [];
+                if (result.output && Array.isArray(result.output)) {
+                    images = result.output;
+                } else if (result.output && typeof result.output === 'string') {
+                    images = [result.output];
+                } else {
+                    return { error: "❌ No images generated. Please try a different prompt." };
+                }
+
+                return { images: images };
+            } catch (err) {
+                console.error('Replicate error:', err);
+                return { error: "❌ Network error: " + err.message };
+            }
         }
 
         // ================================================================
@@ -2118,15 +2271,10 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                     <div class="chat-item-actions">
                         <button class="more-btn" data-chatid="${id}"><i class="fas fa-ellipsis-v"></i></button>
                         <div class="dropdown-menu" data-chatid="${id}">
-                            <button class="menu-item rename-chat" data-id="${id}"><i class="fas fa-pen"></i> Rename</button>
-                            <button class="menu-item delete-chat" data-id="${id}"><i class="fas fa-trash-alt"></i> Delete</button>
+                            <button class="menu-item rename-chat" data-id="${id}"><i class="fas fa-pen"></i> Rename Chat</button>
+                            <button class="menu-item delete-chat" data-id="${id}"><i class="fas fa-trash-alt"></i> Delete Chat</button>
                             <div class="divider"></div>
-                            <button class="menu-item share-chat-wa" data-id="${id}"><i class="fab fa-whatsapp" style="color:#25d366;"></i> Share to WhatsApp</button>
-                            <button class="menu-item share-chat-fb" data-id="${id}"><i class="fab fa-facebook" style="color:#1877f2;"></i> Share to Facebook</button>
-                            <button class="menu-item share-chat-x" data-id="${id}"><i class="fab fa-x-twitter"></i> Share to X</button>
-                            <button class="menu-item share-chat-tiktok" data-id="${id}"><i class="fab fa-tiktok"></i> Share to TikTok</button>
-                            <div class="divider"></div>
-                            <button class="menu-item copy-chat-link" data-id="${id}"><i class="fas fa-link"></i> Copy Link</button>
+                            <button class="menu-item share-chat-btn" data-id="${id}"><i class="fas fa-share-alt"></i> Share Chat</button>
                         </div>
                     </div>
                 `;
@@ -2208,64 +2356,26 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                 });
             });
 
-            document.querySelectorAll('.share-chat-wa, .share-chat-fb, .share-chat-x, .share-chat-tiktok, .copy-chat-link')
-                .forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const id = btn.dataset.id;
-                        const chat = chats[id];
-                        if (!chat) return;
-                        const text = `Wise King AI Chat: ${chat.title}\n\n${chat.messages.map(m => m.role + ': ' + m.content).join('\n')}`;
-                        const encoded = encodeURIComponent(text);
-                        const url = window.location.href;
-
-                        let shareUrl = '';
-                        if (btn.classList.contains('share-chat-wa')) {
-                            shareUrl = `https://wa.me/?text=${encoded}`;
-                        } else if (btn.classList.contains('share-chat-fb')) {
-                            shareUrl = `https://www.facebook.com/sharer/sharer.php?quote=${encoded}`;
-                        } else if (btn.classList.contains('share-chat-x')) {
-                            shareUrl = `https://twitter.com/intent/tweet?text=${encoded}`;
-                        } else if (btn.classList.contains('share-chat-tiktok')) {
-                            navigator.clipboard.writeText(text).then(() => {
-                                showToast('📋 Text copied! Open TikTok and paste it.');
-                            }).catch(() => {
-                                const ta = document.createElement('textarea');
-                                ta.value = text;
-                                document.body.appendChild(ta);
-                                ta.select();
-                                document.execCommand('copy');
-                                document.body.removeChild(ta);
-                                showToast('📋 Text copied! Open TikTok and paste it.');
-                            });
-                            document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
-                            return;
-                        } else if (btn.classList.contains('copy-chat-link')) {
-                            navigator.clipboard.writeText(url + '?chat=' + id).then(() => {
-                                showToast('✅ Chat link copied!');
-                            }).catch(() => {
-                                const ta = document.createElement('textarea');
-                                ta.value = url + '?chat=' + id;
-                                document.body.appendChild(ta);
-                                ta.select();
-                                document.execCommand('copy');
-                                document.body.removeChild(ta);
-                                showToast('✅ Chat link copied!');
-                            });
-                            document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
-                            return;
-                        }
-
-                        if (shareUrl) {
-                            window.open(shareUrl, '_blank');
-                        }
-                        document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
-                    });
+            document.querySelectorAll('.share-chat-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = btn.dataset.id;
+                    pendingShareChatId = id;
+                    shareChatModal.classList.add('active');
+                    document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
                 });
+            });
 
             // Close dropdowns on outside click
-            document.addEventListener('click', () => {
-                document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+            document.addEventListener('click', (e) => {
+                // Check if click is outside any dropdown
+                const dropdowns = document.querySelectorAll('.dropdown-menu');
+                dropdowns.forEach(menu => {
+                    if (!menu.contains(e.target) && !menu.closest('.chat-item')?.querySelector('.more-btn')
+                        ?.contains(e.target)) {
+                        menu.classList.remove('show');
+                    }
+                });
             });
         }
 
@@ -2281,6 +2391,95 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                 pendingDeleteChatId = null;
             }
             deleteModal.classList.remove('active');
+        });
+
+        // Share Chat
+        closeShareChat.addEventListener('click', () => {
+            shareChatModal.classList.remove('active');
+            pendingShareChatId = null;
+        });
+
+        shareChatGrid.addEventListener('click', (e) => {
+            const btn = e.target.closest('.share-btn');
+            if (!btn) return;
+            const platform = btn.dataset.sharePlatform;
+            if (!pendingShareChatId || !chats[pendingShareChatId]) {
+                showToast('❌ Chat not found');
+                return;
+            }
+            const chat = chats[pendingShareChatId];
+            const text = `Wise King AI Chat: ${chat.title}\n\n${chat.messages.map(m => m.role + ': ' + m.content).join('\n')}`;
+            const encoded = encodeURIComponent(text);
+            const url = window.location.href + '?chat=' + pendingShareChatId;
+
+            let shareUrl = '';
+            switch (platform) {
+                case 'whatsapp':
+                    shareUrl = `https://wa.me/?text=${encoded}`;
+                    break;
+                case 'facebook':
+                    shareUrl = `https://www.facebook.com/sharer/sharer.php?quote=${encoded}`;
+                    break;
+                case 'x':
+                    shareUrl = `https://twitter.com/intent/tweet?text=${encoded}`;
+                    break;
+                case 'tiktok':
+                    navigator.clipboard.writeText(text).then(() => {
+                        showToast('📋 Text copied! Open TikTok and paste it.');
+                    }).catch(() => {
+                        const ta = document.createElement('textarea');
+                        ta.value = text;
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(ta);
+                        showToast('📋 Text copied! Open TikTok and paste it.');
+                    });
+                    shareChatModal.classList.remove('active');
+                    pendingShareChatId = null;
+                    return;
+                case 'instagram':
+                    navigator.clipboard.writeText(text).then(() => {
+                        showToast('📋 Text copied! Open Instagram and paste it in your story or post.');
+                    }).catch(() => {
+                        const ta = document.createElement('textarea');
+                        ta.value = text;
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(ta);
+                        showToast('📋 Text copied! Open Instagram and paste it.');
+                    });
+                    shareChatModal.classList.remove('active');
+                    pendingShareChatId = null;
+                    return;
+                case 'copy':
+                    navigator.clipboard.writeText(url + '\n\n' + text).then(() => {
+                        showToast('✅ Chat link and content copied!');
+                    }).catch(() => {
+                        const ta = document.createElement('textarea');
+                        ta.value = url + '\n\n' + text;
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(ta);
+                        showToast('✅ Chat link and content copied!');
+                    });
+                    shareChatModal.classList.remove('active');
+                    pendingShareChatId = null;
+                    return;
+                default:
+                    showToast('⚠️ Unknown platform');
+                    shareChatModal.classList.remove('active');
+                    pendingShareChatId = null;
+                    return;
+            }
+
+            if (shareUrl) {
+                window.open(shareUrl, '_blank');
+            }
+            shareChatModal.classList.remove('active');
+            pendingShareChatId = null;
         });
 
         function createNewChat() {
@@ -2339,7 +2538,7 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
         });
 
         // ================================================================
-        // SEND MESSAGE — WITH FULL CONTEXT HISTORY
+        // SEND MESSAGE — WITH FULL CONTEXT HISTORY + Replicate detection
         // ================================================================
         async function sendMessage() {
             const text = chatInput.value.trim();
@@ -2370,11 +2569,65 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
             typingIndicator.classList.remove('hidden');
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
+            // --- Check if this is an image generation request ---
+            const isImageRequest = isImageGenerationPrompt(text);
+
+            if (isImageRequest && state.replicateKey) {
+                // Use Replicate Flux
+                try {
+                    typingIndicator.querySelector('.typing-bubble').innerHTML =
+                        '<div style="display:flex;align-items:center;gap:8px;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Generating image with Flux...</div>';
+                    const result = await generateFluxImage(text);
+
+                    typingIndicator.classList.add('hidden');
+                    typingIndicator.querySelector('.typing-bubble').innerHTML =
+                        `<div class="typing-dots"><span></span><span></span><span></span></div>`;
+
+                    let aiMsg;
+                    if (result.error) {
+                        aiMsg = { role: 'assistant', content: result.error, extra: {} };
+                    } else if (result.images && result.images.length > 0) {
+                        aiMsg = {
+                            role: 'assistant',
+                            content: `🎨 Here are your generated images for: *"${text}"*`,
+                            extra: { generatedImages: result.images }
+                        };
+                    } else {
+                        aiMsg = {
+                            role: 'assistant',
+                            content: `❌ No images were generated. Please try a different prompt.`,
+                            extra: {}
+                        };
+                    }
+                    chats[currentChatId].messages.push(aiMsg);
+                    renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
+                    saveChats();
+                    return;
+                } catch (err) {
+                    typingIndicator.classList.add('hidden');
+                    typingIndicator.querySelector('.typing-bubble').innerHTML =
+                        `<div class="typing-dots"><span></span><span></span><span></span></div>`;
+                    const aiMsg = {
+                        role: 'assistant',
+                        content: `❌ Failed to generate image: ${err.message || 'Unknown error'}`,
+                        extra: {}
+                    };
+                    chats[currentChatId].messages.push(aiMsg);
+                    renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
+                    saveChats();
+                    return;
+                }
+            }
+
+            // --- Check if image mode is toggled (Pollinations fallback) ---
             if (isImageMode) {
                 try {
                     typingIndicator.querySelector('.typing-bubble').innerHTML =
                         '<div style="display:flex;align-items:center;gap:8px;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Generating images...</div>';
                     const imageUrls = await generateImagesPollinations(text);
+                    typingIndicator.classList.add('hidden');
+                    typingIndicator.querySelector('.typing-bubble').innerHTML =
+                        `<div class="typing-dots"><span></span><span></span><span></span></div>`;
                     const aiMsg = {
                         role: 'assistant',
                         content: `🎨 Here are your generated images for: *"${text}"*`,
@@ -2383,6 +2636,9 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                     chats[currentChatId].messages.push(aiMsg);
                     renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
                 } catch (err) {
+                    typingIndicator.classList.add('hidden');
+                    typingIndicator.querySelector('.typing-bubble').innerHTML =
+                        `<div class="typing-dots"><span></span><span></span><span></span></div>`;
                     const aiMsg = {
                         role: 'assistant',
                         content: `❌ Failed to generate images. Please try again.`
@@ -2390,18 +2646,13 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                     chats[currentChatId].messages.push(aiMsg);
                     renderMessage('assistant', aiMsg.content, {}, chats[currentChatId].messages.length - 1);
                 }
-                typingIndicator.classList.add('hidden');
-                typingIndicator.querySelector('.typing-bubble').innerHTML =
-                    `<div class="typing-dots"><span></span><span></span><span></span></div>`;
                 saveChats();
                 return;
             }
 
             // --- CHAT MODE: Pass full conversation history ---
-            // Build history from all messages before the current one (excluding the just-added user message)
             const history = [];
             const allMessages = chats[currentChatId].messages;
-            // Exclude the last message (which is the current user message) for history
             for (let i = 0; i < allMessages.length - 1; i++) {
                 const msg = allMessages[i];
                 history.push({ role: msg.role, content: msg.content });
@@ -2415,6 +2666,20 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
             saveChats();
         }
 
+        // Pollinations fallback (kept for image mode)
+        async function generateImagesPollinations(prompt) {
+            const baseUrl = 'https://image.pollinations.ai/prompt/';
+            const encoded = encodeURIComponent(prompt);
+            const imageUrls = [];
+            for (let i = 0; i < 4; i++) {
+                const seed = Math.floor(Math.random() * 2147483647);
+                const url =
+                    `${baseUrl}${encoded}?width=512&height=512&seed=${seed}&model=flux&nologo=true&enhance=false&safe=false`;
+                imageUrls.push(url);
+            }
+            return imageUrls;
+        }
+
         // ================================================================
         // SETTINGS / PROFILE
         // ================================================================
@@ -2423,6 +2688,7 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
             providerSelect.value = state.provider;
             updateProviderUI();
             voiceLangSelect.value = state.voiceLang;
+            replicateKeyInput.value = state.replicateKey;
             settingsModal.classList.add('active');
         });
 
@@ -2436,12 +2702,19 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
             state.apiKey = key;
             state.model = modelSelect.value;
             state.voiceLang = voiceLangSelect.value;
+            state.replicateKey = replicateKeyInput.value.trim();
             localStorage.setItem('wk_provider', state.provider);
             localStorage.setItem('wk_api_key', state.apiKey);
             localStorage.setItem('wk_model', state.model);
             localStorage.setItem('wk_voice_lang', state.voiceLang);
+            localStorage.setItem('wk_replicate_key', state.replicateKey);
             settingsModal.classList.remove('active');
             updateProviderUI();
+            if (state.replicateKey) {
+                replicateBadge.style.display = 'inline';
+            } else {
+                replicateBadge.style.display = 'none';
+            }
             showToast('✅ Settings saved!');
             modelDisplay.textContent = state.model;
         });
@@ -2495,22 +2768,25 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
         });
 
         signOutBtn.addEventListener('click', () => {
-            if (!confirm('Sign out? This will clear your API key locally.')) return;
+            if (!confirm('Sign out? This will clear your API keys locally.')) return;
             localStorage.removeItem('wk_api_key');
             localStorage.removeItem('wk_user_name');
             localStorage.removeItem('wk_user_avatar');
             localStorage.removeItem('wk_provider');
             localStorage.removeItem('wk_model');
             localStorage.removeItem('wk_voice_lang');
+            localStorage.removeItem('wk_replicate_key');
             state.apiKey = '';
             state.userName = 'My Profile';
             state.userAvatar = '';
             state.provider = 'gemini';
             state.model = 'gemini-3.5-flash';
+            state.replicateKey = '';
             loadProfile();
             showToast('✅ Signed out');
             updateOwnerBadge();
             updateProviderUI();
+            replicateBadge.style.display = 'none';
         });
 
         // ================================================================
@@ -2557,6 +2833,20 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                     });
                     closeShareModal();
                     break;
+                case 'instagram':
+                    navigator.clipboard.writeText(text).then(() => {
+                        showToast('📋 Text copied! Open Instagram and paste it in your story or post.');
+                    }).catch(() => {
+                        const ta = document.createElement('textarea');
+                        ta.value = text;
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(ta);
+                        showToast('📋 Text copied! Open Instagram and paste it.');
+                    });
+                    closeShareModal();
+                    break;
                 case 'copy':
                     navigator.clipboard.writeText(text).then(() => {
                         showToast('✅ Copied to clipboard!');
@@ -2569,14 +2859,6 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                         document.body.removeChild(ta);
                         showToast('✅ Copied to clipboard!');
                     });
-                    closeShareModal();
-                    break;
-                case 'native':
-                    if (navigator.share) {
-                        navigator.share({ text: text }).catch(() => {});
-                    } else {
-                        showToast('⚠️ Web Share API not supported. Use Copy instead.');
-                    }
                     closeShareModal();
                     break;
                 default:
@@ -2640,7 +2922,7 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
         });
         newChatBtn.addEventListener('click', createNewChat);
 
-        // Simple auth placeholder (Google Sign-In UI only)
+        // Simple auth placeholder
         authBtn.addEventListener('click', () => {
             showToast('🔐 Google Sign-In coming soon! Configure Firebase to enable.');
         });
@@ -2655,15 +2937,19 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
             providerSelect.value = state.provider;
             updateProviderUI();
             voiceLangSelect.value = state.voiceLang;
+            replicateKeyInput.value = state.replicateKey;
             updateBackButton();
             modelDisplay.textContent = state.model;
-            console.log('👑 Wise King AI — Context & Memory FIXED!');
-            console.log('✅ Full conversation history now sent to LLM on every message.');
-            console.log('✅ 3-dot menu fully active: Rename (inline), Delete (modal), Share (WA/FB/X/TikTok/Copy)');
+            if (state.replicateKey) {
+                replicateBadge.style.display = 'inline';
+            }
+            console.log('👑 Wise King AI — Fully Upgraded!');
+            console.log('✅ 3-dot menu: Rename, Delete (with modal), Share Chat (WA/FB/X/TikTok/IG/Copy)');
+            console.log('✅ Replicate Flux image generation — add your key in Settings!');
+            console.log('✅ Auto quality tags: photorealistic, highly detailed, 8K, sharp focus');
+            console.log('✅ "keep my face, change background" prompt support');
             console.log('🔄 Providers: Gemini, DeepSeek, Grok, OpenAI');
-            console.log('🖼️ Image generation: Pollinations');
-            console.log('🎤 Voice input: Web Speech API');
-            console.log('📎 File upload: working with preview');
+            console.log('🖼️ Image: Replicate Flux + Pollinations fallback');
         }
 
         init();
