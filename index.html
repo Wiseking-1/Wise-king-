@@ -747,6 +747,7 @@
             -webkit-overflow-scrolling: touch;
             display: flex;
             flex-direction: column;
+            scroll-behavior: smooth; /* Added for smooth scrolling */
         }
         .chat-container::-webkit-scrollbar {
             width: 4px;
@@ -1081,6 +1082,23 @@
         .input-inner:focus-within {
             border-color: var(--accent);
             box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
+        }
+        /* --- FIX: Auto-scroll input box --- */
+        #chatInput {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 0.95rem;
+            padding: 8px 0;
+            color: var(--text-main);
+            min-width: 0;
+            resize: none;
+            overflow-y: auto;
+            overflow-x: hidden;
+            max-height: 120px; /* Prevents it from growing too large; will scroll instead */
+            line-height: 1.5;
+            font-family: inherit;
         }
         .input-inner input[type="text"] {
             flex: 1;
@@ -1749,7 +1767,8 @@
                 <div class="input-inner">
                     <button class="icon-btn" id="attachBtn" title="Attach image"><i class="fas fa-paperclip"></i></button>
                     <input type="file" id="fileInput" accept="image/*" multiple />
-                    <input id="chatInput" type="text" placeholder="Message Wise King AI..." autocomplete="off" />
+                    <!-- --- FIX: Auto-scroll input box (changed input to textarea) --- -->
+                    <textarea id="chatInput" rows="1" placeholder="Message Wise King AI..." autocomplete="off" style="resize: none; overflow-y: auto; overflow-x: hidden; max-height: 120px;"></textarea>
                     <button class="icon-btn" id="voiceBtn" title="Voice input"><i class="fas fa-microphone"></i></button>
                     <button class="icon-btn" id="stopVoiceBtn" title="Stop speaking" style="display:none;"><i class="fas fa-stop-circle"></i></button>
                     <button class="send-btn" id="sendBtn" title="Send"><i class="fas fa-paper-plane"></i></button>
@@ -3292,8 +3311,8 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
             updateImagePreview();
             renderMessage('user', text, userMsg.extra, chats[currentChatId].messages.length - 1);
 
-            const isImageRequest = /create|generate|make|draw|paint|render|picture|image|photo|art|illustration|design|visual|scene|portrait|landscape|fantasy|concept art|character|environment|background|style|beautiful|aesthetic|digital art|sketch|painting/i
-                .test(text) && !/code|programming|function|api|database|sql|debug|fix bug/i.test(text);
+            // --- FIX: Image mode generation (updated regex to include more keywords) ---
+            const isImageRequest = /create|generate|make|draw|paint|render|picture|image|photo|photograph|art|illustration|design|visual|scene|portrait|landscape|fantasy|concept art|character|environment|background|style|beautiful|aesthetic|digital art|sketch|painting|realistic|real person|live picture|front view|photorealistic|view/i.test(text) && !/code|programming|function|api|database|sql|debug|fix bug/i.test(text);
             const removeBgMatch = text.match(/remove\s+(?:the\s+)?background|erase\s+background|delete\s+background/i);
             const replaceBgMatch = text.match(/replace\s+(?:the\s+)?background|change\s+background|new\s+background/i);
             const anotherMatch = text.match(/another|other one|next one|one more|again|different one/i);
@@ -3433,7 +3452,8 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
             }
 
             // Standard image generation
-            if (isImageRequest && state.replicateKey) {
+            // --- FIX: Image mode generation (allows Pollinations fallback if no Replicate key) ---
+            if (isImageRequest) {
                 typingIndicator.classList.remove('hidden');
                 typingIndicator.querySelector('.typing-bubble').innerHTML =
                     '<div style="display:flex;align-items:center;gap:8px;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Generating image...</div>';
@@ -3441,7 +3461,13 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 try {
                     const operation = (imagesForApi.length > 0) ? 'img2img' : 'txt2img';
                     const refImage = imagesForApi.length > 0 ? imagesForApi[0] : null;
-                    const result = await generateImage(text, refImage, operation, activeProjectId);
+                    let result;
+                    if (state.replicateKey) {
+                        result = await generateImage(text, refImage, operation, activeProjectId);
+                    } else {
+                        const imageUrls = await generateImagesPollinations(text);
+                        result = imageUrls.length > 0 ? { imageUrl: imageUrls[0] } : { error: 'No image returned' };
+                    }
                     typingIndicator.classList.add('hidden');
                     typingIndicator.querySelector('.typing-bubble').innerHTML =
                         `<div class="typing-dots"><span></span><span></span><span></span></div>`;
@@ -3461,11 +3487,12 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                         chats[currentChatId].messages.push(aiMsg);
                         renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
                         .length - 1);
-                    } else { const aiMsg = { role: 'assistant', content: `❌ Image generation failed.`,
-                            extra: {} };
+                    } else {
+                        const aiMsg = { role: 'assistant', content: `❌ Image generation failed.`, extra: {} };
                         chats[currentChatId].messages.push(aiMsg);
                         renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
-                        .length - 1); }
+                        .length - 1);
+                    }
                     saveChats();
                     return;
                 } catch (err) {
@@ -3474,39 +3501,6 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                         `<div class="typing-dots"><span></span><span></span><span></span></div>`;
                     const aiMsg = { role: 'assistant', content: `❌ ${err.message || 'Generation failed.'}`,
                         extra: {} };
-                    chats[currentChatId].messages.push(aiMsg);
-                    renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
-                    saveChats();
-                    return;
-                }
-            }
-
-            // Image mode fallback (Pollinations)
-            if (isImageMode) {
-                try {
-                    typingIndicator.querySelector('.typing-bubble').innerHTML =
-                        '<div style="display:flex;align-items:center;gap:8px;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Generating images...</div>';
-                    const imageUrls = await generateImagesPollinations(text);
-                    typingIndicator.classList.add('hidden');
-                    typingIndicator.querySelector('.typing-bubble').innerHTML =
-                        `<div class="typing-dots"><span></span><span></span><span></span></div>`;
-                    if (imageUrls && imageUrls.length > 0) {
-                        const aiMsg = { role: 'assistant', content: `🎨 Here is your generated image.`,
-                            extra: { generatedImage: imageUrls[0] } };
-                        chats[currentChatId].messages.push(aiMsg);
-                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
-                        .length - 1);
-                    } else { const aiMsg = { role: 'assistant', content: `❌ No image generated.`, extra: {} };
-                        chats[currentChatId].messages.push(aiMsg);
-                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
-                        .length - 1); }
-                    saveChats();
-                    return;
-                } catch (err) {
-                    typingIndicator.classList.add('hidden');
-                    typingIndicator.querySelector('.typing-bubble').innerHTML =
-                        `<div class="typing-dots"><span></span><span></span><span></span></div>`;
-                    const aiMsg = { role: 'assistant', content: `❌ Image generation failed.`, extra: {} };
                     chats[currentChatId].messages.push(aiMsg);
                     renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
                     saveChats();
@@ -3992,6 +3986,18 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 sendMessage(); }
         });
         newChatBtn.addEventListener('click', createNewChat);
+
+        // --- FIX: Auto-scroll input box (auto-expand and scroll to see last line) ---
+        chatInput.addEventListener('input', function() {
+            this.style.height = 'auto'; // Reset height to auto
+            this.style.height = (this.scrollHeight) + 'px'; // Set height based on content
+            // If it exceeds max-height, it will scroll automatically
+        });
+        // Initial height adjustment (in case of preset text)
+        if (chatInput.value) {
+            chatInput.style.height = 'auto';
+            chatInput.style.height = (chatInput.scrollHeight) + 'px';
+        }
 
         // Close modals on backdrop click
         document.querySelectorAll('.modal-backdrop').forEach(modal => {
