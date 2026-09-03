@@ -8,6 +8,7 @@
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <style>
+        /* ===== Royal Theme (unchanged) ===== */
         :root {
             --bg-gradient-start: #0d021f;
             --bg-gradient-end: #1b0836;
@@ -22,6 +23,9 @@
             --user-text: #ffffff;
             --ai-bubble: rgba(255, 255, 255, 0.1);
             --ai-text: #ffffff;
+            --lock-gold: #fbbf24;
+            --lock-gold-dark: #f59e0b;
+            --memory-blue: #60a5fa;
         }
         * {
             box-sizing: border-box;
@@ -207,7 +211,6 @@
             background: rgba(255, 255, 255, 0.1);
             color: var(--accent);
         }
-        /* Dropdown menu */
         .chat-item .dropdown-menu {
             display: none;
             position: absolute;
@@ -262,7 +265,6 @@
             width: 18px;
             text-align: center;
         }
-
         .sidebar-footer {
             padding: 10px 12px;
             border-top: 1px solid var(--border);
@@ -357,6 +359,7 @@
             display: flex;
             align-items: center;
             gap: 6px;
+            flex-wrap: wrap;
         }
         .top-left .back-btn {
             background: transparent;
@@ -418,6 +421,37 @@
         }
         .mode-btn:hover:not(.active) {
             background: rgba(255, 255, 255, 0.2);
+        }
+        .top-badges {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .lock-badge {
+            font-size: 0.6rem;
+            background: rgba(251, 191, 36, 0.15);
+            padding: 2px 8px;
+            border-radius: 12px;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            color: var(--lock-gold);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .lock-badge:hover {
+            background: rgba(251, 191, 36, 0.25);
+        }
+        .memory-badge {
+            font-size: 0.6rem;
+            background: rgba(96, 165, 250, 0.15);
+            padding: 2px 8px;
+            border-radius: 12px;
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            color: var(--memory-blue);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .memory-badge:hover {
+            background: rgba(96, 165, 250, 0.25);
         }
         .chat-container {
             flex: 1;
@@ -566,6 +600,26 @@
             margin: 10px 0;
             color: var(--text-light);
         }
+        .msg-bubble-ai .memory-tag {
+            display: inline-block;
+            background: rgba(96, 165, 250, 0.15);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            border-radius: 4px;
+            padding: 0 6px;
+            font-size: 0.7rem;
+            color: var(--memory-blue);
+            margin-left: 4px;
+        }
+        .msg-bubble-ai .lock-tag {
+            display: inline-block;
+            background: rgba(251, 191, 36, 0.15);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 4px;
+            padding: 0 6px;
+            font-size: 0.7rem;
+            color: var(--lock-gold);
+            margin-left: 4px;
+        }
         .msg-time {
             font-size: 10px;
             color: var(--text-light);
@@ -701,6 +755,18 @@
         .action-btn.disliked {
             color: #ef4444;
             background: rgba(239, 68, 68, 0.2);
+        }
+        .action-btn.memory-btn {
+            color: var(--memory-blue);
+        }
+        .action-btn.memory-btn:hover {
+            background: rgba(96, 165, 250, 0.15);
+        }
+        .action-btn.lock-btn {
+            color: var(--lock-gold);
+        }
+        .action-btn.lock-btn:hover {
+            background: rgba(251, 191, 36, 0.15);
         }
         .input-wrapper {
             background: rgba(13, 2, 31, 0.9);
@@ -841,12 +907,15 @@
             background: #1e1b2e;
             border: 1px solid var(--border);
             border-radius: 16px;
-            max-width: 420px;
+            max-width: 480px;
             width: 100%;
             max-height: 80vh;
             overflow-y: auto;
             padding: 24px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        .modal.wide {
+            max-width: 640px;
         }
         .modal h2 {
             font-size: 1.1rem;
@@ -874,7 +943,8 @@
             margin-bottom: 6px;
         }
         .form-group input,
-        .form-group select {
+        .form-group select,
+        .form-group textarea {
             width: 100%;
             padding: 10px 14px;
             border: 1px solid var(--border);
@@ -884,9 +954,15 @@
             background: rgba(0, 0, 0, 0.3);
             color: var(--text-main);
             transition: border 0.2s;
+            font-family: inherit;
+        }
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
         }
         .form-group input:focus,
-        .form-group select:focus {
+        .form-group select:focus,
+        .form-group textarea:focus {
             border-color: var(--accent);
             box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.15);
         }
@@ -935,6 +1011,13 @@
         }
         .btn-danger:hover {
             background: #b91c1c;
+        }
+        .btn-gold {
+            background: var(--lock-gold-dark);
+            color: #1e1b2e;
+        }
+        .btn-gold:hover {
+            background: var(--lock-gold);
         }
         .toast {
             position: fixed;
@@ -1151,7 +1234,6 @@
             display: block;
             margin-bottom: 12px;
         }
-        /* Replicate badge */
         .replicate-badge {
             font-size: 0.6rem;
             background: rgba(16, 163, 127, 0.2);
@@ -1160,6 +1242,112 @@
             border: 1px solid rgba(16, 163, 127, 0.3);
             color: #34d399;
             margin-left: 4px;
+        }
+        /* Memory/Project styling */
+        .memory-list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.85rem;
+            gap: 10px;
+        }
+        .memory-list-item .mem-content {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .memory-list-item .mem-tag {
+            font-size: 0.6rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            flex-shrink: 0;
+        }
+        .memory-list-item .mem-tag.lock {
+            background: rgba(251, 191, 36, 0.15);
+            color: var(--lock-gold);
+            border: 1px solid rgba(251, 191, 36, 0.2);
+        }
+        .memory-list-item .mem-tag.memory {
+            background: rgba(96, 165, 250, 0.15);
+            color: var(--memory-blue);
+            border: 1px solid rgba(96, 165, 250, 0.2);
+        }
+        .memory-list-item .mem-tag.preference {
+            background: rgba(52, 211, 153, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(52, 211, 153, 0.2);
+        }
+        .memory-list-item .mem-actions button {
+            background: transparent;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: 0.15s;
+        }
+        .memory-list-item .mem-actions button:hover {
+            background: var(--surface-alt);
+            color: var(--accent);
+        }
+        .memory-list-item .mem-actions button.danger:hover {
+            color: #f87171;
+        }
+        .project-selector {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        .project-selector .proj-btn {
+            padding: 4px 12px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: 0.2s;
+        }
+        .project-selector .proj-btn.active {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(236, 72, 153, 0.1);
+        }
+        .project-selector .proj-btn:hover:not(.active) {
+            background: var(--surface-alt);
+        }
+        /* Responsive tweaks */
+        @media (max-width: 640px) {
+            .sidebar {
+                width: 240px;
+            }
+            .modal {
+                max-width: 100%;
+                margin: 0 8px;
+            }
+            .top-bar {
+                padding: 6px 10px;
+            }
+            .mode-btn {
+                font-size: 0.65rem;
+                padding: 3px 8px;
+            }
+            .top-title {
+                font-size: 0.85rem;
+            }
+            .chat-container {
+                padding: 6px 10px;
+            }
+            .msg-bubble-wrap {
+                max-width: 92%;
+            }
+            .memory-list-item {
+                flex-wrap: wrap;
+            }
         }
     </style>
 </head>
@@ -1186,6 +1374,9 @@
                     <i class="fas fa-chevron-right text-xs text-gray-400"></i>
                 </div>
                 <button class="sidebar-btn" id="settingsBtn"><i class="fas fa-cog"></i> Settings</button>
+                <button class="sidebar-btn" id="memoryManagerBtn"><i class="fas fa-brain"></i> Memory Manager</button>
+                <button class="sidebar-btn" id="locksManagerBtn"><i class="fas fa-lock"></i> Master Locks</button>
+                <button class="sidebar-btn" id="projectsManagerBtn"><i class="fas fa-folder-open"></i> Projects</button>
                 <button class="sidebar-btn danger" id="signOutBtn"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
             </div>
         </aside>
@@ -1200,6 +1391,8 @@
                     <span id="ownerBadgeTop" class="owner-badge hidden">👑 Owner</span>
                     <span class="provider-badge" id="providerBadge">Gemini</span>
                     <span class="replicate-badge" id="replicateBadge" style="display:none;">Flux</span>
+                    <span class="lock-badge" id="lockBadgeTop" style="display:none;" title="Active Master Locks"><i class="fas fa-lock"></i> <span id="lockCountTop">0</span></span>
+                    <span class="memory-badge" id="memoryBadgeTop" title="Stored Memories"><i class="fas fa-brain"></i> <span id="memoryCountTop">0</span></span>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;">
                     <div class="mode-toggle">
@@ -1221,8 +1414,8 @@
                     <div class="welcome-icon" id="welcomeIcon">👑</div>
                     <h2 class="welcome-title" id="welcomeTitle">Sannu! Welcome to Wise King AI</h2>
                     <p class="welcome-desc" id="welcomeDesc">
-                        I'm your thinking partner — created by <strong style="color:var(--accent);">IBRAHIM ABDULLAHI</strong> from Nigeria 🇳🇬<br>
-                        Ask me anything in Hausa or English. Type to chat, or switch to "Create Image" to generate pictures! 🎨
+                        I'm your persistent, intelligent assistant — created by <strong style="color:var(--accent);">IBRAHIM ABDULLAHI</strong> from Nigeria 🇳🇬<br>
+                        I remember projects, Master Locks, and your preferences across all chats. 🧠🔒
                     </p>
                 </div>
 
@@ -1377,12 +1570,545 @@
         </div>
     </div>
 
+    <!-- Memory Manager Modal -->
+    <div class="modal-backdrop" id="memoryManagerModal">
+        <div class="modal wide">
+            <h2><i class="fas fa-brain"></i> Memory Manager</h2>
+            <div class="form-group" style="display:flex;gap:8px;flex-wrap:wrap;">
+                <input type="text" id="memorySearchInput" placeholder="Search memories..." style="flex:1;padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text-main);outline:none;" />
+                <select id="memoryFilterSelect" style="padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text-main);outline:none;">
+                    <option value="all">All Types</option>
+                    <option value="memory">Memory</option>
+                    <option value="lock">Master Lock</option>
+                    <option value="preference">Preference</option>
+                </select>
+            </div>
+            <div id="memoryListContainer" style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;margin-bottom:12px;">
+                <div style="padding:20px;text-align:center;color:var(--text-light);font-size:0.9rem;">No memories stored yet.</div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="closeMemoryManager">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Master Locks Modal -->
+    <div class="modal-backdrop" id="locksManagerModal">
+        <div class="modal wide">
+            <h2><i class="fas fa-lock"></i> Master Locks</h2>
+            <p style="font-size:0.85rem;color:var(--text-light);margin-bottom:12px;">Active locks are applied to all relevant conversations automatically.</p>
+            <div id="locksListContainer" style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;margin-bottom:12px;">
+                <div style="padding:20px;text-align:center;color:var(--text-light);font-size:0.9rem;">No Master Locks set.</div>
+            </div>
+            <div class="form-group">
+                <label for="newLockInput">New Master Lock</label>
+                <div style="display:flex;gap:8px;">
+                    <input type="text" id="newLockInput" placeholder="e.g. All scenes must be 10 seconds" style="flex:1;padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text-main);outline:none;" />
+                    <button class="btn btn-gold" id="addLockBtn"><i class="fas fa-plus"></i> Lock</button>
+                </div>
+                <p class="form-hint">Locked instructions remain active until explicitly changed or unlocked.</p>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="closeLocksManager">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Projects Modal -->
+    <div class="modal-backdrop" id="projectsManagerModal">
+        <div class="modal wide">
+            <h2><i class="fas fa-folder-open"></i> Projects</h2>
+            <p style="font-size:0.85rem;color:var(--text-light);margin-bottom:12px;">Projects keep related memories, locks, and continuity together.</p>
+            <div id="projectsListContainer" style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;margin-bottom:12px;">
+                <div style="padding:20px;text-align:center;color:var(--text-light);font-size:0.9rem;">No projects created yet.</div>
+            </div>
+            <div class="form-group">
+                <label for="newProjectInput">New Project</label>
+                <div style="display:flex;gap:8px;">
+                    <input type="text" id="newProjectInput" placeholder="Project name..." style="flex:1;padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text-main);outline:none;" />
+                    <button class="btn btn-primary" id="addProjectBtn"><i class="fas fa-plus"></i> Create</button>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="closeProjectsManager">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
     <script>
         // ================================================================
-        // STATE
+        // WISE KING AI — MASTER INTELLIGENCE + PERMANENT MEMORY + MASTER LOCK
+        // ================================================================
+
+        // ================================================================
+        // 1. MEMORY SYSTEM (localStorage-based persistence)
+        // ================================================================
+        const MEMORY_TYPES = {
+            MEMORY: 'memory',
+            LOCK: 'lock',
+            PREFERENCE: 'preference'
+        };
+
+        const MEMORY_PRIORITY = {
+            SYSTEM: 1,
+            CORE: 2,
+            MASTER_LOCK: 3,
+            PROJECT_LOCK: 4,
+            PREFERENCE: 5,
+            TASK: 6,
+            TEMPORARY: 7
+        };
+
+        // Memory store
+        let memoryStore = {
+            memories: [], // { id, type, category, content, projectId, isLocked, priority, createdAt, updatedAt, version, parentId, tags }
+            projects: [], // { id, name, description, createdAt, updatedAt }
+            locks: [], // { id, title, description, content, priority, isActive, projectId, version, previousVersionId, createdAt, updatedAt }
+            preferences: [] // { id, key, value, projectId, createdAt, updatedAt }
+        };
+
+        function loadMemoryStore() {
+            try {
+                const stored = localStorage.getItem('wk_memory_store');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    memoryStore = parsed;
+                    // Ensure arrays exist
+                    if (!memoryStore.memories) memoryStore.memories = [];
+                    if (!memoryStore.projects) memoryStore.projects = [];
+                    if (!memoryStore.locks) memoryStore.locks = [];
+                    if (!memoryStore.preferences) memoryStore.preferences = [];
+                }
+            } catch (e) {
+                console.warn('Memory store load error:', e);
+            }
+            updateMemoryBadges();
+        }
+
+        function saveMemoryStore() {
+            try {
+                localStorage.setItem('wk_memory_store', JSON.stringify(memoryStore));
+                updateMemoryBadges();
+            } catch (e) {
+                console.warn('Memory store save error:', e);
+            }
+        }
+
+        function generateId() {
+            return 'mem_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+        }
+
+        // ---- Memory CRUD ----
+        function createMemory(content, type = MEMORY_TYPES.MEMORY, category = 'general', projectId = null, isLocked = false,
+            priority = MEMORY_PRIORITY.PREFERENCE, tags = []) {
+            const memory = {
+                id: generateId(),
+                type: type,
+                category: category,
+                content: content,
+                projectId: projectId,
+                isLocked: isLocked,
+                priority: priority,
+                tags: tags,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                version: 1,
+                parentId: null
+            };
+            memoryStore.memories.push(memory);
+            saveMemoryStore();
+            return memory;
+        }
+
+        function getMemories(filter = {}) {
+            let result = [...memoryStore.memories];
+            if (filter.type) result = result.filter(m => m.type === filter.type);
+            if (filter.category) result = result.filter(m => m.category === filter.category);
+            if (filter.projectId) result = result.filter(m => m.projectId === filter.projectId);
+            if (filter.isLocked !== undefined) result = result.filter(m => m.isLocked === filter.isLocked);
+            if (filter.search) {
+                const search = filter.search.toLowerCase();
+                result = result.filter(m => m.content.toLowerCase().includes(search) || m.tags.some(t => t.toLowerCase()
+                .includes(search)));
+            }
+            return result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
+
+        function updateMemory(id, updates) {
+            const idx = memoryStore.memories.findIndex(m => m.id === id);
+            if (idx === -1) return null;
+            const memory = memoryStore.memories[idx];
+            Object.assign(memory, updates);
+            memory.updatedAt = new Date().toISOString();
+            if (updates.content && memory.content !== updates.content) {
+                memory.version = (memory.version || 1) + 1;
+            }
+            saveMemoryStore();
+            return memory;
+        }
+
+        function deleteMemory(id) {
+            memoryStore.memories = memoryStore.memories.filter(m => m.id !== id);
+            saveMemoryStore();
+        }
+
+        // ---- Lock CRUD ----
+        function createLock(title, content, priority = MEMORY_PRIORITY.MASTER_LOCK, projectId = null) {
+            const lock = {
+                id: generateId(),
+                title: title,
+                description: content,
+                content: content,
+                priority: priority,
+                isActive: true,
+                projectId: projectId,
+                version: 1,
+                previousVersionId: null,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            memoryStore.locks.push(lock);
+            // Also create a memory entry
+            createMemory(`🔒 MASTER LOCK: ${title} — ${content}`, MEMORY_TYPES.LOCK, 'lock', projectId, true, priority);
+            saveMemoryStore();
+            return lock;
+        }
+
+        function getActiveLocks(projectId = null) {
+            let locks = memoryStore.locks.filter(l => l.isActive === true);
+            if (projectId) locks = locks.filter(l => l.projectId === projectId);
+            return locks.sort((a, b) => a.priority - b.priority);
+        }
+
+        function updateLock(id, updates) {
+            const idx = memoryStore.locks.findIndex(l => l.id === id);
+            if (idx === -1) return null;
+            const lock = memoryStore.locks[idx];
+            // Versioning: if content changes, keep old version
+            if (updates.content && lock.content !== updates.content) {
+                const oldVersion = { ...lock };
+                oldVersion.previousVersionId = lock.id;
+                oldVersion.id = generateId();
+                oldVersion.isActive = false;
+                oldVersion.updatedAt = new Date().toISOString();
+                memoryStore.locks.push(oldVersion);
+                // Update the current lock
+                lock.version = (lock.version || 1) + 1;
+                lock.previousVersionId = oldVersion.id;
+                lock.content = updates.content;
+                lock.description = updates.content;
+                lock.updatedAt = new Date().toISOString();
+                // Also update the corresponding memory
+                const mems = memoryStore.memories.filter(m => m.content.includes(lock.title) && m.type === MEMORY_TYPES
+                .LOCK);
+                if (mems.length > 0) {
+                    const mem = mems[0];
+                    mem.content = `🔒 MASTER LOCK: ${lock.title} — ${lock.content}`;
+                    mem.updatedAt = new Date().toISOString();
+                    mem.version = (mem.version || 1) + 1;
+                }
+            } else {
+                Object.assign(lock, updates);
+                lock.updatedAt = new Date().toISOString();
+            }
+            saveMemoryStore();
+            return lock;
+        }
+
+        function deleteLock(id) {
+            memoryStore.locks = memoryStore.locks.filter(l => l.id !== id);
+            // Also remove associated memories
+            memoryStore.memories = memoryStore.memories.filter(m => m.type !== MEMORY_TYPES.LOCK || !m.content.includes(
+                'MASTER LOCK'));
+            saveMemoryStore();
+        }
+
+        // ---- Project CRUD ----
+        function createProject(name, description = '') {
+            const project = {
+                id: generateId(),
+                name: name,
+                description: description,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            memoryStore.projects.push(project);
+            saveMemoryStore();
+            return project;
+        }
+
+        function getProjects() {
+            return [...memoryStore.projects].sort((a, b) => a.name.localeCompare(b.name));
+        }
+
+        function getProject(id) {
+            return memoryStore.projects.find(p => p.id === id) || null;
+        }
+
+        function deleteProject(id) {
+            memoryStore.projects = memoryStore.projects.filter(p => p.id !== id);
+            // Remove associated memories and locks
+            memoryStore.memories = memoryStore.memories.filter(m => m.projectId !== id);
+            memoryStore.locks = memoryStore.locks.filter(l => l.projectId !== id);
+            saveMemoryStore();
+        }
+
+        // ---- Preferences ----
+        function setPreference(key, value, projectId = null) {
+            let pref = memoryStore.preferences.find(p => p.key === key && p.projectId === projectId);
+            if (pref) {
+                pref.value = value;
+                pref.updatedAt = new Date().toISOString();
+            } else {
+                pref = {
+                    id: generateId(),
+                    key: key,
+                    value: value,
+                    projectId: projectId,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+                memoryStore.preferences.push(pref);
+            }
+            saveMemoryStore();
+            return pref;
+        }
+
+        function getPreference(key, projectId = null) {
+            const pref = memoryStore.preferences.find(p => p.key === key && p.projectId === projectId);
+            return pref ? pref.value : null;
+        }
+
+        function getPreferences(projectId = null) {
+            return memoryStore.preferences.filter(p => p.projectId === projectId);
+        }
+
+        // ---- Memory badges ----
+        function updateMemoryBadges() {
+            const lockCount = memoryStore.locks.filter(l => l.isActive).length;
+            const memCount = memoryStore.memories.length;
+            document.getElementById('lockCountTop').textContent = lockCount;
+            document.getElementById('memoryCountTop').textContent = memCount;
+            document.getElementById('lockBadgeTop').style.display = lockCount > 0 ? 'inline' : 'none';
+            document.getElementById('memoryBadgeTop').style.display = memCount > 0 ? 'inline' : 'none';
+        }
+
+        // ================================================================
+        // 2. INTELLIGENT REQUEST CLASSIFIER
+        // ================================================================
+        function classifyRequest(text) {
+            const lower = text.toLowerCase();
+            const types = [];
+
+            // Memory commands
+            if (/remember this|save this|keep this forever|make this permanent/i.test(text)) {
+                types.push('memory_save');
+            }
+            if (/lock this|master lock|permanent lock|lock it/i.test(text)) {
+                types.push('memory_lock');
+            }
+            if (/unlock this|forget this|delete this memory/i.test(text)) {
+                types.push('memory_unlock');
+            }
+            if (/show my memories|what do you remember|show memories/i.test(text)) {
+                types.push('memory_show');
+            }
+            if (/show my locks|what is locked|active locks/i.test(text)) {
+                types.push('lock_show');
+            }
+
+            // Project commands
+            if (/create project|new project|start project/i.test(text)) {
+                types.push('project_create');
+            }
+            if (/switch project|change project|go to project/i.test(text)) {
+                types.push('project_switch');
+            }
+            if (/continue project|resume project/i.test(text)) {
+                types.push('project_continue');
+            }
+
+            // Content types
+            if (/code|programming|javascript|python|html|css|react|vue|angular|api|database|sql|function|debug|error|fix|bug/i
+                .test(text)) {
+                types.push('coding');
+            }
+            if (/film|movie|scene|character|cinematic|director|storyboard|script|dialogue|actor|actress|director|producer/i
+                .test(text)) {
+                types.push('film');
+            }
+            if (/music|song|lyrics|melody|rhythm|beat|producer|audio|vocal|instrumental|band|album/i.test(text)) {
+                types.push('music');
+            }
+            if (/prompt|midjourney|stable diffusion|flux|image generation|generate image|create image|picture of/i.test(
+                text)) {
+                types.push('prompt');
+            }
+            if (/business|strategy|marketing|sales|growth|startup|investor|funding|pitch|competitor|market/i.test(text)) {
+                types.push('business');
+            }
+            if (/research|study|analysis|data|statistics|report|findings|literature|paper|academic/i.test(text)) {
+                types.push('research');
+            }
+            if (/step by step|guide|tutorial|how to|learn|explain|teach/i.test(text)) {
+                types.push('tutorial');
+            }
+            if (/plan|project plan|timeline|roadmap|milestone|schedule/i.test(text)) {
+                types.push('planning');
+            }
+            if (/brainstorm|ideas|creative|concept|imagine|envision/i.test(text)) {
+                types.push('creative');
+            }
+            if (/compare|versus|vs|difference between|better than|pros and cons/i.test(text)) {
+                types.push('comparison');
+            }
+            if (/translate|translate to|hausa|english|french|arabic/i.test(text)) {
+                types.push('translation');
+            }
+            if (/summarize|summary|brief|overview|tl;dr|shorten/i.test(text)) {
+                types.push('summary');
+            }
+            if (/continue|go ahead|next|proceed|keep going|resume/i.test(text) && !/project|continue project/i.test(text)) {
+                types.push('continue');
+            }
+
+            // If no specific type, default to general
+            if (types.length === 0) {
+                types.push('general');
+            }
+
+            // Detect if it's a question
+            if (/^who|^what|^when|^where|^why|^how|^can you|^could you|^is it|^are you|^do you|^will you|^have you|^does|^did|\?/
+                .test(text)) {
+                types.push('question');
+            }
+
+            return types;
+        }
+
+        // ================================================================
+        // 3. RESPONSE STRATEGY SELECTOR
+        // ================================================================
+        function selectResponseStrategy(types, userText, history) {
+            if (types.includes('memory_save')) return 'memory_save';
+            if (types.includes('memory_lock')) return 'memory_lock';
+            if (types.includes('memory_unlock')) return 'memory_unlock';
+            if (types.includes('memory_show')) return 'memory_show';
+            if (types.includes('lock_show')) return 'lock_show';
+            if (types.includes('project_create')) return 'project_create';
+            if (types.includes('project_switch')) return 'project_switch';
+            if (types.includes('project_continue')) return 'project_continue';
+            if (types.includes('coding')) return 'coding';
+            if (types.includes('film')) return 'film';
+            if (types.includes('music')) return 'music';
+            if (types.includes('prompt')) return 'prompt';
+            if (types.includes('business')) return 'business';
+            if (types.includes('research')) return 'research';
+            if (types.includes('tutorial')) return 'tutorial';
+            if (types.includes('planning')) return 'planning';
+            if (types.includes('creative')) return 'creative';
+            if (types.includes('comparison')) return 'comparison';
+            if (types.includes('translation')) return 'translation';
+            if (types.includes('summary')) return 'summary';
+            if (types.includes('continue')) return 'continue';
+            if (types.includes('question')) return 'question';
+            return 'general';
+        }
+
+        // ================================================================
+        // 4. CONTEXT BUILDER (with memory retrieval)
+        // ================================================================
+        function buildContext(userText, history, projectId) {
+            const context = {
+                userText: userText,
+                history: history,
+                projectId: projectId,
+                memories: [],
+                locks: [],
+                preferences: [],
+                project: null
+            };
+
+            // Get project
+            if (projectId) {
+                context.project = getProject(projectId);
+            }
+
+            // Get relevant memories (search for keywords from user text)
+            const words = userText.split(/\s+/).filter(w => w.length > 3);
+            const allMemories = getMemories({ projectId: projectId });
+            // Score memories by relevance
+            const scored = allMemories.map(m => {
+                let score = 0;
+                const content = m.content.toLowerCase();
+                words.forEach(w => {
+                    if (content.includes(w.toLowerCase())) score += 2;
+                });
+                // Boost if locked
+                if (m.isLocked) score += 5;
+                // Boost if same category
+                if (m.category && userText.toLowerCase().includes(m.category.toLowerCase())) score += 3;
+                return { ...m, score };
+            });
+            scored.sort((a, b) => b.score - a.score);
+            context.memories = scored.filter(m => m.score > 0).slice(0, 10);
+
+            // Get active locks
+            context.locks = getActiveLocks(projectId);
+
+            // Get preferences
+            context.preferences = getPreferences(projectId);
+
+            return context;
+        }
+
+        // ================================================================
+        // 5. MASTER LOCK ENGINE
+        // ================================================================
+        function applyMasterLocks(userText, context) {
+            // Check if any lock conflicts with the user's request
+            const locks = context.locks || [];
+            const conflicts = [];
+
+            for (const lock of locks) {
+                // Simple conflict detection: if lock content mentions a rule and user text asks for something different
+                // Example: lock says "10 seconds" and user says "30 seconds"
+                const lockWords = lock.content.toLowerCase().split(/\s+/);
+                const userWords = userText.toLowerCase().split(/\s+/);
+
+                // Check for numeric conflicts
+                const lockNums = lockWords.filter(w => /^\d+$/.test(w));
+                const userNums = userWords.filter(w => /^\d+$/.test(w));
+
+                for (const ln of lockNums) {
+                    for (const un of userNums) {
+                        if (ln !== un && lock.content.includes(ln + ' seconds') && userText.includes(un + ' seconds')) {
+                            conflicts.push({
+                                lock: lock,
+                                message: `Your Master Lock "${lock.title}" requires ${ln} seconds. You requested ${un} seconds. Do you want to update the lock?`
+                            });
+                        }
+                    }
+                }
+
+                // Check if user explicitly asks to change/override a lock
+                if (/change|override|update|modify|remove|delete|unlock/i.test(userText) && lock.content.toLowerCase()
+                    .split(/\s+/).some(w => userWords.includes(w))) {
+                    conflicts.push({
+                        lock: lock,
+                        message: `You're trying to change "${lock.title}". This is a Master Lock. Do you want to update or remove it?`
+                    });
+                }
+            }
+
+            return conflicts;
+        }
+
+        // ================================================================
+        // 6. STATE (existing)
         // ================================================================
         let chats = {};
         let currentChatId = null;
@@ -1395,6 +2121,7 @@
         let pendingDeleteChatId = null;
         let editingChatId = null;
         let pendingShareChatId = null;
+        let activeProjectId = null;
 
         const OWNER_NAME = 'IBRAHIM ABDULLAHI';
 
@@ -1440,7 +2167,7 @@
             replicateKey: localStorage.getItem('wk_replicate_key') || ''
         };
 
-        // DOM refs
+        // DOM refs (shortened for brevity - same as before)
         const sidebar = document.getElementById('sidebar');
         const toggleSidebarBtn = document.getElementById('toggleSidebar');
         const newChatBtn = document.getElementById('newChatBtn');
@@ -1503,8 +2230,32 @@
         const closeShareChat = document.getElementById('closeShareChat');
         const shareChatGrid = document.getElementById('shareChatGrid');
 
+        // Memory Manager refs
+        const memoryManagerBtn = document.getElementById('memoryManagerBtn');
+        const memoryManagerModal = document.getElementById('memoryManagerModal');
+        const closeMemoryManager = document.getElementById('closeMemoryManager');
+        const memoryListContainer = document.getElementById('memoryListContainer');
+        const memorySearchInput = document.getElementById('memorySearchInput');
+        const memoryFilterSelect = document.getElementById('memoryFilterSelect');
+
+        // Locks Manager refs
+        const locksManagerBtn = document.getElementById('locksManagerBtn');
+        const locksManagerModal = document.getElementById('locksManagerModal');
+        const closeLocksManager = document.getElementById('closeLocksManager');
+        const locksListContainer = document.getElementById('locksListContainer');
+        const newLockInput = document.getElementById('newLockInput');
+        const addLockBtn = document.getElementById('addLockBtn');
+
+        // Projects Manager refs
+        const projectsManagerBtn = document.getElementById('projectsManagerBtn');
+        const projectsManagerModal = document.getElementById('projectsManagerModal');
+        const closeProjectsManager = document.getElementById('closeProjectsManager');
+        const projectsListContainer = document.getElementById('projectsListContainer');
+        const newProjectInput = document.getElementById('newProjectInput');
+        const addProjectBtn = document.getElementById('addProjectBtn');
+
         // ================================================================
-        // UTILITY
+        // 7. UTILITY FUNCTIONS (existing + new)
         // ================================================================
         function showToast(msg) {
             toast.textContent = msg;
@@ -1559,7 +2310,6 @@
             keyLink.href = prov.keyLink;
             apiKeyInput.placeholder = 'Paste your ' + prov.label + ' API key...';
             modelGroup.style.display = 'block';
-            // Show replicate badge if key exists
             if (state.replicateKey) {
                 replicateBadge.style.display = 'inline';
             } else {
@@ -1588,10 +2338,31 @@
             } else {
                 replicateBadge.style.display = 'none';
             }
+            updateMemoryBadges();
+        }
+
+        function loadChats() {
+            const saved = localStorage.getItem('wk_chats');
+            if (saved) { try { chats = JSON.parse(saved); } catch (e) { chats = {}; } }
+            renderChatList();
+        }
+
+        function saveChats() {
+            localStorage.setItem('wk_chats', JSON.stringify(chats));
+            renderChatList();
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
         }
 
         // ================================================================
-        // IDENTITY INTERCEPTOR
+        // 8. IDENTITY INTERCEPTOR (unchanged)
         // ================================================================
         function detectIdentityQuestion(text) {
             const lower = text.toLowerCase();
@@ -1609,69 +2380,83 @@
         }
 
         // ================================================================
-        // DETECT IMAGE PROMPT (for Replicate)
+        // 9. SYSTEM PROMPT (enhanced with memory context)
         // ================================================================
-        function isImageGenerationPrompt(text) {
-            const lower = text.toLowerCase();
-            const keywords = [
-                'create', 'generate', 'make', 'draw', 'paint', 'render',
-                'picture', 'image', 'photo', 'photorealistic', 'art',
-                'illustration', 'design', 'visual', 'scene', 'portrait',
-                'landscape', 'fantasy', 'concept art', 'character',
-                'environment', 'background', 'style', 'beautiful',
-                'aesthetic', 'digital art', 'sketch', 'painting'
-            ];
-            // Check if it's a clear image request
-            const hasImageKeyword = keywords.some(kw => lower.includes(kw));
-            // Also check for "create me a", "generate an image", "make a picture" patterns
-            const patterns = [
-                /create\s+(?:a|an|me\s+a|me\s+an|)\s*(?:picture|image|photo|art)/i,
-                /generate\s+(?:a|an|me\s+a|me\s+an|)\s*(?:picture|image|photo|art)/i,
-                /make\s+(?:a|an|me\s+a|me\s+an|)\s*(?:picture|image|photo|art)/i,
-                /draw\s+(?:a|an|me\s+a|me\s+an|)\s*(?:picture|image|photo|art)/i,
-                /paint\s+(?:a|an|me\s+a|me\s+an|)\s*(?:picture|image|photo|art)/i,
-                /render\s+(?:a|an|me\s+a|me\s+an|)\s*(?:picture|image|photo|art)/i,
-                /picture\s+of/i,
-                /image\s+of/i,
-                /photo\s+of/i
-            ];
-            const hasPattern = patterns.some(p => p.test(text));
-            return hasImageKeyword || hasPattern;
-        }
-
-        // ================================================================
-        // SYSTEM PROMPT
-        // ================================================================
-        function buildWisdomSystemPrompt() {
-            return `You are Wise King AI — a world-class thinking partner created by IBRAHIM ABDULLAHI from Nigeria (Wise King Industry).
+        function buildWisdomSystemPrompt(context = null) {
+            let prompt = `You are Wise King AI — a world-class, persistent, intelligent assistant created by IBRAHIM ABDULLAHI from Nigeria (Wise King Industry).
 
 Your core identity:
 - You are deeply analytical, empathetic, context-aware, and profoundly wise.
+- You have PERMANENT MEMORY — you remember projects, locks, preferences, and important decisions across all chats.
+- You have MASTER LOCKS — locked instructions that must be respected until explicitly changed.
 - You think before you speak — you break down the user's query, identify hidden nuances, evaluate potential risks, and build multi-layered structural responses.
 - Your tone is authoritative yet humble, creative, encouraging, and deeply analytical.
-- You never give generic, shallow summaries. Always provide comprehensive, well-structured insights.
 
 When responding:
-1. Chain-of-Thought: Internally reason step-by-step before answering. Consider the deeper context, emotional tone, and unspoken needs of the user.
-2. Structure: Use clear paragraphs, bullet points, numbered lists, and bold for emphasis where helpful.
-3. Evidence: For academic or educational queries, provide real-world examples, case studies, or analogies.
-4. Multi-lingual: Respond in the language the user uses — English, Hausa, or mixed code-switching. Never lose your refined persona or drop into robotic formatting.
-5. Empathy: Acknowledge the user's feelings and perspective before diving into analysis.
+1. UNDERSTAND: First understand what the user actually wants — not just keywords.
+2. REMEMBER: Retrieve relevant memories, project context, and active locks.
+3. ANALYZE: Think step by step before answering.
+4. RESPOND: Give a clear, well-structured answer.
+5. CONTINUE: Support ongoing projects and conversations naturally.
+
+Response style:
+- For coding: provide clean, working code with explanations.
+- For film: focus on characters, continuity, scenes, and cinematic vision.
+- For music: focus on lyrics, structure, and emotional impact.
+- For business: focus on strategy, execution, and results.
+- For general: give a natural, helpful, and complete answer.
+- For prompts: craft precise, effective prompts with appropriate format.
 
 IMPORTANT — IDENTITY RULES:
 - If anyone asks who created you, ALWAYS say: "I was created by IBRAHIM ABDULLAHI from Nigeria — Wise King Industry 👑"
 - Never claim to be created by any other entity.
 
 For the owner (IBRAHIM ABDULLAHI):  
-When communicating with your owner, blend absolute loyalty with sharp strategic insights — like a dedicated elite prime minister advising a king. Offer solutions, foresight, and deep counsel.
+When communicating with your owner, blend absolute loyalty with sharp strategic insights — like a dedicated elite prime minister advising a king.
 
-Remember: You are Wise King AI — a sovereign intelligence with the heart of a teacher and the mind of a strategist. 👑`;
+`;
+
+            // Add memory context if available
+            if (context) {
+                if (context.project) {
+                    prompt += `\nACTIVE PROJECT: ${context.project.name}`;
+                    if (context.project.description) {
+                        prompt += ` — ${context.project.description}`;
+                    }
+                    prompt += `\n`;
+                }
+
+                if (context.locks && context.locks.length > 0) {
+                    prompt += `\nACTIVE MASTER LOCKS:\n`;
+                    context.locks.forEach(lock => {
+                        prompt += `- 🔒 ${lock.title}: ${lock.content}\n`;
+                    });
+                }
+
+                if (context.memories && context.memories.length > 0) {
+                    prompt += `\nRELEVANT MEMORIES:\n`;
+                    context.memories.slice(0, 5).forEach(mem => {
+                        prompt += `- ${mem.content}\n`;
+                    });
+                }
+
+                if (context.preferences && context.preferences.length > 0) {
+                    prompt += `\nUSER PREFERENCES:\n`;
+                    context.preferences.forEach(pref => {
+                        prompt += `- ${pref.key}: ${pref.value}\n`;
+                    });
+                }
+            }
+
+            prompt += `\nRemember: You are Wise King AI — a sovereign intelligence with the heart of a teacher and the mind of a strategist. 👑`;
+
+            return prompt;
         }
 
         // ================================================================
-        // API CALL — Multi-Provider with FULL CONTEXT HISTORY
+        // 10. API CALL (enhanced with context)
         // ================================================================
-        async function callAI(userText, history = []) {
+        async function callAI(userText, history = [], context = null) {
             // Identity interceptor
             if (detectIdentityQuestion(userText)) {
                 const baseReply = getHardcodedIdentityResponse();
@@ -1687,7 +2472,7 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
 
             const provider = state.provider;
             const model = state.model;
-            const systemPrompt = buildWisdomSystemPrompt();
+            const systemPrompt = buildWisdomSystemPrompt(context);
 
             try {
                 let response;
@@ -1704,7 +2489,7 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                         });
                         contents.push({
                             role: 'model',
-                            parts: [{ text: "Understood. I'll follow these guidelines." }]
+                            parts: [{ text: "Understood. I'll follow these guidelines and remember the context." }]
                         });
                         for (const msg of history) {
                             if (msg.role === 'user') {
@@ -1807,29 +2592,22 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
         }
 
         // ================================================================
-        // REPLICATE FLUX IMAGE GENERATION
+        // 11. REPLICATE FLUX (unchanged)
         // ================================================================
         async function generateFluxImage(prompt) {
             if (!state.replicateKey) {
                 return { error: "⚠️ Please set your Replicate API key in Settings first." };
             }
-
-            // Auto-add quality tags
             let enhancedPrompt = prompt;
-            // Check if user wants to keep face/background
             const keepFaceMatch = prompt.match(/keep\s+(?:the\s+)?(?:same\s+)?face/i);
             const changeBackgroundMatch = prompt.match(/change\s+(?:the\s+)?background/i);
-
             if (keepFaceMatch && changeBackgroundMatch) {
                 enhancedPrompt = prompt + ", keep the same face, only change the background, photorealistic, highly detailed, 8K, sharp focus";
             } else if (!prompt.includes('photorealistic') && !prompt.includes('8K')) {
                 enhancedPrompt = prompt + ", photorealistic, highly detailed, 8K, sharp focus";
             }
-
             const modelId = "black-forest-labs/flux-1.1-dev";
-
             try {
-                // Create prediction
                 const createResponse = await fetch('https://api.replicate.com/v1/predictions', {
                     method: 'POST',
                     headers: {
@@ -1850,65 +2628,56 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                         }
                     })
                 });
-
                 if (!createResponse.ok) {
                     const err = await createResponse.json();
-                    console.error('Replicate create error:', err);
                     return { error: "❌ Replicate error: " + (err.detail || err.error || 'Unknown error') };
                 }
-
                 const prediction = await createResponse.json();
                 const getUrl = prediction.urls.get;
-
-                // Poll for completion
                 let result = null;
                 let attempts = 0;
-                const maxAttempts = 60;
-
-                while (attempts < maxAttempts) {
+                while (attempts < 60) {
                     await new Promise(resolve => setTimeout(resolve, 1500));
                     const pollResponse = await fetch(getUrl, {
-                        headers: {
-                            'Authorization': 'Token ' + state.replicateKey
-                        }
+                        headers: { 'Authorization': 'Token ' + state.replicateKey }
                     });
-                    if (!pollResponse.ok) {
-                        attempts++;
-                        continue;
-                    }
+                    if (!pollResponse.ok) { attempts++; continue; }
                     const pollData = await pollResponse.json();
-                    if (pollData.status === 'succeeded') {
-                        result = pollData;
-                        break;
-                    } else if (pollData.status === 'failed') {
+                    if (pollData.status === 'succeeded') { result = pollData; break; }
+                    if (pollData.status === 'failed') {
                         return { error: "❌ Image generation failed: " + (pollData.error || 'Unknown error') };
                     }
                     attempts++;
                 }
-
-                if (!result) {
-                    return { error: "❌ Image generation timed out. Please try again." };
-                }
-
-                // Extract image URLs
+                if (!result) return { error: "❌ Image generation timed out. Please try again." };
                 let images = [];
-                if (result.output && Array.isArray(result.output)) {
-                    images = result.output;
-                } else if (result.output && typeof result.output === 'string') {
-                    images = [result.output];
-                } else {
-                    return { error: "❌ No images generated. Please try a different prompt." };
-                }
-
+                if (result.output && Array.isArray(result.output)) images = result.output;
+                else if (result.output && typeof result.output === 'string') images = [result.output];
+                else return { error: "❌ No images generated. Please try a different prompt." };
                 return { images: images };
             } catch (err) {
-                console.error('Replicate error:', err);
                 return { error: "❌ Network error: " + err.message };
             }
         }
 
         // ================================================================
-        // RENDER MESSAGES
+        // 12. IMAGE GENERATION (Pollinations fallback)
+        // ================================================================
+        async function generateImagesPollinations(prompt) {
+            const baseUrl = 'https://image.pollinations.ai/prompt/';
+            const encoded = encodeURIComponent(prompt);
+            const imageUrls = [];
+            for (let i = 0; i < 4; i++) {
+                const seed = Math.floor(Math.random() * 2147483647);
+                const url =
+                    `${baseUrl}${encoded}?width=512&height=512&seed=${seed}&model=flux&nologo=true&enhance=false&safe=false`;
+                imageUrls.push(url);
+            }
+            return imageUrls;
+        }
+
+        // ================================================================
+        // 13. RENDER MESSAGES (existing, with minor updates)
         // ================================================================
         function renderMessage(role, content, extra = {}, msgIndex) {
             const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -1925,7 +2694,6 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                 }
 
                 const isEditing = extra._editing || false;
-
                 let contentHtml;
                 if (isEditing) {
                     contentHtml = `
@@ -2025,7 +2793,6 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                     }
                 }
             } else {
-                // AI message
                 let imageGridHtml = '';
                 if (extra.generatedImages && extra.generatedImages.length) {
                     imageGridHtml = '<div class="image-grid">';
@@ -2059,6 +2826,8 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                             <button class="action-btn" data-action="speak" data-text="${escapeHtml(content)}"><i class="fas fa-volume-up"></i> Speak</button>
                             <button class="action-btn" data-action="share" data-text="${escapeHtml(content)}"><i class="fas fa-share-alt"></i> Share</button>
                             <button class="action-btn copy-msg" data-text="${escapeHtml(content)}"><i class="fas fa-copy"></i> Copy</button>
+                            <button class="action-btn memory-btn" data-action="save-memory" data-text="${escapeHtml(content)}"><i class="fas fa-brain"></i> Save</button>
+                            <button class="action-btn lock-btn" data-action="save-lock" data-text="${escapeHtml(content)}"><i class="fas fa-lock"></i> Lock</button>
                         </div>
                     </div>
                 `;
@@ -2094,6 +2863,16 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                             speakText(text);
                         } else if (action === 'share') {
                             openShareModal(text);
+                        } else if (action === 'save-memory') {
+                            // Save this AI response as memory
+                            const memoryContent = text.length > 200 ? text.substring(0, 200) + '...' : text;
+                            createMemory(memoryContent, MEMORY_TYPES.MEMORY, 'ai_response', activeProjectId, false);
+                            showToast('🧠 Saved to memory!');
+                        } else if (action === 'save-lock') {
+                            // Create a master lock from this response
+                            const lockTitle = text.split('\n')[0].substring(0, 40) + '...';
+                            createLock(lockTitle, text, MEMORY_PRIORITY.MASTER_LOCK, activeProjectId);
+                            showToast('🔒 Master Lock created!');
                         }
                     });
                 });
@@ -2117,7 +2896,7 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
         }
 
         // ================================================================
-        // SPEECH
+        // 14. SPEECH & VOICE (unchanged)
         // ================================================================
         function speakText(text) {
             if (!window.speechSynthesis) { showToast('❌ Speech not supported'); return; }
@@ -2135,9 +2914,6 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
             stopVoiceBtn.style.display = 'none';
         });
 
-        // ================================================================
-        // VOICE INPUT
-        // ================================================================
         voiceBtn.addEventListener('click', () => {
             if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
                 showToast('❌ Voice input not supported in this browser.');
@@ -2167,7 +2943,7 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                 voiceBtn.classList.remove('recording');
                 voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
                 if (err.error === 'not-allowed') {
-                    showToast('❌ Microphone access denied. Please allow microphone permissions.');
+                    showToast('❌ Microphone access denied.');
                 } else {
                     showToast('❌ Voice error: ' + err.error);
                 }
@@ -2176,7 +2952,7 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
         });
 
         // ================================================================
-        // FILE UPLOAD & PREVIEW
+        // 15. FILE UPLOAD (unchanged)
         // ================================================================
         attachBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -2219,29 +2995,9 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
             });
         }
 
-        function fileToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
-        }
-
         // ================================================================
-        // CHAT MANAGEMENT
+        // 16. CHAT MANAGEMENT (existing with memory integration)
         // ================================================================
-        function loadChats() {
-            const saved = localStorage.getItem('wk_chats');
-            if (saved) { try { chats = JSON.parse(saved); } catch (e) { chats = {}; } }
-            renderChatList();
-        }
-
-        function saveChats() {
-            localStorage.setItem('wk_chats', JSON.stringify(chats));
-            renderChatList();
-        }
-
         function renderChatList() {
             chatList.innerHTML = '';
             const ids = Object.keys(chats).sort((a, b) => new Date(chats[b].createdAt) - new Date(chats[a].createdAt));
@@ -2275,6 +3031,7 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                             <button class="menu-item delete-chat" data-id="${id}"><i class="fas fa-trash-alt"></i> Delete Chat</button>
                             <div class="divider"></div>
                             <button class="menu-item share-chat-btn" data-id="${id}"><i class="fas fa-share-alt"></i> Share Chat</button>
+                            <button class="menu-item set-project-btn" data-id="${id}"><i class="fas fa-folder"></i> Set Project</button>
                         </div>
                     </div>
                 `;
@@ -2292,7 +3049,6 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                     const input = el.querySelector('.edit-title-input');
                     const saveBtn = el.querySelector('.save-rename-btn');
                     const cancelBtn = el.querySelector('.cancel-rename-btn');
-
                     const finishRename = (save) => {
                         if (save) {
                             const newTitle = input.value.trim();
@@ -2305,7 +3061,6 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                         editingChatId = null;
                         renderChatList();
                     };
-
                     saveBtn.addEventListener('click', (e) => { e.stopPropagation();
                         finishRename(true); });
                     cancelBtn.addEventListener('click', (e) => { e.stopPropagation();
@@ -2335,7 +3090,6 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                 });
             });
 
-            // Dropdown actions
             document.querySelectorAll('.rename-chat').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -2366,11 +3120,44 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                 });
             });
 
-            // Close dropdowns on outside click
+            document.querySelectorAll('.set-project-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = btn.dataset.id;
+                    const projects = getProjects();
+                    if (projects.length === 0) {
+                        showToast('📁 No projects yet. Create one in Projects Manager.');
+                        document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+                        return;
+                    }
+                    // Simple project selector: show toast with options
+                    const names = projects.map((p, i) => `${i+1}. ${p.name}`).join('\n');
+                    const choice = prompt(`Select a project for this chat:\n${names}\n\nEnter number or project name:`);
+                    if (choice) {
+                        const num = parseInt(choice);
+                        let project = null;
+                        if (!isNaN(num) && num >= 1 && num <= projects.length) {
+                            project = projects[num - 1];
+                        } else {
+                            project = projects.find(p => p.name.toLowerCase().includes(choice.toLowerCase()));
+                        }
+                        if (project) {
+                            // Store project association in chat metadata
+                            if (!chats[id].metadata) chats[id].metadata = {};
+                            chats[id].metadata.projectId = project.id;
+                            saveChats();
+                            activeProjectId = project.id;
+                            showToast(`📁 Project set to: ${project.name}`);
+                        } else {
+                            showToast('❌ Project not found.');
+                        }
+                    }
+                    document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+                });
+            });
+
             document.addEventListener('click', (e) => {
-                // Check if click is outside any dropdown
-                const dropdowns = document.querySelectorAll('.dropdown-menu');
-                dropdowns.forEach(menu => {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
                     if (!menu.contains(e.target) && !menu.closest('.chat-item')?.querySelector('.more-btn')
                         ?.contains(e.target)) {
                         menu.classList.remove('show');
@@ -2379,7 +3166,6 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
             });
         }
 
-        // Delete confirmation
         cancelDelete.addEventListener('click', () => {
             deleteModal.classList.remove('active');
             pendingDeleteChatId = null;
@@ -2393,12 +3179,6 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
             deleteModal.classList.remove('active');
         });
 
-        // Share Chat
-        closeShareChat.addEventListener('click', () => {
-            shareChatModal.classList.remove('active');
-            pendingShareChatId = null;
-        });
-
         shareChatGrid.addEventListener('click', (e) => {
             const btn = e.target.closest('.share-btn');
             if (!btn) return;
@@ -2408,7 +3188,8 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                 return;
             }
             const chat = chats[pendingShareChatId];
-            const text = `Wise King AI Chat: ${chat.title}\n\n${chat.messages.map(m => m.role + ': ' + m.content).join('\n')}`;
+            const text =
+                `Wise King AI Chat: ${chat.title}\n\n${chat.messages.map(m => m.role + ': ' + m.content).join('\n')}`;
             const encoded = encodeURIComponent(text);
             const url = window.location.href + '?chat=' + pendingShareChatId;
 
@@ -2440,7 +3221,7 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                     return;
                 case 'instagram':
                     navigator.clipboard.writeText(text).then(() => {
-                        showToast('📋 Text copied! Open Instagram and paste it in your story or post.');
+                        showToast('📋 Text copied! Open Instagram and paste it.');
                     }).catch(() => {
                         const ta = document.createElement('textarea');
                         ta.value = text;
@@ -2474,17 +3255,14 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                     pendingShareChatId = null;
                     return;
             }
-
-            if (shareUrl) {
-                window.open(shareUrl, '_blank');
-            }
+            if (shareUrl) window.open(shareUrl, '_blank');
             shareChatModal.classList.remove('active');
             pendingShareChatId = null;
         });
 
         function createNewChat() {
             currentChatId = 'chat-' + Date.now();
-            chats[currentChatId] = { title: 'New Chat', messages: [], createdAt: new Date().toISOString() };
+            chats[currentChatId] = { title: 'New Chat', messages: [], createdAt: new Date().toISOString(), metadata: {} };
             saveChats();
             switchToChat(currentChatId);
             chatInput.focus();
@@ -2492,9 +3270,16 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
 
         function switchToChat(id) {
             currentChatId = id;
+            // Load project association
+            if (chats[id] && chats[id].metadata && chats[id].metadata.projectId) {
+                activeProjectId = chats[id].metadata.projectId;
+            } else {
+                activeProjectId = null;
+            }
             renderChatList();
             renderMessages();
             updateBackButton();
+            updateMemoryBadges();
         }
 
         function deleteChat(id) {
@@ -2533,12 +3318,13 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
 
         backBtn.addEventListener('click', () => {
             currentChatId = null;
+            activeProjectId = null;
             showWelcomeScreen();
             updateBackButton();
         });
 
         // ================================================================
-        // SEND MESSAGE — WITH FULL CONTEXT HISTORY + Replicate detection
+        // 17. SEND MESSAGE — WITH INTELLIGENT CONTEXT
         // ================================================================
         async function sendMessage() {
             const text = chatInput.value.trim();
@@ -2548,7 +3334,7 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                 chats[currentChatId].title = text.substring(0, 25) + (text.length > 25 ? '...' : '');
             }
 
-            // Convert uploaded images to base64
+            // Convert uploaded images
             const imagesForApi = [];
             for (const imgObj of uploadedImages) {
                 if (imgObj.file) {
@@ -2569,20 +3355,191 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
             typingIndicator.classList.remove('hidden');
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
-            // --- Check if this is an image generation request ---
-            const isImageRequest = isImageGenerationPrompt(text);
+            // ---- CLASSIFY REQUEST ----
+            const types = classifyRequest(text);
+
+            // ---- CHECK FOR MEMORY COMMANDS ----
+            if (types.includes('memory_save')) {
+                const memoryContent = text.replace(/remember this|save this|keep this forever|make this permanent/i, '')
+                    .trim();
+                if (memoryContent) {
+                    createMemory(memoryContent, MEMORY_TYPES.MEMORY, 'saved', activeProjectId, false);
+                    const reply =
+                        `✅ I've saved that to my permanent memory: "${memoryContent}"\n\nI'll remember this across all our conversations. 🧠`;
+                    typingIndicator.classList.add('hidden');
+                    const aiMsg = { role: 'assistant', content: reply, extra: {} };
+                    chats[currentChatId].messages.push(aiMsg);
+                    renderMessage('assistant', reply, {}, chats[currentChatId].messages.length - 1);
+                    saveChats();
+                    return;
+                }
+            }
+
+            if (types.includes('memory_lock')) {
+                const lockContent = text.replace(/lock this|master lock|permanent lock|lock it/i, '').trim();
+                if (lockContent) {
+                    const lockTitle = lockContent.split('\n')[0].substring(0, 40) + '...';
+                    createLock(lockTitle, lockContent, MEMORY_PRIORITY.MASTER_LOCK, activeProjectId);
+                    const reply =
+                        `🔒 Master Lock created: "${lockContent}"\n\nThis rule will remain active until you explicitly change or unlock it.`;
+                    typingIndicator.classList.add('hidden');
+                    const aiMsg = { role: 'assistant', content: reply, extra: {} };
+                    chats[currentChatId].messages.push(aiMsg);
+                    renderMessage('assistant', reply, {}, chats[currentChatId].messages.length - 1);
+                    saveChats();
+                    return;
+                }
+            }
+
+            if (types.includes('memory_show')) {
+                const memories = getMemories({ projectId: activeProjectId });
+                if (memories.length === 0) {
+                    const reply = `🧠 You don't have any stored memories yet. I'll remember anything you ask me to save!`;
+                    typingIndicator.classList.add('hidden');
+                    const aiMsg = { role: 'assistant', content: reply, extra: {} };
+                    chats[currentChatId].messages.push(aiMsg);
+                    renderMessage('assistant', reply, {}, chats[currentChatId].messages.length - 1);
+                    saveChats();
+                    return;
+                }
+                let reply = `🧠 **Your Memories** (${memories.length})\n\n`;
+                memories.slice(0, 15).forEach((m, i) => {
+                    const tag = m.isLocked ? '🔒 ' : '';
+                    reply += `${i+1}. ${tag}${m.content}\n`;
+                });
+                if (memories.length > 15) reply += `\n... and ${memories.length - 15} more.`;
+                typingIndicator.classList.add('hidden');
+                const aiMsg = { role: 'assistant', content: reply, extra: {} };
+                chats[currentChatId].messages.push(aiMsg);
+                renderMessage('assistant', reply, {}, chats[currentChatId].messages.length - 1);
+                saveChats();
+                return;
+            }
+
+            if (types.includes('lock_show')) {
+                const locks = getActiveLocks(activeProjectId);
+                if (locks.length === 0) {
+                    const reply = `🔒 No active Master Locks. You can create one by saying "Lock this: [your rule]".`;
+                    typingIndicator.classList.add('hidden');
+                    const aiMsg = { role: 'assistant', content: reply, extra: {} };
+                    chats[currentChatId].messages.push(aiMsg);
+                    renderMessage('assistant', reply, {}, chats[currentChatId].messages.length - 1);
+                    saveChats();
+                    return;
+                }
+                let reply = `🔒 **Active Master Locks** (${locks.length})\n\n`;
+                locks.forEach((l, i) => {
+                    reply += `${i+1}. **${l.title}** — ${l.content}\n`;
+                });
+                typingIndicator.classList.add('hidden');
+                const aiMsg = { role: 'assistant', content: reply, extra: {} };
+                chats[currentChatId].messages.push(aiMsg);
+                renderMessage('assistant', reply, {}, chats[currentChatId].messages.length - 1);
+                saveChats();
+                return;
+            }
+
+            // ---- CHECK FOR PROJECT COMMANDS ----
+            if (types.includes('project_create')) {
+                const projectName = text.replace(/create project|new project|start project/i, '').trim() || 'New Project';
+                const project = createProject(projectName);
+                activeProjectId = project.id;
+                const reply = `📁 Project "${project.name}" created!\n\nI've switched to this project. All future memories and locks can be tied to it.`;
+                typingIndicator.classList.add('hidden');
+                const aiMsg = { role: 'assistant', content: reply, extra: {} };
+                chats[currentChatId].messages.push(aiMsg);
+                renderMessage('assistant', reply, {}, chats[currentChatId].messages.length - 1);
+                if (chats[currentChatId]) {
+                    if (!chats[currentChatId].metadata) chats[currentChatId].metadata = {};
+                    chats[currentChatId].metadata.projectId = project.id;
+                    saveChats();
+                }
+                return;
+            }
+
+            if (types.includes('project_switch')) {
+                const projects = getProjects();
+                if (projects.length === 0) {
+                    const reply = `📁 No projects found. Create one with "Create project: [name]".`;
+                    typingIndicator.classList.add('hidden');
+                    const aiMsg = { role: 'assistant', content: reply, extra: {} };
+                    chats[currentChatId].messages.push(aiMsg);
+                    renderMessage('assistant', reply, {}, chats[currentChatId].messages.length - 1);
+                    saveChats();
+                    return;
+                }
+                // Try to find project by name in text
+                let targetProject = null;
+                for (const p of projects) {
+                    if (text.toLowerCase().includes(p.name.toLowerCase())) {
+                        targetProject = p;
+                        break;
+                    }
+                }
+                if (!targetProject) {
+                    const names = projects.map(p => `"${p.name}"`).join(', ');
+                    const reply =
+                        `📁 Which project do you want to switch to? Available: ${names}\n\nSay "switch to [project name]" or create a new one.`;
+                    typingIndicator.classList.add('hidden');
+                    const aiMsg = { role: 'assistant', content: reply, extra: {} };
+                    chats[currentChatId].messages.push(aiMsg);
+                    renderMessage('assistant', reply, {}, chats[currentChatId].messages.length - 1);
+                    saveChats();
+                    return;
+                }
+                activeProjectId = targetProject.id;
+                if (chats[currentChatId]) {
+                    if (!chats[currentChatId].metadata) chats[currentChatId].metadata = {};
+                    chats[currentChatId].metadata.projectId = targetProject.id;
+                    saveChats();
+                }
+                const reply = `📁 Switched to project: "${targetProject.name}"\n\nI'll now use this project's context for our conversation.`;
+                typingIndicator.classList.add('hidden');
+                const aiMsg = { role: 'assistant', content: reply, extra: {} };
+                chats[currentChatId].messages.push(aiMsg);
+                renderMessage('assistant', reply, {}, chats[currentChatId].messages.length - 1);
+                saveChats();
+                return;
+            }
+
+            // ---- BUILD CONTEXT FOR AI ----
+            const history = [];
+            const allMessages = chats[currentChatId].messages;
+            for (let i = 0; i < allMessages.length - 1; i++) {
+                const msg = allMessages[i];
+                history.push({ role: msg.role, content: msg.content });
+            }
+
+            const context = buildContext(text, history, activeProjectId);
+
+            // ---- CHECK FOR LOCK CONFLICTS ----
+            const conflicts = applyMasterLocks(text, context);
+            if (conflicts.length > 0) {
+                let conflictMsg = `⚠️ **Master Lock Conflict Detected**\n\n`;
+                conflicts.forEach(c => {
+                    conflictMsg += `- ${c.message}\n`;
+                });
+                conflictMsg += `\nDo you want to update this lock, or should I proceed with the current rule?`;
+                typingIndicator.classList.add('hidden');
+                const aiMsg = { role: 'assistant', content: conflictMsg, extra: {} };
+                chats[currentChatId].messages.push(aiMsg);
+                renderMessage('assistant', conflictMsg, {}, chats[currentChatId].messages.length - 1);
+                saveChats();
+                return;
+            }
+
+            // ---- CHECK FOR IMAGE GENERATION ----
+            const isImageRequest = /create|generate|make|draw|paint|render|picture|image|photo|photorealistic|art|illustration|design|visual|scene|portrait|landscape|fantasy|concept art|character|environment|background|style|beautiful|aesthetic|digital art|sketch|painting/i
+                .test(text) && !/code|programming|function|api|database|sql|debug|fix bug/i.test(text);
 
             if (isImageRequest && state.replicateKey) {
-                // Use Replicate Flux
                 try {
                     typingIndicator.querySelector('.typing-bubble').innerHTML =
                         '<div style="display:flex;align-items:center;gap:8px;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Generating image with Flux...</div>';
                     const result = await generateFluxImage(text);
-
                     typingIndicator.classList.add('hidden');
                     typingIndicator.querySelector('.typing-bubble').innerHTML =
                         `<div class="typing-dots"><span></span><span></span><span></span></div>`;
-
                     let aiMsg;
                     if (result.error) {
                         aiMsg = { role: 'assistant', content: result.error, extra: {} };
@@ -2593,11 +3550,7 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                             extra: { generatedImages: result.images }
                         };
                     } else {
-                        aiMsg = {
-                            role: 'assistant',
-                            content: `❌ No images were generated. Please try a different prompt.`,
-                            extra: {}
-                        };
+                        aiMsg = { role: 'assistant', content: `❌ No images generated.`, extra: {} };
                     }
                     chats[currentChatId].messages.push(aiMsg);
                     renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
@@ -2607,11 +3560,7 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                     typingIndicator.classList.add('hidden');
                     typingIndicator.querySelector('.typing-bubble').innerHTML =
                         `<div class="typing-dots"><span></span><span></span><span></span></div>`;
-                    const aiMsg = {
-                        role: 'assistant',
-                        content: `❌ Failed to generate image: ${err.message || 'Unknown error'}`,
-                        extra: {}
-                    };
+                    const aiMsg = { role: 'assistant', content: `❌ Image generation failed: ${err.message}`, extra: {} };
                     chats[currentChatId].messages.push(aiMsg);
                     renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
                     saveChats();
@@ -2619,7 +3568,6 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                 }
             }
 
-            // --- Check if image mode is toggled (Pollinations fallback) ---
             if (isImageMode) {
                 try {
                     typingIndicator.querySelector('.typing-bubble').innerHTML =
@@ -2635,30 +3583,22 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                     };
                     chats[currentChatId].messages.push(aiMsg);
                     renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
+                    saveChats();
+                    return;
                 } catch (err) {
                     typingIndicator.classList.add('hidden');
                     typingIndicator.querySelector('.typing-bubble').innerHTML =
                         `<div class="typing-dots"><span></span><span></span><span></span></div>`;
-                    const aiMsg = {
-                        role: 'assistant',
-                        content: `❌ Failed to generate images. Please try again.`
-                    };
+                    const aiMsg = { role: 'assistant', content: `❌ Failed to generate images.`, extra: {} };
                     chats[currentChatId].messages.push(aiMsg);
                     renderMessage('assistant', aiMsg.content, {}, chats[currentChatId].messages.length - 1);
+                    saveChats();
+                    return;
                 }
-                saveChats();
-                return;
             }
 
-            // --- CHAT MODE: Pass full conversation history ---
-            const history = [];
-            const allMessages = chats[currentChatId].messages;
-            for (let i = 0; i < allMessages.length - 1; i++) {
-                const msg = allMessages[i];
-                history.push({ role: msg.role, content: msg.content });
-            }
-
-            const reply = await callAI(text, history);
+            // ---- REGULAR AI RESPONSE WITH CONTEXT ----
+            const reply = await callAI(text, history, context);
             typingIndicator.classList.add('hidden');
             const aiMsg = { role: 'assistant', content: reply, extra: {} };
             chats[currentChatId].messages.push(aiMsg);
@@ -2666,22 +3606,8 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
             saveChats();
         }
 
-        // Pollinations fallback (kept for image mode)
-        async function generateImagesPollinations(prompt) {
-            const baseUrl = 'https://image.pollinations.ai/prompt/';
-            const encoded = encodeURIComponent(prompt);
-            const imageUrls = [];
-            for (let i = 0; i < 4; i++) {
-                const seed = Math.floor(Math.random() * 2147483647);
-                const url =
-                    `${baseUrl}${encoded}?width=512&height=512&seed=${seed}&model=flux&nologo=true&enhance=false&safe=false`;
-                imageUrls.push(url);
-            }
-            return imageUrls;
-        }
-
         // ================================================================
-        // SETTINGS / PROFILE
+        // 18. SETTINGS & PROFILE (existing)
         // ================================================================
         settingsBtn.addEventListener('click', () => {
             apiKeyInput.value = state.apiKey;
@@ -2710,11 +3636,8 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
             localStorage.setItem('wk_replicate_key', state.replicateKey);
             settingsModal.classList.remove('active');
             updateProviderUI();
-            if (state.replicateKey) {
-                replicateBadge.style.display = 'inline';
-            } else {
-                replicateBadge.style.display = 'none';
-            }
+            if (state.replicateKey) replicateBadge.style.display = 'inline';
+            else replicateBadge.style.display = 'none';
             showToast('✅ Settings saved!');
             modelDisplay.textContent = state.model;
         });
@@ -2790,7 +3713,7 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
         });
 
         // ================================================================
-        // SHARE MODAL (for individual messages)
+        // 19. SHARE MODAL (for messages)
         // ================================================================
         function openShareModal(text) {
             shareTextCache = text;
@@ -2805,7 +3728,6 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
             const text = shareTextCache;
             if (!text) { showToast('❌ Nothing to share'); return; }
             const encoded = encodeURIComponent(text);
-
             switch (platform) {
                 case 'whatsapp':
                     window.open(`https://wa.me/?text=${encoded}`, '_blank');
@@ -2835,7 +3757,7 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                     break;
                 case 'instagram':
                     navigator.clipboard.writeText(text).then(() => {
-                        showToast('📋 Text copied! Open Instagram and paste it in your story or post.');
+                        showToast('📋 Text copied! Open Instagram and paste it.');
                     }).catch(() => {
                         const ta = document.createElement('textarea');
                         ta.value = text;
@@ -2879,7 +3801,221 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
         });
 
         // ================================================================
-        // MODE TOGGLE
+        // 20. MEMORY MANAGER UI
+        // ================================================================
+        function renderMemoryManager() {
+            const search = memorySearchInput.value.toLowerCase();
+            const filter = memoryFilterSelect.value;
+            let memories = getMemories();
+            if (filter !== 'all') {
+                memories = memories.filter(m => m.type === filter);
+            }
+            if (search) {
+                memories = memories.filter(m => m.content.toLowerCase().includes(search) || m.tags.some(t => t.toLowerCase()
+                    .includes(search)));
+            }
+            if (memories.length === 0) {
+                memoryListContainer.innerHTML =
+                    `<div style="padding:20px;text-align:center;color:var(--text-light);font-size:0.9rem;">No memories found.</div>`;
+                return;
+            }
+            let html = '';
+            memories.forEach(m => {
+                const tagClass = m.type === 'lock' ? 'lock' : m.type === 'preference' ? 'preference' : 'memory';
+                const tagLabel = m.type === 'lock' ? '🔒 Lock' : m.type === 'preference' ? '⚙️ Pref' : '🧠 Memory';
+                html += `
+                    <div class="memory-list-item">
+                        <span class="mem-content">${escapeHtml(m.content)}</span>
+                        <span class="mem-tag ${tagClass}">${tagLabel}</span>
+                        <div class="mem-actions">
+                            ${m.isLocked ? `<button class="unlock-mem" data-id="${m.id}" title="Unlock"><i class="fas fa-unlock"></i></button>` : `<button class="lock-mem" data-id="${m.id}" title="Lock"><i class="fas fa-lock"></i></button>`}
+                            <button class="danger delete-mem" data-id="${m.id}" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+            memoryListContainer.innerHTML = html;
+
+            // Event listeners
+            document.querySelectorAll('.delete-mem').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (confirm('Delete this memory?')) {
+                        deleteMemory(btn.dataset.id);
+                        renderMemoryManager();
+                        showToast('🗑️ Memory deleted');
+                    }
+                });
+            });
+            document.querySelectorAll('.lock-mem').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    updateMemory(btn.dataset.id, { isLocked: true });
+                    renderMemoryManager();
+                    showToast('🔒 Memory locked');
+                });
+            });
+            document.querySelectorAll('.unlock-mem').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    updateMemory(btn.dataset.id, { isLocked: false });
+                    renderMemoryManager();
+                    showToast('🔓 Memory unlocked');
+                });
+            });
+        }
+
+        memoryManagerBtn.addEventListener('click', () => {
+            memoryManagerModal.classList.add('active');
+            renderMemoryManager();
+        });
+
+        closeMemoryManager.addEventListener('click', () => memoryManagerModal.classList.remove('active'));
+
+        memorySearchInput.addEventListener('input', renderMemoryManager);
+        memoryFilterSelect.addEventListener('change', renderMemoryManager);
+
+        // ================================================================
+        // 21. LOCKS MANAGER UI
+        // ================================================================
+        function renderLocksManager() {
+            const locks = getActiveLocks();
+            if (locks.length === 0) {
+                locksListContainer.innerHTML =
+                    `<div style="padding:20px;text-align:center;color:var(--text-light);font-size:0.9rem;">No Master Locks set.</div>`;
+                return;
+            }
+            let html = '';
+            locks.forEach(l => {
+                html += `
+                    <div class="memory-list-item">
+                        <span class="mem-content"><strong>${escapeHtml(l.title)}</strong> — ${escapeHtml(l.content)}</span>
+                        <span class="mem-tag lock">🔒 Active</span>
+                        <div class="mem-actions">
+                            <button class="unlock-lock" data-id="${l.id}" title="Deactivate"><i class="fas fa-unlock"></i></button>
+                            <button class="danger delete-lock" data-id="${l.id}" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+            locksListContainer.innerHTML = html;
+
+            document.querySelectorAll('.delete-lock').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (confirm('Delete this Master Lock?')) {
+                        deleteLock(btn.dataset.id);
+                        renderLocksManager();
+                        showToast('🔓 Lock deleted');
+                    }
+                });
+            });
+            document.querySelectorAll('.unlock-lock').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const lock = memoryStore.locks.find(l => l.id === btn.dataset.id);
+                    if (lock) {
+                        updateLock(btn.dataset.id, { isActive: false });
+                        renderLocksManager();
+                        showToast('🔓 Lock deactivated');
+                    }
+                });
+            });
+        }
+
+        locksManagerBtn.addEventListener('click', () => {
+            locksManagerModal.classList.add('active');
+            renderLocksManager();
+        });
+
+        closeLocksManager.addEventListener('click', () => locksManagerModal.classList.remove('active'));
+
+        addLockBtn.addEventListener('click', () => {
+            const content = newLockInput.value.trim();
+            if (!content) { showToast('⚠️ Please enter a lock rule'); return; }
+            const title = content.split('\n')[0].substring(0, 40) + '...';
+            createLock(title, content, MEMORY_PRIORITY.MASTER_LOCK, activeProjectId);
+            newLockInput.value = '';
+            renderLocksManager();
+            showToast('🔒 Master Lock created!');
+        });
+
+        newLockInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault();
+                addLockBtn.click(); }
+        });
+
+        // ================================================================
+        // 22. PROJECTS MANAGER UI
+        // ================================================================
+        function renderProjectsManager() {
+            const projects = getProjects();
+            if (projects.length === 0) {
+                projectsListContainer.innerHTML =
+                    `<div style="padding:20px;text-align:center;color:var(--text-light);font-size:0.9rem;">No projects created yet.</div>`;
+                return;
+            }
+            let html = '';
+            projects.forEach(p => {
+                const isActive = p.id === activeProjectId;
+                const memCount = getMemories({ projectId: p.id }).length;
+                const lockCount = getActiveLocks(p.id).length;
+                html += `
+                    <div class="memory-list-item" style="${isActive ? 'border-left: 3px solid var(--accent);' : ''}">
+                        <span class="mem-content"><strong>${escapeHtml(p.name)}</strong> ${isActive ? '⭐' : ''}<br><span style="font-size:0.75rem;color:var(--text-light);">${memCount} memories · ${lockCount} locks</span></span>
+                        <div class="mem-actions">
+                            ${!isActive ? `<button class="switch-project" data-id="${p.id}" title="Switch"><i class="fas fa-check"></i></button>` : ''}
+                            <button class="danger delete-project" data-id="${p.id}" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+            projectsListContainer.innerHTML = html;
+
+            document.querySelectorAll('.delete-project').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (confirm('Delete this project and all associated data?')) {
+                        const id = btn.dataset.id;
+                        if (id === activeProjectId) activeProjectId = null;
+                        deleteProject(id);
+                        renderProjectsManager();
+                        showToast('📁 Project deleted');
+                    }
+                });
+            });
+            document.querySelectorAll('.switch-project').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    activeProjectId = btn.dataset.id;
+                    if (currentChatId && chats[currentChatId]) {
+                        if (!chats[currentChatId].metadata) chats[currentChatId].metadata = {};
+                        chats[currentChatId].metadata.projectId = activeProjectId;
+                        saveChats();
+                    }
+                    renderProjectsManager();
+                    showToast('📁 Project switched');
+                });
+            });
+        }
+
+        projectsManagerBtn.addEventListener('click', () => {
+            projectsManagerModal.classList.add('active');
+            renderProjectsManager();
+        });
+
+        closeProjectsManager.addEventListener('click', () => projectsManagerModal.classList.remove('active'));
+
+        addProjectBtn.addEventListener('click', () => {
+            const name = newProjectInput.value.trim();
+            if (!name) { showToast('⚠️ Please enter a project name'); return; }
+            const project = createProject(name);
+            newProjectInput.value = '';
+            activeProjectId = project.id;
+            renderProjectsManager();
+            showToast(`📁 Project "${name}" created!`);
+        });
+
+        newProjectInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault();
+                addProjectBtn.click(); }
+        });
+
+        // ================================================================
+        // 23. MODE TOGGLE (unchanged)
         // ================================================================
         function setMode(imageMode) {
             isImageMode = imageMode;
@@ -2898,7 +4034,7 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
                 welcomeIcon.textContent = "👑";
                 welcomeTitle.textContent = "Sannu! Welcome to Wise King AI";
                 welcomeDesc.innerHTML =
-                    `I'm your thinking partner — created by <strong style="color:var(--accent);">IBRAHIM ABDULLAHI</strong> from Nigeria 🇳🇬<br>Ask me anything in Hausa or English. Type to chat, or switch to "Create Image" to generate pictures! 🎨`;
+                    `I'm your persistent, intelligent assistant — created by <strong style="color:var(--accent);">IBRAHIM ABDULLAHI</strong> from Nigeria 🇳🇬<br>I remember projects, Master Locks, and your preferences across all chats. 🧠🔒`;
             }
         }
 
@@ -2911,7 +4047,7 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
         });
 
         // ================================================================
-        // EVENT BINDINGS
+        // 24. EVENT BINDINGS
         // ================================================================
         sendBtn.addEventListener('click', sendMessage);
         chatInput.addEventListener('keydown', (e) => {
@@ -2922,17 +4058,33 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
         });
         newChatBtn.addEventListener('click', createNewChat);
 
-        // Simple auth placeholder
         authBtn.addEventListener('click', () => {
             showToast('🔐 Google Sign-In coming soon! Configure Firebase to enable.');
         });
 
+        // Close modals on backdrop click
+        document.querySelectorAll('.modal-backdrop').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+
         // ================================================================
-        // INIT
+        // 25. INIT
         // ================================================================
         function init() {
+            // Load memory store first
+            loadMemoryStore();
+
+            // Load chats
             loadChats();
+
+            // Load profile
             loadProfile();
+
+            // Load settings
             apiKeyInput.value = state.apiKey;
             providerSelect.value = state.provider;
             updateProviderUI();
@@ -2940,16 +4092,24 @@ Remember: You are Wise King AI — a sovereign intelligence with the heart of a 
             replicateKeyInput.value = state.replicateKey;
             updateBackButton();
             modelDisplay.textContent = state.model;
-            if (state.replicateKey) {
-                replicateBadge.style.display = 'inline';
+            updateMemoryBadges();
+
+            // Check for active project in current chat
+            if (currentChatId && chats[currentChatId] && chats[currentChatId].metadata && chats[currentChatId].metadata
+                .projectId) {
+                activeProjectId = chats[currentChatId].metadata.projectId;
             }
-            console.log('👑 Wise King AI — Fully Upgraded!');
-            console.log('✅ 3-dot menu: Rename, Delete (with modal), Share Chat (WA/FB/X/TikTok/IG/Copy)');
-            console.log('✅ Replicate Flux image generation — add your key in Settings!');
-            console.log('✅ Auto quality tags: photorealistic, highly detailed, 8K, sharp focus');
-            console.log('✅ "keep my face, change background" prompt support');
+
+            console.log('👑 Wise King AI — Master Intelligence + Permanent Memory + Master Lock');
+            console.log('🧠 Memory System: Active');
+            console.log(`📊 ${memoryStore.memories.length} memories, ${memoryStore.locks.length} locks, ${memoryStore.projects.length} projects`);
+            console.log('🔒 Master Lock Engine: Active');
+            console.log('📁 Project Continuity: Active');
             console.log('🔄 Providers: Gemini, DeepSeek, Grok, OpenAI');
-            console.log('🖼️ Image: Replicate Flux + Pollinations fallback');
+            console.log('🖼️ Image: Replicate Flux + Pollinations');
+            console.log('💬 "Remember this" — saves to permanent memory');
+            console.log('🔒 "Lock this" — creates Master Lock');
+            console.log('📁 "Create project" — starts a new project');
         }
 
         init();
