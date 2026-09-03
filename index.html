@@ -627,15 +627,13 @@
         }
         .image-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: 1fr;
             gap: 10px;
             margin-top: 12px;
             width: 100%;
-        }
-        @media (max-width: 480px) {
-            .image-grid {
-                grid-template-columns: 1fr;
-            }
+            max-width: 512px;
+            margin-left: auto;
+            margin-right: auto;
         }
         .generated-image-card {
             position: relative;
@@ -649,6 +647,7 @@
             height: auto;
             display: block;
             object-fit: cover;
+            max-height: 600px;
         }
         .image-card-overlay {
             position: absolute;
@@ -659,13 +658,14 @@
             padding: 8px;
             display: flex;
             justify-content: center;
+            gap: 8px;
             opacity: 0;
             transition: opacity 0.2s;
         }
         .generated-image-card:hover .image-card-overlay {
             opacity: 1;
         }
-        .download-btn {
+        .download-btn, .retry-btn {
             background: white;
             color: var(--text-main);
             border: none;
@@ -682,6 +682,13 @@
         .download-btn:hover {
             background: var(--accent);
             color: white;
+        }
+        .retry-btn {
+            background: var(--accent);
+            color: white;
+        }
+        .retry-btn:hover {
+            background: var(--accent-hover);
         }
         .typing-row {
             display: flex;
@@ -842,7 +849,11 @@
             transition: background 0.2s;
             flex-shrink: 0;
         }
-        .send-btn:hover {
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .send-btn:hover:not(:disabled) {
             background: var(--accent-hover);
         }
         #fileInput {
@@ -1243,7 +1254,6 @@
             color: #34d399;
             margin-left: 4px;
         }
-        /* Memory/Project styling */
         .memory-list-item {
             display: flex;
             align-items: center;
@@ -1320,7 +1330,6 @@
         .project-selector .proj-btn:hover:not(.active) {
             background: var(--surface-alt);
         }
-        /* Responsive tweaks */
         @media (max-width: 640px) {
             .sidebar {
                 width: 240px;
@@ -1348,6 +1357,50 @@
             .memory-list-item {
                 flex-wrap: wrap;
             }
+            .image-grid {
+                max-width: 100%;
+            }
+        }
+        /* Loading overlay for image generation */
+        .generating-overlay {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 20px;
+            gap: 12px;
+            color: var(--text-light);
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        .generating-overlay .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border);
+            border-top: 4px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .generating-overlay .cancel-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid var(--border);
+            color: var(--text-light);
+            padding: 4px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: 0.2s;
+        }
+        .generating-overlay .cancel-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        .generating-overlay .error-text {
+            color: #f87171;
         }
     </style>
 </head>
@@ -1641,6 +1694,7 @@
     <script>
         // ================================================================
         // WISE KING AI — MASTER INTELLIGENCE + PERMANENT MEMORY + MASTER LOCK
+        // PLUS UPGRADED IMAGE ENGINE (SINGLE IMAGE, ROBUST, LOCK-AWARE)
         // ================================================================
 
         // ================================================================
@@ -1662,12 +1716,11 @@
             TEMPORARY: 7
         };
 
-        // Memory store
         let memoryStore = {
-            memories: [], // { id, type, category, content, projectId, isLocked, priority, createdAt, updatedAt, version, parentId, tags }
-            projects: [], // { id, name, description, createdAt, updatedAt }
-            locks: [], // { id, title, description, content, priority, isActive, projectId, version, previousVersionId, createdAt, updatedAt }
-            preferences: [] // { id, key, value, projectId, createdAt, updatedAt }
+            memories: [],
+            projects: [],
+            locks: [],
+            preferences: []
         };
 
         function loadMemoryStore() {
@@ -1676,15 +1729,12 @@
                 if (stored) {
                     const parsed = JSON.parse(stored);
                     memoryStore = parsed;
-                    // Ensure arrays exist
                     if (!memoryStore.memories) memoryStore.memories = [];
                     if (!memoryStore.projects) memoryStore.projects = [];
                     if (!memoryStore.locks) memoryStore.locks = [];
                     if (!memoryStore.preferences) memoryStore.preferences = [];
                 }
-            } catch (e) {
-                console.warn('Memory store load error:', e);
-            }
+            } catch (e) { console.warn('Memory store load error:', e); }
             updateMemoryBadges();
         }
 
@@ -1692,27 +1742,24 @@
             try {
                 localStorage.setItem('wk_memory_store', JSON.stringify(memoryStore));
                 updateMemoryBadges();
-            } catch (e) {
-                console.warn('Memory store save error:', e);
-            }
+            } catch (e) { console.warn('Memory store save error:', e); }
         }
 
         function generateId() {
             return 'mem_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
         }
 
-        // ---- Memory CRUD ----
         function createMemory(content, type = MEMORY_TYPES.MEMORY, category = 'general', projectId = null, isLocked = false,
             priority = MEMORY_PRIORITY.PREFERENCE, tags = []) {
             const memory = {
                 id: generateId(),
-                type: type,
-                category: category,
-                content: content,
-                projectId: projectId,
-                isLocked: isLocked,
-                priority: priority,
-                tags: tags,
+                type,
+                category,
+                content,
+                projectId,
+                isLocked,
+                priority,
+                tags,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
                 version: 1,
@@ -1730,9 +1777,9 @@
             if (filter.projectId) result = result.filter(m => m.projectId === filter.projectId);
             if (filter.isLocked !== undefined) result = result.filter(m => m.isLocked === filter.isLocked);
             if (filter.search) {
-                const search = filter.search.toLowerCase();
-                result = result.filter(m => m.content.toLowerCase().includes(search) || m.tags.some(t => t.toLowerCase()
-                .includes(search)));
+                const s = filter.search.toLowerCase();
+                result = result.filter(m => m.content.toLowerCase().includes(s) || m.tags.some(t => t.toLowerCase().includes(
+                s)));
             }
             return result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         }
@@ -1743,9 +1790,7 @@
             const memory = memoryStore.memories[idx];
             Object.assign(memory, updates);
             memory.updatedAt = new Date().toISOString();
-            if (updates.content && memory.content !== updates.content) {
-                memory.version = (memory.version || 1) + 1;
-            }
+            if (updates.content && memory.content !== updates.content) memory.version = (memory.version || 1) + 1;
             saveMemoryStore();
             return memory;
         }
@@ -1755,23 +1800,21 @@
             saveMemoryStore();
         }
 
-        // ---- Lock CRUD ----
         function createLock(title, content, priority = MEMORY_PRIORITY.MASTER_LOCK, projectId = null) {
             const lock = {
                 id: generateId(),
-                title: title,
+                title,
                 description: content,
-                content: content,
-                priority: priority,
+                content,
+                priority,
                 isActive: true,
-                projectId: projectId,
+                projectId,
                 version: 1,
                 previousVersionId: null,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             };
             memoryStore.locks.push(lock);
-            // Also create a memory entry
             createMemory(`🔒 MASTER LOCK: ${title} — ${content}`, MEMORY_TYPES.LOCK, 'lock', projectId, true, priority);
             saveMemoryStore();
             return lock;
@@ -1787,21 +1830,17 @@
             const idx = memoryStore.locks.findIndex(l => l.id === id);
             if (idx === -1) return null;
             const lock = memoryStore.locks[idx];
-            // Versioning: if content changes, keep old version
             if (updates.content && lock.content !== updates.content) {
                 const oldVersion = { ...lock };
-                oldVersion.previousVersionId = lock.id;
                 oldVersion.id = generateId();
                 oldVersion.isActive = false;
                 oldVersion.updatedAt = new Date().toISOString();
                 memoryStore.locks.push(oldVersion);
-                // Update the current lock
                 lock.version = (lock.version || 1) + 1;
                 lock.previousVersionId = oldVersion.id;
                 lock.content = updates.content;
                 lock.description = updates.content;
                 lock.updatedAt = new Date().toISOString();
-                // Also update the corresponding memory
                 const mems = memoryStore.memories.filter(m => m.content.includes(lock.title) && m.type === MEMORY_TYPES
                 .LOCK);
                 if (mems.length > 0) {
@@ -1820,18 +1859,16 @@
 
         function deleteLock(id) {
             memoryStore.locks = memoryStore.locks.filter(l => l.id !== id);
-            // Also remove associated memories
             memoryStore.memories = memoryStore.memories.filter(m => m.type !== MEMORY_TYPES.LOCK || !m.content.includes(
                 'MASTER LOCK'));
             saveMemoryStore();
         }
 
-        // ---- Project CRUD ----
         function createProject(name, description = '') {
             const project = {
                 id: generateId(),
-                name: name,
-                description: description,
+                name,
+                description,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             };
@@ -1850,13 +1887,11 @@
 
         function deleteProject(id) {
             memoryStore.projects = memoryStore.projects.filter(p => p.id !== id);
-            // Remove associated memories and locks
             memoryStore.memories = memoryStore.memories.filter(m => m.projectId !== id);
             memoryStore.locks = memoryStore.locks.filter(l => l.projectId !== id);
             saveMemoryStore();
         }
 
-        // ---- Preferences ----
         function setPreference(key, value, projectId = null) {
             let pref = memoryStore.preferences.find(p => p.key === key && p.projectId === projectId);
             if (pref) {
@@ -1865,9 +1900,9 @@
             } else {
                 pref = {
                     id: generateId(),
-                    key: key,
-                    value: value,
-                    projectId: projectId,
+                    key,
+                    value,
+                    projectId,
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString()
                 };
@@ -1886,7 +1921,6 @@
             return memoryStore.preferences.filter(p => p.projectId === projectId);
         }
 
-        // ---- Memory badges ----
         function updateMemoryBadges() {
             const lockCount = memoryStore.locks.filter(l => l.isActive).length;
             const memCount = memoryStore.memories.length;
@@ -1897,218 +1931,301 @@
         }
 
         // ================================================================
-        // 2. INTELLIGENT REQUEST CLASSIFIER
+        // 2. IMAGE ENGINE — NEW SINGLE-IMAGE, LOCK-AWARE, RELIABLE
         // ================================================================
-        function classifyRequest(text) {
-            const lower = text.toLowerCase();
-            const types = [];
+        let imageState = {
+            isGenerating: false,
+            abortController: null,
+            lastRequest: null, // { prompt, imageData, operation }
+            lastResult: null // { imageUrl, context }
+        };
 
-            // Memory commands
-            if (/remember this|save this|keep this forever|make this permanent/i.test(text)) {
-                types.push('memory_save');
-            }
-            if (/lock this|master lock|permanent lock|lock it/i.test(text)) {
-                types.push('memory_lock');
-            }
-            if (/unlock this|forget this|delete this memory/i.test(text)) {
-                types.push('memory_unlock');
-            }
-            if (/show my memories|what do you remember|show memories/i.test(text)) {
-                types.push('memory_show');
-            }
-            if (/show my locks|what is locked|active locks/i.test(text)) {
-                types.push('lock_show');
-            }
-
-            // Project commands
-            if (/create project|new project|start project/i.test(text)) {
-                types.push('project_create');
-            }
-            if (/switch project|change project|go to project/i.test(text)) {
-                types.push('project_switch');
-            }
-            if (/continue project|resume project/i.test(text)) {
-                types.push('project_continue');
-            }
-
-            // Content types
-            if (/code|programming|javascript|python|html|css|react|vue|angular|api|database|sql|function|debug|error|fix|bug/i
-                .test(text)) {
-                types.push('coding');
-            }
-            if (/film|movie|scene|character|cinematic|director|storyboard|script|dialogue|actor|actress|director|producer/i
-                .test(text)) {
-                types.push('film');
-            }
-            if (/music|song|lyrics|melody|rhythm|beat|producer|audio|vocal|instrumental|band|album/i.test(text)) {
-                types.push('music');
-            }
-            if (/prompt|midjourney|stable diffusion|flux|image generation|generate image|create image|picture of/i.test(
-                text)) {
-                types.push('prompt');
-            }
-            if (/business|strategy|marketing|sales|growth|startup|investor|funding|pitch|competitor|market/i.test(text)) {
-                types.push('business');
-            }
-            if (/research|study|analysis|data|statistics|report|findings|literature|paper|academic/i.test(text)) {
-                types.push('research');
-            }
-            if (/step by step|guide|tutorial|how to|learn|explain|teach/i.test(text)) {
-                types.push('tutorial');
-            }
-            if (/plan|project plan|timeline|roadmap|milestone|schedule/i.test(text)) {
-                types.push('planning');
-            }
-            if (/brainstorm|ideas|creative|concept|imagine|envision/i.test(text)) {
-                types.push('creative');
-            }
-            if (/compare|versus|vs|difference between|better than|pros and cons/i.test(text)) {
-                types.push('comparison');
-            }
-            if (/translate|translate to|hausa|english|french|arabic/i.test(text)) {
-                types.push('translation');
-            }
-            if (/summarize|summary|brief|overview|tl;dr|shorten/i.test(text)) {
-                types.push('summary');
-            }
-            if (/continue|go ahead|next|proceed|keep going|resume/i.test(text) && !/project|continue project/i.test(text)) {
-                types.push('continue');
-            }
-
-            // If no specific type, default to general
-            if (types.length === 0) {
-                types.push('general');
-            }
-
-            // Detect if it's a question
-            if (/^who|^what|^when|^where|^why|^how|^can you|^could you|^is it|^are you|^do you|^will you|^have you|^does|^did|\?/
-                .test(text)) {
-                types.push('question');
-            }
-
-            return types;
+        // Helper to get active locks for image generation
+        function getImageLocks(projectId) {
+            const locks = getActiveLocks(projectId);
+            const faceLocks = locks.filter(l => /face|character|person|identity|same face|consistent face/i.test(l.content));
+            const styleLocks = locks.filter(l => /style|cinematic|realistic|artistic/i.test(l.content));
+            const outfitLocks = locks.filter(l => /outfit|clothing|dress/i.test(l.content));
+            const bgLocks = locks.filter(l => /background|environment|setting/i.test(l.content));
+            return { faceLocks, styleLocks, outfitLocks, bgLocks };
         }
 
-        // ================================================================
-        // 3. RESPONSE STRATEGY SELECTOR
-        // ================================================================
-        function selectResponseStrategy(types, userText, history) {
-            if (types.includes('memory_save')) return 'memory_save';
-            if (types.includes('memory_lock')) return 'memory_lock';
-            if (types.includes('memory_unlock')) return 'memory_unlock';
-            if (types.includes('memory_show')) return 'memory_show';
-            if (types.includes('lock_show')) return 'lock_show';
-            if (types.includes('project_create')) return 'project_create';
-            if (types.includes('project_switch')) return 'project_switch';
-            if (types.includes('project_continue')) return 'project_continue';
-            if (types.includes('coding')) return 'coding';
-            if (types.includes('film')) return 'film';
-            if (types.includes('music')) return 'music';
-            if (types.includes('prompt')) return 'prompt';
-            if (types.includes('business')) return 'business';
-            if (types.includes('research')) return 'research';
-            if (types.includes('tutorial')) return 'tutorial';
-            if (types.includes('planning')) return 'planning';
-            if (types.includes('creative')) return 'creative';
-            if (types.includes('comparison')) return 'comparison';
-            if (types.includes('translation')) return 'translation';
-            if (types.includes('summary')) return 'summary';
-            if (types.includes('continue')) return 'continue';
-            if (types.includes('question')) return 'question';
-            return 'general';
+        // Build enhanced prompt with locks and context
+        function buildImagePrompt(userPrompt, referenceImage, projectId, operation = 'txt2img') {
+            let prompt = userPrompt;
+
+            // Add quality tags if not present
+            if (!prompt.includes('photorealistic') && !prompt.includes('8K') && !prompt.includes('highly detailed')) {
+                prompt += ", photorealistic, highly detailed, 8K, sharp focus";
+            }
+
+            // Apply master locks
+            const locks = getImageLocks(projectId);
+            if (locks.faceLocks.length > 0) {
+                // If reference image exists, we'll keep face via image-to-image; add text reinforcement
+                prompt += ", keep the same face, consistent identity";
+            }
+            if (locks.styleLocks.length > 0) {
+                const styleText = locks.styleLocks.map(l => l.content).join(', ');
+                prompt += `, ${styleText}`;
+            }
+            if (locks.outfitLocks.length > 0) {
+                const outfitText = locks.outfitLocks.map(l => l.content).join(', ');
+                prompt += `, ${outfitText}`;
+            }
+            if (locks.bgLocks.length > 0) {
+                const bgText = locks.bgLocks.map(l => l.content).join(', ');
+                prompt += `, ${bgText}`;
+            }
+
+            // If "create another" or "make it better", we add variation cue
+            if (operation === 'another' && imageState.lastResult) {
+                prompt += ", different variation, new composition, creative reinterpretation";
+            }
+            if (operation === 'improve' && imageState.lastResult) {
+                prompt += ", improved quality, more detailed, enhanced lighting, better composition";
+            }
+
+            return prompt;
         }
 
-        // ================================================================
-        // 4. CONTEXT BUILDER (with memory retrieval)
-        // ================================================================
-        function buildContext(userText, history, projectId) {
-            const context = {
-                userText: userText,
-                history: history,
-                projectId: projectId,
-                memories: [],
-                locks: [],
-                preferences: [],
-                project: null
+        // Main image generation function
+        async function generateImage(userPrompt, referenceImage = null, operation = 'txt2img', projectId = null) {
+            if (imageState.isGenerating) {
+                showToast('⏳ An image is already generating. Please wait.');
+                return null;
+            }
+
+            // Check API key
+            if (!state.replicateKey) {
+                showToast('⚠️ Please set your Replicate API key in Settings.');
+                return null;
+            }
+
+            // Build prompt
+            const finalPrompt = buildImagePrompt(userPrompt, referenceImage, projectId, operation);
+
+            // Prepare input for Replicate
+            let input = {
+                prompt: finalPrompt,
+                width: 1024,
+                height: 1024,
+                num_outputs: 1, // ONLY ONE IMAGE
+                guidance_scale: 3.5,
+                num_inference_steps: 28,
+                output_format: 'webp',
+                quality: 90
             };
 
-            // Get project
-            if (projectId) {
-                context.project = getProject(projectId);
+            // If reference image provided and operation is img2img or background replacement
+            if (referenceImage && (operation === 'img2img' || operation === 'replace_bg' || operation === 'remove_bg')) {
+                // Use the flux model with image input
+                input.image = referenceImage; // base64 or URL
+                // For img2img we need a different model? Actually flux supports img2img via image input.
+                // We'll use the same model but with image parameter.
+                // For remove_bg, we need a different model, we'll handle separately.
+                if (operation === 'remove_bg') {
+                    return await removeBackground(referenceImage);
+                }
+                // For replace_bg, we keep the same model but add background instruction in prompt
+                if (operation === 'replace_bg') {
+                    // Already handled by prompt building
+                }
             }
 
-            // Get relevant memories (search for keywords from user text)
-            const words = userText.split(/\s+/).filter(w => w.length > 3);
-            const allMemories = getMemories({ projectId: projectId });
-            // Score memories by relevance
-            const scored = allMemories.map(m => {
-                let score = 0;
-                const content = m.content.toLowerCase();
-                words.forEach(w => {
-                    if (content.includes(w.toLowerCase())) score += 2;
+            // For remove_bg, we call a dedicated function
+            if (operation === 'remove_bg') {
+                return await removeBackground(referenceImage);
+            }
+
+            // If no reference image, it's text-to-image
+            // For image-to-image, we need to send image data to Replicate
+            // The flux model supports image input via the "image" field.
+            // We'll use the same model for both.
+
+            try {
+                imageState.isGenerating = true;
+                imageState.abortController = new AbortController();
+                const signal = imageState.abortController.signal;
+
+                // Create prediction
+                const createResponse = await fetch('https://api.replicate.com/v1/predictions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Token ' + state.replicateKey
+                    },
+                    body: JSON.stringify({
+                        version: "black-forest-labs/flux-1.1-dev",
+                        input: input
+                    }),
+                    signal
                 });
-                // Boost if locked
-                if (m.isLocked) score += 5;
-                // Boost if same category
-                if (m.category && userText.toLowerCase().includes(m.category.toLowerCase())) score += 3;
-                return { ...m, score };
-            });
-            scored.sort((a, b) => b.score - a.score);
-            context.memories = scored.filter(m => m.score > 0).slice(0, 10);
 
-            // Get active locks
-            context.locks = getActiveLocks(projectId);
+                if (!createResponse.ok) {
+                    const err = await createResponse.json();
+                    throw new Error(err.detail || err.error || 'Failed to create prediction');
+                }
 
-            // Get preferences
-            context.preferences = getPreferences(projectId);
+                const prediction = await createResponse.json();
+                const getUrl = prediction.urls.get;
 
-            return context;
-        }
+                // Poll for completion
+                let result = null;
+                let attempts = 0;
+                const maxAttempts = 60;
 
-        // ================================================================
-        // 5. MASTER LOCK ENGINE
-        // ================================================================
-        function applyMasterLocks(userText, context) {
-            // Check if any lock conflicts with the user's request
-            const locks = context.locks || [];
-            const conflicts = [];
-
-            for (const lock of locks) {
-                // Simple conflict detection: if lock content mentions a rule and user text asks for something different
-                // Example: lock says "10 seconds" and user says "30 seconds"
-                const lockWords = lock.content.toLowerCase().split(/\s+/);
-                const userWords = userText.toLowerCase().split(/\s+/);
-
-                // Check for numeric conflicts
-                const lockNums = lockWords.filter(w => /^\d+$/.test(w));
-                const userNums = userWords.filter(w => /^\d+$/.test(w));
-
-                for (const ln of lockNums) {
-                    for (const un of userNums) {
-                        if (ln !== un && lock.content.includes(ln + ' seconds') && userText.includes(un + ' seconds')) {
-                            conflicts.push({
-                                lock: lock,
-                                message: `Your Master Lock "${lock.title}" requires ${ln} seconds. You requested ${un} seconds. Do you want to update the lock?`
-                            });
-                        }
+                while (attempts < maxAttempts) {
+                    if (signal.aborted) {
+                        throw new Error('Cancelled');
                     }
-                }
-
-                // Check if user explicitly asks to change/override a lock
-                if (/change|override|update|modify|remove|delete|unlock/i.test(userText) && lock.content.toLowerCase()
-                    .split(/\s+/).some(w => userWords.includes(w))) {
-                    conflicts.push({
-                        lock: lock,
-                        message: `You're trying to change "${lock.title}". This is a Master Lock. Do you want to update or remove it?`
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    const pollResponse = await fetch(getUrl, {
+                        headers: { 'Authorization': 'Token ' + state.replicateKey },
+                        signal
                     });
+                    if (!pollResponse.ok) { attempts++; continue; }
+                    const pollData = await pollResponse.json();
+                    if (pollData.status === 'succeeded') {
+                        result = pollData;
+                        break;
+                    } else if (pollData.status === 'failed') {
+                        throw new Error(pollData.error || 'Image generation failed');
+                    }
+                    attempts++;
                 }
-            }
 
-            return conflicts;
+                if (!result) {
+                    throw new Error('Image generation timed out.');
+                }
+
+                // Extract image URL
+                let imageUrl = null;
+                if (result.output && Array.isArray(result.output) && result.output.length > 0) {
+                    imageUrl = result.output[0];
+                } else if (result.output && typeof result.output === 'string') {
+                    imageUrl = result.output;
+                } else {
+                    throw new Error('No image returned.');
+                }
+
+                // Store last result
+                imageState.lastResult = { imageUrl, context: { prompt: finalPrompt, operation, projectId } };
+                imageState.lastRequest = { prompt: userPrompt, imageData: referenceImage, operation };
+
+                imageState.isGenerating = false;
+                imageState.abortController = null;
+                return { imageUrl };
+
+            } catch (err) {
+                imageState.isGenerating = false;
+                imageState.abortController = null;
+                if (err.name === 'AbortError' || err.message === 'Cancelled') {
+                    showToast('⏹️ Image generation cancelled.');
+                    return { cancelled: true };
+                }
+                console.error('Image generation error:', err);
+                showToast('❌ Image generation failed: ' + err.message);
+                return { error: err.message };
+            }
+        }
+
+        // Background removal using a dedicated model
+        async function removeBackground(imageData) {
+            if (!state.replicateKey) {
+                showToast('⚠️ Please set your Replicate API key.');
+                return { error: 'No API key' };
+            }
+            try {
+                imageState.isGenerating = true;
+                imageState.abortController = new AbortController();
+                const signal = imageState.abortController.signal;
+
+                // Use the rembg model
+                const createResponse = await fetch('https://api.replicate.com/v1/predictions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Token ' + state.replicateKey
+                    },
+                    body: JSON.stringify({
+                        version: "cjwbw/rembg:fb8af171cfa1616ddcf1242c093f9c46bcada5ad4cf6f2fbe8b81b330ec5c003",
+                        input: {
+                            image: imageData
+                        }
+                    }),
+                    signal
+                });
+
+                if (!createResponse.ok) {
+                    const err = await createResponse.json();
+                    throw new Error(err.detail || err.error || 'Failed to create background removal');
+                }
+
+                const prediction = await createResponse.json();
+                const getUrl = prediction.urls.get;
+
+                let result = null;
+                let attempts = 0;
+                while (attempts < 30) {
+                    if (signal.aborted) throw new Error('Cancelled');
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    const pollResponse = await fetch(getUrl, {
+                        headers: { 'Authorization': 'Token ' + state.replicateKey },
+                        signal
+                    });
+                    if (!pollResponse.ok) { attempts++; continue; }
+                    const pollData = await pollResponse.json();
+                    if (pollData.status === 'succeeded') {
+                        result = pollData;
+                        break;
+                    } else if (pollData.status === 'failed') {
+                        throw new Error(pollData.error || 'Background removal failed');
+                    }
+                    attempts++;
+                }
+
+                if (!result) throw new Error('Background removal timed out.');
+
+                let imageUrl = null;
+                if (result.output && typeof result.output === 'string') {
+                    imageUrl = result.output;
+                } else if (result.output && Array.isArray(result.output) && result.output.length > 0) {
+                    imageUrl = result.output[0];
+                } else {
+                    throw new Error('No image returned.');
+                }
+
+                imageState.isGenerating = false;
+                imageState.abortController = null;
+                return { imageUrl };
+            } catch (err) {
+                imageState.isGenerating = false;
+                imageState.abortController = null;
+                if (err.name === 'AbortError' || err.message === 'Cancelled') {
+                    showToast('⏹️ Background removal cancelled.');
+                    return { cancelled: true };
+                }
+                console.error('Remove bg error:', err);
+                showToast('❌ Background removal failed: ' + err.message);
+                return { error: err.message };
+            }
+        }
+
+        // Cancel ongoing generation
+        function cancelImageGeneration() {
+            if (imageState.abortController) {
+                imageState.abortController.abort();
+                imageState.isGenerating = false;
+                imageState.abortController = null;
+                showToast('⏹️ Generation cancelled.');
+                return true;
+            }
+            return false;
         }
 
         // ================================================================
-        // 6. STATE (existing)
+        // 3. STATE (existing)
         // ================================================================
         let chats = {};
         let currentChatId = null;
@@ -2255,7 +2372,7 @@
         const addProjectBtn = document.getElementById('addProjectBtn');
 
         // ================================================================
-        // 7. UTILITY FUNCTIONS (existing + new)
+        // 4. UTILITY FUNCTIONS (existing)
         // ================================================================
         function showToast(msg) {
             toast.textContent = msg;
@@ -2362,7 +2479,7 @@
         }
 
         // ================================================================
-        // 8. IDENTITY INTERCEPTOR (unchanged)
+        // 5. IDENTITY INTERCEPTOR (unchanged)
         // ================================================================
         function detectIdentityQuestion(text) {
             const lower = text.toLowerCase();
@@ -2380,7 +2497,7 @@
         }
 
         // ================================================================
-        // 9. SYSTEM PROMPT (enhanced with memory context)
+        // 6. SYSTEM PROMPT (existing, for chat)
         // ================================================================
         function buildWisdomSystemPrompt(context = null) {
             let prompt = `You are Wise King AI — a world-class, persistent, intelligent assistant created by IBRAHIM ABDULLAHI from Nigeria (Wise King Industry).
@@ -2415,31 +2532,22 @@ For the owner (IBRAHIM ABDULLAHI):
 When communicating with your owner, blend absolute loyalty with sharp strategic insights — like a dedicated elite prime minister advising a king.
 
 `;
-
-            // Add memory context if available
             if (context) {
                 if (context.project) {
-                    prompt += `\nACTIVE PROJECT: ${context.project.name}`;
-                    if (context.project.description) {
-                        prompt += ` — ${context.project.description}`;
-                    }
-                    prompt += `\n`;
+                    prompt += `\nACTIVE PROJECT: ${context.project.name}\n`;
                 }
-
                 if (context.locks && context.locks.length > 0) {
                     prompt += `\nACTIVE MASTER LOCKS:\n`;
                     context.locks.forEach(lock => {
                         prompt += `- 🔒 ${lock.title}: ${lock.content}\n`;
                     });
                 }
-
                 if (context.memories && context.memories.length > 0) {
                     prompt += `\nRELEVANT MEMORIES:\n`;
                     context.memories.slice(0, 5).forEach(mem => {
                         prompt += `- ${mem.content}\n`;
                     });
                 }
-
                 if (context.preferences && context.preferences.length > 0) {
                     prompt += `\nUSER PREFERENCES:\n`;
                     context.preferences.forEach(pref => {
@@ -2447,110 +2555,71 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                     });
                 }
             }
-
             prompt += `\nRemember: You are Wise King AI — a sovereign intelligence with the heart of a teacher and the mind of a strategist. 👑`;
-
             return prompt;
         }
 
         // ================================================================
-        // 10. API CALL (enhanced with context)
+        // 7. API CALL (existing, for chat)
         // ================================================================
         async function callAI(userText, history = [], context = null) {
-            // Identity interceptor
             if (detectIdentityQuestion(userText)) {
                 const baseReply = getHardcodedIdentityResponse();
-                if (isOwner()) {
-                    return "Yah Maigida Na! 👑 " + baseReply;
-                }
+                if (isOwner()) return "Yah Maigida Na! 👑 " + baseReply;
                 return baseReply;
             }
-
-            if (!state.apiKey) {
-                return "⚠️ Please set your API key in Settings first.";
-            }
-
+            if (!state.apiKey) return "⚠️ Please set your API key in Settings first.";
             const provider = state.provider;
             const model = state.model;
             const systemPrompt = buildWisdomSystemPrompt(context);
-
             try {
-                let response;
-                let data;
-
+                let response, data;
                 switch (provider) {
                     case 'gemini': {
                         const url =
                             `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${state.apiKey}`;
                         const contents = [];
-                        contents.push({
-                            role: 'user',
-                            parts: [{ text: systemPrompt }]
-                        });
-                        contents.push({
-                            role: 'model',
-                            parts: [{ text: "Understood. I'll follow these guidelines and remember the context." }]
-                        });
+                        contents.push({ role: 'user', parts: [{ text: systemPrompt }] });
+                        contents.push({ role: 'model', parts: [{ text: "Understood." }] });
                         for (const msg of history) {
-                            if (msg.role === 'user') {
-                                contents.push({
-                                    role: 'user',
-                                    parts: [{ text: msg.content }]
-                                });
-                            } else if (msg.role === 'assistant') {
-                                contents.push({
-                                    role: 'model',
-                                    parts: [{ text: msg.content }]
-                                });
-                            }
+                            if (msg.role === 'user') contents.push({ role: 'user', parts: [{ text: msg.content }] });
+                            else if (msg.role === 'assistant') contents.push({ role: 'model', parts: [{ text: msg
+                                        .content }] });
                         }
-                        contents.push({
-                            role: 'user',
-                            parts: [{ text: userText }]
-                        });
+                        contents.push({ role: 'user', parts: [{ text: userText }] });
                         response = await fetch(url, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 generationConfig: { temperature: 0.75, maxOutputTokens: 4096, topP: 0.95 },
-                                contents: contents
+                                contents
                             })
                         });
                         data = await response.json();
                         if (!response.ok) {
                             let errMsg = data.error?.message || 'Unknown error';
-                            if (errMsg.includes('not found') || errMsg.includes('model')) {
-                                errMsg =
-                                    `Model "${model}" is not available. Try "gemini-3.5-flash" or "gemini-2.5-flash".`;
-                            }
+                            if (errMsg.includes('not found') || errMsg.includes('model')) errMsg =
+                                `Model "${model}" not available. Try "gemini-3.5-flash".`;
                             if (isOwner()) return "Yah Maigida Na! 👑 ❌ Gemini Error: " + errMsg;
                             return "❌ Gemini Error: " + errMsg;
                         }
-                        if (!data.candidates || !data.candidates[0]?.content?.parts) {
-                            return "❌ No response from Gemini.";
-                        }
+                        if (!data.candidates || !data.candidates[0]?.content?.parts) return "❌ No response.";
                         let reply = data.candidates[0].content.parts.map(p => p.text || '').join('').trim();
                         if (isOwner()) reply = "Yah Maigida Na! 👑 " + reply;
                         return reply;
                     }
-
                     case 'deepseek':
                     case 'grok':
                     case 'openai': {
                         const endpoint = provider === 'deepseek' ? 'https://api.deepseek.com/chat/completions' :
                             provider === 'grok' ? 'https://api.x.ai/v1/chat/completions' :
                             'https://api.openai.com/v1/chat/completions';
-
-                        const messages = [
-                            { role: 'system', content: systemPrompt }
-                        ];
+                        const messages = [{ role: 'system', content: systemPrompt }];
                         for (const msg of history) {
-                            if (msg.role === 'user' || msg.role === 'assistant') {
-                                messages.push({ role: msg.role, content: msg.content });
-                            }
+                            if (msg.role === 'user' || msg.role === 'assistant') messages.push({ role: msg.role,
+                                content: msg.content });
                         }
                         messages.push({ role: 'user', content: userText });
-
                         response = await fetch(endpoint, {
                             method: 'POST',
                             headers: {
@@ -2558,8 +2627,8 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                                 'Authorization': 'Bearer ' + state.apiKey
                             },
                             body: JSON.stringify({
-                                model: model,
-                                messages: messages,
+                                model,
+                                messages,
                                 temperature: 0.75,
                                 max_tokens: 4096,
                                 top_p: 0.95
@@ -2568,9 +2637,8 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                         data = await response.json();
                         if (!response.ok) {
                             let errMsg = data.error?.message || 'Unknown error';
-                            if (provider === 'deepseek' && errMsg.toLowerCase().includes('insufficient balance')) {
-                                errMsg = 'Insufficient balance. Please add credits at platform.deepseek.com';
-                            }
+                            if (provider === 'deepseek' && errMsg.toLowerCase().includes('insufficient balance'))
+                                errMsg = 'Insufficient balance. Add credits.';
                             if (isOwner()) return "Yah Maigida Na! 👑 ❌ " + provider.charAt(0).toUpperCase() + provider
                                 .slice(1) + " Error: " + errMsg;
                             return "❌ " + provider.charAt(0).toUpperCase() + provider.slice(1) + " Error: " + errMsg;
@@ -2579,105 +2647,19 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                         if (isOwner()) reply = "Yah Maigida Na! 👑 " + reply;
                         return reply;
                     }
-
                     default:
-                        return "❌ Unknown provider selected.";
+                        return "❌ Unknown provider.";
                 }
             } catch (err) {
-                console.error('API Call Error:', err);
-                let errMsg = "❌ Network error. Check your internet connection.";
+                console.error('API Error:', err);
+                let errMsg = "❌ Network error.";
                 if (isOwner()) return "Yah Maigida Na! 👑 " + errMsg;
                 return errMsg;
             }
         }
 
         // ================================================================
-        // 11. REPLICATE FLUX (unchanged)
-        // ================================================================
-        async function generateFluxImage(prompt) {
-            if (!state.replicateKey) {
-                return { error: "⚠️ Please set your Replicate API key in Settings first." };
-            }
-            let enhancedPrompt = prompt;
-            const keepFaceMatch = prompt.match(/keep\s+(?:the\s+)?(?:same\s+)?face/i);
-            const changeBackgroundMatch = prompt.match(/change\s+(?:the\s+)?background/i);
-            if (keepFaceMatch && changeBackgroundMatch) {
-                enhancedPrompt = prompt + ", keep the same face, only change the background, photorealistic, highly detailed, 8K, sharp focus";
-            } else if (!prompt.includes('photorealistic') && !prompt.includes('8K')) {
-                enhancedPrompt = prompt + ", photorealistic, highly detailed, 8K, sharp focus";
-            }
-            const modelId = "black-forest-labs/flux-1.1-dev";
-            try {
-                const createResponse = await fetch('https://api.replicate.com/v1/predictions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Token ' + state.replicateKey
-                    },
-                    body: JSON.stringify({
-                        version: modelId,
-                        input: {
-                            prompt: enhancedPrompt,
-                            width: 1024,
-                            height: 1024,
-                            num_outputs: 2,
-                            guidance_scale: 3.5,
-                            num_inference_steps: 28,
-                            output_format: 'webp',
-                            quality: 90
-                        }
-                    })
-                });
-                if (!createResponse.ok) {
-                    const err = await createResponse.json();
-                    return { error: "❌ Replicate error: " + (err.detail || err.error || 'Unknown error') };
-                }
-                const prediction = await createResponse.json();
-                const getUrl = prediction.urls.get;
-                let result = null;
-                let attempts = 0;
-                while (attempts < 60) {
-                    await new Promise(resolve => setTimeout(resolve, 1500));
-                    const pollResponse = await fetch(getUrl, {
-                        headers: { 'Authorization': 'Token ' + state.replicateKey }
-                    });
-                    if (!pollResponse.ok) { attempts++; continue; }
-                    const pollData = await pollResponse.json();
-                    if (pollData.status === 'succeeded') { result = pollData; break; }
-                    if (pollData.status === 'failed') {
-                        return { error: "❌ Image generation failed: " + (pollData.error || 'Unknown error') };
-                    }
-                    attempts++;
-                }
-                if (!result) return { error: "❌ Image generation timed out. Please try again." };
-                let images = [];
-                if (result.output && Array.isArray(result.output)) images = result.output;
-                else if (result.output && typeof result.output === 'string') images = [result.output];
-                else return { error: "❌ No images generated. Please try a different prompt." };
-                return { images: images };
-            } catch (err) {
-                return { error: "❌ Network error: " + err.message };
-            }
-        }
-
-        // ================================================================
-        // 12. IMAGE GENERATION (Pollinations fallback)
-        // ================================================================
-        async function generateImagesPollinations(prompt) {
-            const baseUrl = 'https://image.pollinations.ai/prompt/';
-            const encoded = encodeURIComponent(prompt);
-            const imageUrls = [];
-            for (let i = 0; i < 4; i++) {
-                const seed = Math.floor(Math.random() * 2147483647);
-                const url =
-                    `${baseUrl}${encoded}?width=512&height=512&seed=${seed}&model=flux&nologo=true&enhance=false&safe=false`;
-                imageUrls.push(url);
-            }
-            return imageUrls;
-        }
-
-        // ================================================================
-        // 13. RENDER MESSAGES (existing, with minor updates)
+        // 8. RENDER MESSAGES (existing, with image engine changes)
         // ================================================================
         function renderMessage(role, content, extra = {}, msgIndex) {
             const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -2793,24 +2775,28 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                     }
                 }
             } else {
+                // AI message - handle image display
                 let imageGridHtml = '';
-                if (extra.generatedImages && extra.generatedImages.length) {
-                    imageGridHtml = '<div class="image-grid">';
-                    extra.generatedImages.forEach((imgSrc, idx) => {
-                        imageGridHtml += `
+                // Only show one image (since we generate single)
+                if (extra.generatedImage) {
+                    imageGridHtml = `
+                        <div class="image-grid">
                             <div class="generated-image-card">
-                                <img src="${imgSrc}" alt="Generated image ${idx+1}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+                                <img src="${extra.generatedImage}" alt="Generated image" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
                                 <div style="display:none;align-items:center;justify-content:center;padding:20px;color:var(--text-light);font-size:0.8rem;gap:6px;">
                                     <i class="fas fa-exclamation-triangle"></i> Failed to load
                                 </div>
                                 <div class="image-card-overlay">
-                                    <button class="download-btn" data-src="${imgSrc}">
+                                    <button class="download-btn" data-src="${extra.generatedImage}">
                                         <i class="fas fa-download"></i> Download
                                     </button>
+                                    <button class="retry-btn" data-prompt="${escapeHtml(content)}" data-operation="another">
+                                        <i class="fas fa-sync"></i> Another
+                                    </button>
                                 </div>
-                            </div>`;
-                    });
-                    imageGridHtml += '</div>';
+                            </div>
+                        </div>
+                    `;
                 }
 
                 const formattedContent = escapeHtml(content).replace(/\n/g, '<br>');
@@ -2832,6 +2818,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                     </div>
                 `;
 
+                // Download and Retry buttons
                 el.querySelectorAll('.download-btn').forEach(btn => {
                     btn.addEventListener('click', () => {
                         const src = btn.dataset.src;
@@ -2842,6 +2829,16 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                         link.click();
                         document.body.removeChild(link);
                         showToast('✅ Image downloaded!');
+                    });
+                });
+                el.querySelectorAll('.retry-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const prompt = btn.dataset.prompt || '';
+                        const operation = btn.dataset.operation || 'another';
+                        // Retry with same concept but new variation
+                        // We'll send a message "Generate another image: [prompt]"
+                        chatInput.value = `Generate another image: ${prompt}`;
+                        sendMessage();
                     });
                 });
 
@@ -2864,12 +2861,10 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                         } else if (action === 'share') {
                             openShareModal(text);
                         } else if (action === 'save-memory') {
-                            // Save this AI response as memory
                             const memoryContent = text.length > 200 ? text.substring(0, 200) + '...' : text;
                             createMemory(memoryContent, MEMORY_TYPES.MEMORY, 'ai_response', activeProjectId, false);
                             showToast('🧠 Saved to memory!');
                         } else if (action === 'save-lock') {
-                            // Create a master lock from this response
                             const lockTitle = text.split('\n')[0].substring(0, 40) + '...';
                             createLock(lockTitle, text, MEMORY_PRIORITY.MASTER_LOCK, activeProjectId);
                             showToast('🔒 Master Lock created!');
@@ -2896,7 +2891,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         // ================================================================
-        // 14. SPEECH & VOICE (unchanged)
+        // 9. SPEECH & VOICE (unchanged)
         // ================================================================
         function speakText(text) {
             if (!window.speechSynthesis) { showToast('❌ Speech not supported'); return; }
@@ -2916,7 +2911,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
 
         voiceBtn.addEventListener('click', () => {
             if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                showToast('❌ Voice input not supported in this browser.');
+                showToast('❌ Voice input not supported.');
                 return;
             }
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -2942,17 +2937,14 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 isRecording = false;
                 voiceBtn.classList.remove('recording');
                 voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
-                if (err.error === 'not-allowed') {
-                    showToast('❌ Microphone access denied.');
-                } else {
-                    showToast('❌ Voice error: ' + err.error);
-                }
+                if (err.error === 'not-allowed') showToast('❌ Microphone access denied.');
+                else showToast('❌ Voice error: ' + err.error);
             };
             recognition.start();
         });
 
         // ================================================================
-        // 15. FILE UPLOAD (unchanged)
+        // 10. FILE UPLOAD (unchanged)
         // ================================================================
         attachBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -2996,7 +2988,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         // ================================================================
-        // 16. CHAT MANAGEMENT (existing with memory integration)
+        // 11. CHAT MANAGEMENT (existing)
         // ================================================================
         function renderChatList() {
             chatList.innerHTML = '';
@@ -3044,7 +3036,6 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 });
                 chatList.appendChild(el);
 
-                // Rename handlers
                 if (isEditing) {
                     const input = el.querySelector('.edit-title-input');
                     const saveBtn = el.querySelector('.save-rename-btn');
@@ -3077,15 +3068,13 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 }
             });
 
-            // Dropdown toggle
             document.querySelectorAll('.more-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const parent = btn.closest('.chat-item');
                     const menu = parent.querySelector('.dropdown-menu');
-                    document.querySelectorAll('.dropdown-menu').forEach(m => {
-                        if (m !== menu) m.classList.remove('show');
-                    });
+                    document.querySelectorAll('.dropdown-menu').forEach(m => { if (m !== menu) m.classList.remove(
+                            'show'); });
                     menu.classList.toggle('show');
                 });
             });
@@ -3126,31 +3115,24 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                     const id = btn.dataset.id;
                     const projects = getProjects();
                     if (projects.length === 0) {
-                        showToast('📁 No projects yet. Create one in Projects Manager.');
+                        showToast('📁 No projects. Create one in Projects Manager.');
                         document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
                         return;
                     }
-                    // Simple project selector: show toast with options
                     const names = projects.map((p, i) => `${i+1}. ${p.name}`).join('\n');
                     const choice = prompt(`Select a project for this chat:\n${names}\n\nEnter number or project name:`);
                     if (choice) {
                         const num = parseInt(choice);
                         let project = null;
-                        if (!isNaN(num) && num >= 1 && num <= projects.length) {
-                            project = projects[num - 1];
-                        } else {
-                            project = projects.find(p => p.name.toLowerCase().includes(choice.toLowerCase()));
-                        }
+                        if (!isNaN(num) && num >= 1 && num <= projects.length) project = projects[num - 1];
+                        else project = projects.find(p => p.name.toLowerCase().includes(choice.toLowerCase()));
                         if (project) {
-                            // Store project association in chat metadata
                             if (!chats[id].metadata) chats[id].metadata = {};
                             chats[id].metadata.projectId = project.id;
                             saveChats();
                             activeProjectId = project.id;
                             showToast(`📁 Project set to: ${project.name}`);
-                        } else {
-                            showToast('❌ Project not found.');
-                        }
+                        } else showToast('❌ Project not found.');
                     }
                     document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
                 });
@@ -3166,16 +3148,11 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
             });
         }
 
-        cancelDelete.addEventListener('click', () => {
-            deleteModal.classList.remove('active');
-            pendingDeleteChatId = null;
-        });
-
+        cancelDelete.addEventListener('click', () => { deleteModal.classList.remove('active');
+            pendingDeleteChatId = null; });
         confirmDelete.addEventListener('click', () => {
-            if (pendingDeleteChatId) {
-                deleteChat(pendingDeleteChatId);
-                pendingDeleteChatId = null;
-            }
+            if (pendingDeleteChatId) { deleteChat(pendingDeleteChatId);
+                pendingDeleteChatId = null; }
             deleteModal.classList.remove('active');
         });
 
@@ -3183,16 +3160,12 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
             const btn = e.target.closest('.share-btn');
             if (!btn) return;
             const platform = btn.dataset.sharePlatform;
-            if (!pendingShareChatId || !chats[pendingShareChatId]) {
-                showToast('❌ Chat not found');
-                return;
-            }
+            if (!pendingShareChatId || !chats[pendingShareChatId]) { showToast('❌ Chat not found'); return; }
             const chat = chats[pendingShareChatId];
             const text =
                 `Wise King AI Chat: ${chat.title}\n\n${chat.messages.map(m => m.role + ': ' + m.content).join('\n')}`;
             const encoded = encodeURIComponent(text);
             const url = window.location.href + '?chat=' + pendingShareChatId;
-
             let shareUrl = '';
             switch (platform) {
                 case 'whatsapp':
@@ -3205,47 +3178,44 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                     shareUrl = `https://twitter.com/intent/tweet?text=${encoded}`;
                     break;
                 case 'tiktok':
-                    navigator.clipboard.writeText(text).then(() => {
-                        showToast('📋 Text copied! Open TikTok and paste it.');
-                    }).catch(() => {
-                        const ta = document.createElement('textarea');
-                        ta.value = text;
-                        document.body.appendChild(ta);
-                        ta.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(ta);
-                        showToast('📋 Text copied! Open TikTok and paste it.');
-                    });
+                    navigator.clipboard.writeText(text).then(() => { showToast('📋 Text copied! Open TikTok and paste it.'); })
+                        .catch(() => {
+                            const ta = document.createElement('textarea');
+                            ta.value = text;
+                            document.body.appendChild(ta);
+                            ta.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(ta);
+                            showToast('📋 Text copied! Open TikTok and paste it.');
+                        });
                     shareChatModal.classList.remove('active');
                     pendingShareChatId = null;
                     return;
                 case 'instagram':
-                    navigator.clipboard.writeText(text).then(() => {
-                        showToast('📋 Text copied! Open Instagram and paste it.');
-                    }).catch(() => {
-                        const ta = document.createElement('textarea');
-                        ta.value = text;
-                        document.body.appendChild(ta);
-                        ta.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(ta);
-                        showToast('📋 Text copied! Open Instagram and paste it.');
-                    });
+                    navigator.clipboard.writeText(text).then(() => { showToast('📋 Text copied! Open Instagram and paste it.'); })
+                        .catch(() => {
+                            const ta = document.createElement('textarea');
+                            ta.value = text;
+                            document.body.appendChild(ta);
+                            ta.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(ta);
+                            showToast('📋 Text copied! Open Instagram and paste it.');
+                        });
                     shareChatModal.classList.remove('active');
                     pendingShareChatId = null;
                     return;
                 case 'copy':
-                    navigator.clipboard.writeText(url + '\n\n' + text).then(() => {
-                        showToast('✅ Chat link and content copied!');
-                    }).catch(() => {
-                        const ta = document.createElement('textarea');
-                        ta.value = url + '\n\n' + text;
-                        document.body.appendChild(ta);
-                        ta.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(ta);
-                        showToast('✅ Chat link and content copied!');
-                    });
+                    navigator.clipboard.writeText(url + '\n\n' + text).then(() => { showToast('✅ Chat link and content copied!'); })
+                        .catch(() => {
+                            const ta = document.createElement('textarea');
+                            ta.value = url + '\n\n' + text;
+                            document.body.appendChild(ta);
+                            ta.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(ta);
+                            showToast('✅ Chat link and content copied!');
+                        });
                     shareChatModal.classList.remove('active');
                     pendingShareChatId = null;
                     return;
@@ -3270,12 +3240,9 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
 
         function switchToChat(id) {
             currentChatId = id;
-            // Load project association
             if (chats[id] && chats[id].metadata && chats[id].metadata.projectId) {
                 activeProjectId = chats[id].metadata.projectId;
-            } else {
-                activeProjectId = null;
-            }
+            } else activeProjectId = null;
             renderChatList();
             renderMessages();
             updateBackButton();
@@ -3302,10 +3269,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         function renderMessages() {
-            if (!currentChatId || !chats[currentChatId]) {
-                showWelcomeScreen();
-                return;
-            }
+            if (!currentChatId || !chats[currentChatId]) { showWelcomeScreen(); return; }
             hideWelcomeScreen();
             messagesTarget.innerHTML = '';
             const msgs = chats[currentChatId].messages;
@@ -3324,9 +3288,15 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
 
         // ================================================================
-        // 17. SEND MESSAGE — WITH INTELLIGENT CONTEXT
+        // 12. SEND MESSAGE — WITH IMAGE ENGINE INTEGRATION
         // ================================================================
         async function sendMessage() {
+            // Prevent duplicate requests while generating
+            if (imageState.isGenerating) {
+                showToast('⏳ An image is already generating. Please wait.');
+                return;
+            }
+
             const text = chatInput.value.trim();
             if (!text && uploadedImages.length === 0) return;
             if (!currentChatId) createNewChat();
@@ -3334,7 +3304,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 chats[currentChatId].title = text.substring(0, 25) + (text.length > 25 ? '...' : '');
             }
 
-            // Convert uploaded images
+            // Convert uploaded images to base64
             const imagesForApi = [];
             for (const imgObj of uploadedImages) {
                 if (imgObj.file) {
@@ -3345,222 +3315,65 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 }
             }
 
+            // Store user message
             const userMsg = { role: 'user', content: text, extra: { images: imagesForApi } };
             chats[currentChatId].messages.push(userMsg);
             chatInput.value = '';
+            const uploadedCopy = [...uploadedImages];
             uploadedImages = [];
             updateImagePreview();
             renderMessage('user', text, userMsg.extra, chats[currentChatId].messages.length - 1);
 
-            typingIndicator.classList.remove('hidden');
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-
-            // ---- CLASSIFY REQUEST ----
-            const types = classifyRequest(text);
-
-            // ---- CHECK FOR MEMORY COMMANDS ----
-            if (types.includes('memory_save')) {
-                const memoryContent = text.replace(/remember this|save this|keep this forever|make this permanent/i, '')
-                    .trim();
-                if (memoryContent) {
-                    createMemory(memoryContent, MEMORY_TYPES.MEMORY, 'saved', activeProjectId, false);
-                    const reply =
-                        `✅ I've saved that to my permanent memory: "${memoryContent}"\n\nI'll remember this across all our conversations. 🧠`;
-                    typingIndicator.classList.add('hidden');
-                    const aiMsg = { role: 'assistant', content: reply, extra: {} };
-                    chats[currentChatId].messages.push(aiMsg);
-                    renderMessage('assistant', reply, {}, chats[currentChatId].messages.length - 1);
-                    saveChats();
-                    return;
-                }
-            }
-
-            if (types.includes('memory_lock')) {
-                const lockContent = text.replace(/lock this|master lock|permanent lock|lock it/i, '').trim();
-                if (lockContent) {
-                    const lockTitle = lockContent.split('\n')[0].substring(0, 40) + '...';
-                    createLock(lockTitle, lockContent, MEMORY_PRIORITY.MASTER_LOCK, activeProjectId);
-                    const reply =
-                        `🔒 Master Lock created: "${lockContent}"\n\nThis rule will remain active until you explicitly change or unlock it.`;
-                    typingIndicator.classList.add('hidden');
-                    const aiMsg = { role: 'assistant', content: reply, extra: {} };
-                    chats[currentChatId].messages.push(aiMsg);
-                    renderMessage('assistant', reply, {}, chats[currentChatId].messages.length - 1);
-                    saveChats();
-                    return;
-                }
-            }
-
-            if (types.includes('memory_show')) {
-                const memories = getMemories({ projectId: activeProjectId });
-                if (memories.length === 0) {
-                    const reply = `🧠 You don't have any stored memories yet. I'll remember anything you ask me to save!`;
-                    typingIndicator.classList.add('hidden');
-                    const aiMsg = { role: 'assistant', content: reply, extra: {} };
-                    chats[currentChatId].messages.push(aiMsg);
-                    renderMessage('assistant', reply, {}, chats[currentChatId].messages.length - 1);
-                    saveChats();
-                    return;
-                }
-                let reply = `🧠 **Your Memories** (${memories.length})\n\n`;
-                memories.slice(0, 15).forEach((m, i) => {
-                    const tag = m.isLocked ? '🔒 ' : '';
-                    reply += `${i+1}. ${tag}${m.content}\n`;
-                });
-                if (memories.length > 15) reply += `\n... and ${memories.length - 15} more.`;
-                typingIndicator.classList.add('hidden');
-                const aiMsg = { role: 'assistant', content: reply, extra: {} };
-                chats[currentChatId].messages.push(aiMsg);
-                renderMessage('assistant', reply, {}, chats[currentChatId].messages.length - 1);
-                saveChats();
-                return;
-            }
-
-            if (types.includes('lock_show')) {
-                const locks = getActiveLocks(activeProjectId);
-                if (locks.length === 0) {
-                    const reply = `🔒 No active Master Locks. You can create one by saying "Lock this: [your rule]".`;
-                    typingIndicator.classList.add('hidden');
-                    const aiMsg = { role: 'assistant', content: reply, extra: {} };
-                    chats[currentChatId].messages.push(aiMsg);
-                    renderMessage('assistant', reply, {}, chats[currentChatId].messages.length - 1);
-                    saveChats();
-                    return;
-                }
-                let reply = `🔒 **Active Master Locks** (${locks.length})\n\n`;
-                locks.forEach((l, i) => {
-                    reply += `${i+1}. **${l.title}** — ${l.content}\n`;
-                });
-                typingIndicator.classList.add('hidden');
-                const aiMsg = { role: 'assistant', content: reply, extra: {} };
-                chats[currentChatId].messages.push(aiMsg);
-                renderMessage('assistant', reply, {}, chats[currentChatId].messages.length - 1);
-                saveChats();
-                return;
-            }
-
-            // ---- CHECK FOR PROJECT COMMANDS ----
-            if (types.includes('project_create')) {
-                const projectName = text.replace(/create project|new project|start project/i, '').trim() || 'New Project';
-                const project = createProject(projectName);
-                activeProjectId = project.id;
-                const reply = `📁 Project "${project.name}" created!\n\nI've switched to this project. All future memories and locks can be tied to it.`;
-                typingIndicator.classList.add('hidden');
-                const aiMsg = { role: 'assistant', content: reply, extra: {} };
-                chats[currentChatId].messages.push(aiMsg);
-                renderMessage('assistant', reply, {}, chats[currentChatId].messages.length - 1);
-                if (chats[currentChatId]) {
-                    if (!chats[currentChatId].metadata) chats[currentChatId].metadata = {};
-                    chats[currentChatId].metadata.projectId = project.id;
-                    saveChats();
-                }
-                return;
-            }
-
-            if (types.includes('project_switch')) {
-                const projects = getProjects();
-                if (projects.length === 0) {
-                    const reply = `📁 No projects found. Create one with "Create project: [name]".`;
-                    typingIndicator.classList.add('hidden');
-                    const aiMsg = { role: 'assistant', content: reply, extra: {} };
-                    chats[currentChatId].messages.push(aiMsg);
-                    renderMessage('assistant', reply, {}, chats[currentChatId].messages.length - 1);
-                    saveChats();
-                    return;
-                }
-                // Try to find project by name in text
-                let targetProject = null;
-                for (const p of projects) {
-                    if (text.toLowerCase().includes(p.name.toLowerCase())) {
-                        targetProject = p;
-                        break;
-                    }
-                }
-                if (!targetProject) {
-                    const names = projects.map(p => `"${p.name}"`).join(', ');
-                    const reply =
-                        `📁 Which project do you want to switch to? Available: ${names}\n\nSay "switch to [project name]" or create a new one.`;
-                    typingIndicator.classList.add('hidden');
-                    const aiMsg = { role: 'assistant', content: reply, extra: {} };
-                    chats[currentChatId].messages.push(aiMsg);
-                    renderMessage('assistant', reply, {}, chats[currentChatId].messages.length - 1);
-                    saveChats();
-                    return;
-                }
-                activeProjectId = targetProject.id;
-                if (chats[currentChatId]) {
-                    if (!chats[currentChatId].metadata) chats[currentChatId].metadata = {};
-                    chats[currentChatId].metadata.projectId = targetProject.id;
-                    saveChats();
-                }
-                const reply = `📁 Switched to project: "${targetProject.name}"\n\nI'll now use this project's context for our conversation.`;
-                typingIndicator.classList.add('hidden');
-                const aiMsg = { role: 'assistant', content: reply, extra: {} };
-                chats[currentChatId].messages.push(aiMsg);
-                renderMessage('assistant', reply, {}, chats[currentChatId].messages.length - 1);
-                saveChats();
-                return;
-            }
-
-            // ---- BUILD CONTEXT FOR AI ----
-            const history = [];
-            const allMessages = chats[currentChatId].messages;
-            for (let i = 0; i < allMessages.length - 1; i++) {
-                const msg = allMessages[i];
-                history.push({ role: msg.role, content: msg.content });
-            }
-
-            const context = buildContext(text, history, activeProjectId);
-
-            // ---- CHECK FOR LOCK CONFLICTS ----
-            const conflicts = applyMasterLocks(text, context);
-            if (conflicts.length > 0) {
-                let conflictMsg = `⚠️ **Master Lock Conflict Detected**\n\n`;
-                conflicts.forEach(c => {
-                    conflictMsg += `- ${c.message}\n`;
-                });
-                conflictMsg += `\nDo you want to update this lock, or should I proceed with the current rule?`;
-                typingIndicator.classList.add('hidden');
-                const aiMsg = { role: 'assistant', content: conflictMsg, extra: {} };
-                chats[currentChatId].messages.push(aiMsg);
-                renderMessage('assistant', conflictMsg, {}, chats[currentChatId].messages.length - 1);
-                saveChats();
-                return;
-            }
-
-            // ---- CHECK FOR IMAGE GENERATION ----
-            const isImageRequest = /create|generate|make|draw|paint|render|picture|image|photo|photorealistic|art|illustration|design|visual|scene|portrait|landscape|fantasy|concept art|character|environment|background|style|beautiful|aesthetic|digital art|sketch|painting/i
+            // Determine if this is an image request
+            const isImageRequest = /create|generate|make|draw|paint|render|picture|image|photo|art|illustration|design|visual|scene|portrait|landscape|fantasy|concept art|character|environment|background|style|beautiful|aesthetic|digital art|sketch|painting/i
                 .test(text) && !/code|programming|function|api|database|sql|debug|fix bug/i.test(text);
 
-            if (isImageRequest && state.replicateKey) {
+            // Check for background removal or replacement
+            const removeBgMatch = text.match(/remove\s+(?:the\s+)?background|erase\s+background|delete\s+background/i);
+            const replaceBgMatch = text.match(/replace\s+(?:the\s+)?background|change\s+background|new\s+background/i);
+
+            // Check for "another" or "make it better"
+            const anotherMatch = text.match(/another|other one|next one|one more|again|different one/i);
+            const improveMatch = text.match(/make it better|improve|enhance|upgrade|refine/i);
+
+            // If we have a reference image and remove bg request
+            if (removeBgMatch && imagesForApi.length > 0) {
+                // Show typing indicator
+                typingIndicator.classList.remove('hidden');
+                typingIndicator.querySelector('.typing-bubble').innerHTML =
+                    '<div style="display:flex;align-items:center;gap:8px;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Removing background...</div>';
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+
                 try {
-                    typingIndicator.querySelector('.typing-bubble').innerHTML =
-                        '<div style="display:flex;align-items:center;gap:8px;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Generating image with Flux...</div>';
-                    const result = await generateFluxImage(text);
+                    const result = await generateImage(text, imagesForApi[0], 'remove_bg', activeProjectId);
                     typingIndicator.classList.add('hidden');
                     typingIndicator.querySelector('.typing-bubble').innerHTML =
                         `<div class="typing-dots"><span></span><span></span><span></span></div>`;
-                    let aiMsg;
-                    if (result.error) {
-                        aiMsg = { role: 'assistant', content: result.error, extra: {} };
-                    } else if (result.images && result.images.length > 0) {
-                        aiMsg = {
+                    if (result && result.imageUrl) {
+                        const aiMsg = {
                             role: 'assistant',
-                            content: `🎨 Here are your generated images for: *"${text}"*`,
-                            extra: { generatedImages: result.images }
+                            content: `✅ Background removed successfully.`,
+                            extra: { generatedImage: result.imageUrl }
                         };
+                        chats[currentChatId].messages.push(aiMsg);
+                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
+                    } else if (result && result.error) {
+                        const aiMsg = { role: 'assistant', content: `❌ ${result.error}`, extra: {} };
+                        chats[currentChatId].messages.push(aiMsg);
+                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
                     } else {
-                        aiMsg = { role: 'assistant', content: `❌ No images generated.`, extra: {} };
+                        const aiMsg = { role: 'assistant', content: `❌ Background removal failed.`, extra: {} };
+                        chats[currentChatId].messages.push(aiMsg);
+                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
                     }
-                    chats[currentChatId].messages.push(aiMsg);
-                    renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
                     saveChats();
                     return;
                 } catch (err) {
                     typingIndicator.classList.add('hidden');
                     typingIndicator.querySelector('.typing-bubble').innerHTML =
                         `<div class="typing-dots"><span></span><span></span><span></span></div>`;
-                    const aiMsg = { role: 'assistant', content: `❌ Image generation failed: ${err.message}`, extra: {} };
+                    const aiMsg = { role: 'assistant', content: `❌ ${err.message || 'Background removal failed.'}`,
+                        extra: {} };
                     chats[currentChatId].messages.push(aiMsg);
                     renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
                     saveChats();
@@ -3568,6 +3381,159 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 }
             }
 
+            // Check if we have image + background replacement
+            if (replaceBgMatch && imagesForApi.length > 0) {
+                // Use text-to-image with reference as img2img
+                typingIndicator.classList.remove('hidden');
+                typingIndicator.querySelector('.typing-bubble').innerHTML =
+                    '<div style="display:flex;align-items:center;gap:8px;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Replacing background...</div>';
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                try {
+                    // We'll use img2img with the prompt
+                    const result = await generateImage(text, imagesForApi[0], 'replace_bg', activeProjectId);
+                    typingIndicator.classList.add('hidden');
+                    typingIndicator.querySelector('.typing-bubble').innerHTML =
+                        `<div class="typing-dots"><span></span><span></span><span></span></div>`;
+                    if (result && result.imageUrl) {
+                        const aiMsg = {
+                            role: 'assistant',
+                            content: `✅ Background replaced successfully.`,
+                            extra: { generatedImage: result.imageUrl }
+                        };
+                        chats[currentChatId].messages.push(aiMsg);
+                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
+                    } else if (result && result.error) {
+                        const aiMsg = { role: 'assistant', content: `❌ ${result.error}`, extra: {} };
+                        chats[currentChatId].messages.push(aiMsg);
+                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
+                    } else {
+                        const aiMsg = { role: 'assistant', content: `❌ Background replacement failed.`, extra: {} };
+                        chats[currentChatId].messages.push(aiMsg);
+                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
+                    }
+                    saveChats();
+                    return;
+                } catch (err) {
+                    typingIndicator.classList.add('hidden');
+                    typingIndicator.querySelector('.typing-bubble').innerHTML =
+                        `<div class="typing-dots"><span></span><span></span><span></span></div>`;
+                    const aiMsg = { role: 'assistant', content: `❌ ${err.message || 'Background replacement failed.'}`,
+                        extra: {} };
+                    chats[currentChatId].messages.push(aiMsg);
+                    renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
+                    saveChats();
+                    return;
+                }
+            }
+
+            // Handle "another" or "make it better" with reference to last image
+            if ((anotherMatch || improveMatch) && imageState.lastResult) {
+                // Use the last generated image as reference
+                const lastImageUrl = imageState.lastResult.imageUrl;
+                if (lastImageUrl) {
+                    // Fetch the image as base64 or use URL
+                    // For simplicity, we'll use the URL directly (if Replicate supports URL)
+                    const operation = anotherMatch ? 'another' : 'improve';
+                    typingIndicator.classList.remove('hidden');
+                    typingIndicator.querySelector('.typing-bubble').innerHTML =
+                        `<div style="display:flex;align-items:center;gap:8px;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Generating ${operation === 'another' ? 'new variation' : 'improved version'}...</div>`;
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                    try {
+                        // Use img2img with the last image as reference
+                        const result = await generateImage(text, lastImageUrl, operation, activeProjectId);
+                        typingIndicator.classList.add('hidden');
+                        typingIndicator.querySelector('.typing-bubble').innerHTML =
+                            `<div class="typing-dots"><span></span><span></span><span></span></div>`;
+                        if (result && result.imageUrl) {
+                            const aiMsg = {
+                                role: 'assistant',
+                                content: operation === 'another' ? `✅ New variation created.` :
+                                    `✅ Improved version created.`,
+                                extra: { generatedImage: result.imageUrl }
+                            };
+                            chats[currentChatId].messages.push(aiMsg);
+                            renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
+                            .length - 1);
+                        } else if (result && result.error) {
+                            const aiMsg = { role: 'assistant', content: `❌ ${result.error}`, extra: {} };
+                            chats[currentChatId].messages.push(aiMsg);
+                            renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
+                            .length - 1);
+                        } else {
+                            const aiMsg = { role: 'assistant', content: `❌ Failed to generate.`, extra: {} };
+                            chats[currentChatId].messages.push(aiMsg);
+                            renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
+                            .length - 1);
+                        }
+                        saveChats();
+                        return;
+                    } catch (err) {
+                        typingIndicator.classList.add('hidden');
+                        typingIndicator.querySelector('.typing-bubble').innerHTML =
+                            `<div class="typing-dots"><span></span><span></span><span></span></div>`;
+                        const aiMsg = { role: 'assistant', content: `❌ ${err.message || 'Generation failed.'}`,
+                            extra: {} };
+                        chats[currentChatId].messages.push(aiMsg);
+                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
+                        .length - 1);
+                        saveChats();
+                        return;
+                    }
+                }
+            }
+
+            // Standard text-to-image or image-to-image (if reference image provided)
+            if (isImageRequest && state.replicateKey) {
+                typingIndicator.classList.remove('hidden');
+                typingIndicator.querySelector('.typing-bubble').innerHTML =
+                    '<div style="display:flex;align-items:center;gap:8px;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Generating image...</div>';
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                try {
+                    const operation = (imagesForApi.length > 0) ? 'img2img' : 'txt2img';
+                    const refImage = imagesForApi.length > 0 ? imagesForApi[0] : null;
+                    const result = await generateImage(text, refImage, operation, activeProjectId);
+                    typingIndicator.classList.add('hidden');
+                    typingIndicator.querySelector('.typing-bubble').innerHTML =
+                        `<div class="typing-dots"><span></span><span></span><span></span></div>`;
+                    if (result && result.imageUrl) {
+                        const aiMsg = {
+                            role: 'assistant',
+                            content: `✅ Here is your generated image.`,
+                            extra: { generatedImage: result.imageUrl }
+                        };
+                        chats[currentChatId].messages.push(aiMsg);
+                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
+                    } else if (result && result.error) {
+                        const aiMsg = { role: 'assistant', content: `❌ ${result.error}`, extra: {} };
+                        chats[currentChatId].messages.push(aiMsg);
+                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
+                    } else if (result && result.cancelled) {
+                        const aiMsg = { role: 'assistant', content: `⏹️ Generation was cancelled.`, extra: {} };
+                        chats[currentChatId].messages.push(aiMsg);
+                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
+                    } else {
+                        const aiMsg = { role: 'assistant', content: `❌ Image generation failed.`, extra: {} };
+                        chats[currentChatId].messages.push(aiMsg);
+                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
+                    }
+                    saveChats();
+                    return;
+                } catch (err) {
+                    typingIndicator.classList.add('hidden');
+                    typingIndicator.querySelector('.typing-bubble').innerHTML =
+                        `<div class="typing-dots"><span></span><span></span><span></span></div>`;
+                    const aiMsg = { role: 'assistant', content: `❌ ${err.message || 'Generation failed.'}`, extra: {} };
+                    chats[currentChatId].messages.push(aiMsg);
+                    renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
+                    saveChats();
+                    return;
+                }
+            }
+
+            // If image mode toggled (fallback Pollinations)
             if (isImageMode) {
                 try {
                     typingIndicator.querySelector('.typing-bubble').innerHTML =
@@ -3576,28 +3542,45 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                     typingIndicator.classList.add('hidden');
                     typingIndicator.querySelector('.typing-bubble').innerHTML =
                         `<div class="typing-dots"><span></span><span></span><span></span></div>`;
-                    const aiMsg = {
-                        role: 'assistant',
-                        content: `🎨 Here are your generated images for: *"${text}"*`,
-                        extra: { generatedImages: imageUrls }
-                    };
-                    chats[currentChatId].messages.push(aiMsg);
-                    renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
+                    // Pollinations returns array, take first one
+                    if (imageUrls && imageUrls.length > 0) {
+                        const aiMsg = {
+                            role: 'assistant',
+                            content: `🎨 Here is your generated image.`,
+                            extra: { generatedImage: imageUrls[0] }
+                        };
+                        chats[currentChatId].messages.push(aiMsg);
+                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
+                    } else {
+                        const aiMsg = { role: 'assistant', content: `❌ No image generated.`, extra: {} };
+                        chats[currentChatId].messages.push(aiMsg);
+                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
+                    }
                     saveChats();
                     return;
                 } catch (err) {
                     typingIndicator.classList.add('hidden');
                     typingIndicator.querySelector('.typing-bubble').innerHTML =
                         `<div class="typing-dots"><span></span><span></span><span></span></div>`;
-                    const aiMsg = { role: 'assistant', content: `❌ Failed to generate images.`, extra: {} };
+                    const aiMsg = { role: 'assistant', content: `❌ Image generation failed.`, extra: {} };
                     chats[currentChatId].messages.push(aiMsg);
-                    renderMessage('assistant', aiMsg.content, {}, chats[currentChatId].messages.length - 1);
+                    renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
                     saveChats();
                     return;
                 }
             }
 
-            // ---- REGULAR AI RESPONSE WITH CONTEXT ----
+            // ============================================================
+            // NON-IMAGE REQUEST: Use chat AI with full context
+            // ============================================================
+            const history = [];
+            const allMessages = chats[currentChatId].messages;
+            for (let i = 0; i < allMessages.length - 1; i++) {
+                const msg = allMessages[i];
+                history.push({ role: msg.role, content: msg.content });
+            }
+
+            const context = buildContext(text, history, activeProjectId);
             const reply = await callAI(text, history, context);
             typingIndicator.classList.add('hidden');
             const aiMsg = { role: 'assistant', content: reply, extra: {} };
@@ -3606,8 +3589,47 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
             saveChats();
         }
 
+        // Pollinations fallback (single image)
+        async function generateImagesPollinations(prompt) {
+            const baseUrl = 'https://image.pollinations.ai/prompt/';
+            const encoded = encodeURIComponent(prompt);
+            const seed = Math.floor(Math.random() * 2147483647);
+            const url =
+                `${baseUrl}${encoded}?width=512&height=512&seed=${seed}&model=flux&nologo=true&enhance=false&safe=false`;
+            return [url];
+        }
+
+        // Build context for chat
+        function buildContext(userText, history, projectId) {
+            const context = {
+                userText,
+                history,
+                projectId,
+                memories: [],
+                locks: [],
+                preferences: [],
+                project: null
+            };
+            if (projectId) context.project = getProject(projectId);
+            const words = userText.split(/\s+/).filter(w => w.length > 3);
+            const allMemories = getMemories({ projectId });
+            const scored = allMemories.map(m => {
+                let score = 0;
+                const content = m.content.toLowerCase();
+                words.forEach(w => { if (content.includes(w.toLowerCase())) score += 2; });
+                if (m.isLocked) score += 5;
+                if (m.category && userText.toLowerCase().includes(m.category.toLowerCase())) score += 3;
+                return { ...m, score };
+            });
+            scored.sort((a, b) => b.score - a.score);
+            context.memories = scored.filter(m => m.score > 0).slice(0, 10);
+            context.locks = getActiveLocks(projectId);
+            context.preferences = getPreferences(projectId);
+            return context;
+        }
+
         // ================================================================
-        // 18. SETTINGS & PROFILE (existing)
+        // 13. SETTINGS & PROFILE (existing)
         // ================================================================
         settingsBtn.addEventListener('click', () => {
             apiKeyInput.value = state.apiKey;
@@ -3713,7 +3735,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
 
         // ================================================================
-        // 19. SHARE MODAL (for messages)
+        // 14. SHARE MODAL (for messages)
         // ================================================================
         function openShareModal(text) {
             shareTextCache = text;
@@ -3742,37 +3764,33 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                     closeShareModal();
                     break;
                 case 'tiktok':
-                    navigator.clipboard.writeText(text).then(() => {
-                        showToast('📋 Text copied! Open TikTok and paste it.');
-                    }).catch(() => {
-                        const ta = document.createElement('textarea');
-                        ta.value = text;
-                        document.body.appendChild(ta);
-                        ta.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(ta);
-                        showToast('📋 Text copied! Open TikTok and paste it.');
-                    });
+                    navigator.clipboard.writeText(text).then(() => { showToast('📋 Text copied! Open TikTok and paste it.'); })
+                        .catch(() => {
+                            const ta = document.createElement('textarea');
+                            ta.value = text;
+                            document.body.appendChild(ta);
+                            ta.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(ta);
+                            showToast('📋 Text copied! Open TikTok and paste it.');
+                        });
                     closeShareModal();
                     break;
                 case 'instagram':
-                    navigator.clipboard.writeText(text).then(() => {
-                        showToast('📋 Text copied! Open Instagram and paste it.');
-                    }).catch(() => {
-                        const ta = document.createElement('textarea');
-                        ta.value = text;
-                        document.body.appendChild(ta);
-                        ta.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(ta);
-                        showToast('📋 Text copied! Open Instagram and paste it.');
-                    });
+                    navigator.clipboard.writeText(text).then(() => { showToast('📋 Text copied! Open Instagram and paste it.'); })
+                        .catch(() => {
+                            const ta = document.createElement('textarea');
+                            ta.value = text;
+                            document.body.appendChild(ta);
+                            ta.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(ta);
+                            showToast('📋 Text copied! Open Instagram and paste it.');
+                        });
                     closeShareModal();
                     break;
                 case 'copy':
-                    navigator.clipboard.writeText(text).then(() => {
-                        showToast('✅ Copied to clipboard!');
-                    }).catch(() => {
+                    navigator.clipboard.writeText(text).then(() => { showToast('✅ Copied to clipboard!'); }).catch(() => {
                         const ta = document.createElement('textarea');
                         ta.value = text;
                         document.body.appendChild(ta);
@@ -3789,10 +3807,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         closeShare.addEventListener('click', closeShareModal);
-        shareModal.addEventListener('click', (e) => {
-            if (e.target === shareModal) closeShareModal();
-        });
-
+        shareModal.addEventListener('click', (e) => { if (e.target === shareModal) closeShareModal(); });
         shareGrid.addEventListener('click', (e) => {
             const btn = e.target.closest('.share-btn');
             if (!btn) return;
@@ -3801,19 +3816,15 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
 
         // ================================================================
-        // 20. MEMORY MANAGER UI
+        // 15. MEMORY MANAGER UI (existing)
         // ================================================================
         function renderMemoryManager() {
             const search = memorySearchInput.value.toLowerCase();
             const filter = memoryFilterSelect.value;
             let memories = getMemories();
-            if (filter !== 'all') {
-                memories = memories.filter(m => m.type === filter);
-            }
-            if (search) {
-                memories = memories.filter(m => m.content.toLowerCase().includes(search) || m.tags.some(t => t.toLowerCase()
-                    .includes(search)));
-            }
+            if (filter !== 'all') memories = memories.filter(m => m.type === filter);
+            if (search) memories = memories.filter(m => m.content.toLowerCase().includes(search) || m.tags.some(t => t
+                .toLowerCase().includes(search)));
             if (memories.length === 0) {
                 memoryListContainer.innerHTML =
                     `<div style="padding:20px;text-align:center;color:var(--text-light);font-size:0.9rem;">No memories found.</div>`;
@@ -3835,45 +3846,33 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 `;
             });
             memoryListContainer.innerHTML = html;
-
-            // Event listeners
             document.querySelectorAll('.delete-mem').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    if (confirm('Delete this memory?')) {
-                        deleteMemory(btn.dataset.id);
+                    if (confirm('Delete this memory?')) { deleteMemory(btn.dataset.id);
                         renderMemoryManager();
-                        showToast('🗑️ Memory deleted');
-                    }
+                        showToast('🗑️ Memory deleted'); }
                 });
             });
             document.querySelectorAll('.lock-mem').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    updateMemory(btn.dataset.id, { isLocked: true });
+                btn.addEventListener('click', () => { updateMemory(btn.dataset.id, { isLocked: true });
                     renderMemoryManager();
-                    showToast('🔒 Memory locked');
-                });
+                    showToast('🔒 Memory locked'); });
             });
             document.querySelectorAll('.unlock-mem').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    updateMemory(btn.dataset.id, { isLocked: false });
+                btn.addEventListener('click', () => { updateMemory(btn.dataset.id, { isLocked: false });
                     renderMemoryManager();
-                    showToast('🔓 Memory unlocked');
-                });
+                    showToast('🔓 Memory unlocked'); });
             });
         }
 
-        memoryManagerBtn.addEventListener('click', () => {
-            memoryManagerModal.classList.add('active');
-            renderMemoryManager();
-        });
-
+        memoryManagerBtn.addEventListener('click', () => { memoryManagerModal.classList.add('active');
+            renderMemoryManager(); });
         closeMemoryManager.addEventListener('click', () => memoryManagerModal.classList.remove('active'));
-
         memorySearchInput.addEventListener('input', renderMemoryManager);
         memoryFilterSelect.addEventListener('change', renderMemoryManager);
 
         // ================================================================
-        // 21. LOCKS MANAGER UI
+        // 16. LOCKS MANAGER UI (existing)
         // ================================================================
         function renderLocksManager() {
             const locks = getActiveLocks();
@@ -3896,33 +3895,25 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 `;
             });
             locksListContainer.innerHTML = html;
-
             document.querySelectorAll('.delete-lock').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    if (confirm('Delete this Master Lock?')) {
-                        deleteLock(btn.dataset.id);
+                    if (confirm('Delete this Master Lock?')) { deleteLock(btn.dataset.id);
                         renderLocksManager();
-                        showToast('🔓 Lock deleted');
-                    }
+                        showToast('🔓 Lock deleted'); }
                 });
             });
             document.querySelectorAll('.unlock-lock').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const lock = memoryStore.locks.find(l => l.id === btn.dataset.id);
-                    if (lock) {
-                        updateLock(btn.dataset.id, { isActive: false });
+                    if (lock) { updateLock(btn.dataset.id, { isActive: false });
                         renderLocksManager();
-                        showToast('🔓 Lock deactivated');
-                    }
+                        showToast('🔓 Lock deactivated'); }
                 });
             });
         }
 
-        locksManagerBtn.addEventListener('click', () => {
-            locksManagerModal.classList.add('active');
-            renderLocksManager();
-        });
-
+        locksManagerBtn.addEventListener('click', () => { locksManagerModal.classList.add('active');
+            renderLocksManager(); });
         closeLocksManager.addEventListener('click', () => locksManagerModal.classList.remove('active'));
 
         addLockBtn.addEventListener('click', () => {
@@ -3934,14 +3925,11 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
             renderLocksManager();
             showToast('🔒 Master Lock created!');
         });
-
-        newLockInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') { e.preventDefault();
-                addLockBtn.click(); }
-        });
+        newLockInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault();
+                addLockBtn.click(); } });
 
         // ================================================================
-        // 22. PROJECTS MANAGER UI
+        // 17. PROJECTS MANAGER UI (existing)
         // ================================================================
         function renderProjectsManager() {
             const projects = getProjects();
@@ -3966,7 +3954,6 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 `;
             });
             projectsListContainer.innerHTML = html;
-
             document.querySelectorAll('.delete-project').forEach(btn => {
                 btn.addEventListener('click', () => {
                     if (confirm('Delete this project and all associated data?')) {
@@ -3992,11 +3979,8 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
             });
         }
 
-        projectsManagerBtn.addEventListener('click', () => {
-            projectsManagerModal.classList.add('active');
-            renderProjectsManager();
-        });
-
+        projectsManagerBtn.addEventListener('click', () => { projectsManagerModal.classList.add('active');
+            renderProjectsManager(); });
         closeProjectsManager.addEventListener('click', () => projectsManagerModal.classList.remove('active'));
 
         addProjectBtn.addEventListener('click', () => {
@@ -4008,14 +3992,11 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
             renderProjectsManager();
             showToast(`📁 Project "${name}" created!`);
         });
-
-        newProjectInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') { e.preventDefault();
-                addProjectBtn.click(); }
-        });
+        newProjectInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault();
+                addProjectBtn.click(); } });
 
         // ================================================================
-        // 23. MODE TOGGLE (unchanged)
+        // 18. MODE TOGGLE (unchanged)
         // ================================================================
         function setMode(imageMode) {
             isImageMode = imageMode;
@@ -4026,7 +4007,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 welcomeIcon.textContent = "🎨";
                 welcomeTitle.textContent = "Image Generation Mode";
                 welcomeDesc.innerHTML =
-                    "Type a description and I'll generate 4 beautiful images instantly using Pollinations AI (free!).";
+                    "Type a description and I'll generate 1 beautiful image instantly using Pollinations AI (free!).";
             } else {
                 chatModeBtn.classList.add('active');
                 imageModeBtn.classList.remove('active');
@@ -4047,7 +4028,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
 
         // ================================================================
-        // 24. EVENT BINDINGS
+        // 19. EVENT BINDINGS
         // ================================================================
         sendBtn.addEventListener('click', sendMessage);
         chatInput.addEventListener('keydown', (e) => {
@@ -4072,19 +4053,12 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
 
         // ================================================================
-        // 25. INIT
+        // 20. INIT
         // ================================================================
         function init() {
-            // Load memory store first
             loadMemoryStore();
-
-            // Load chats
             loadChats();
-
-            // Load profile
             loadProfile();
-
-            // Load settings
             apiKeyInput.value = state.apiKey;
             providerSelect.value = state.provider;
             updateProviderUI();
@@ -4093,23 +4067,15 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
             updateBackButton();
             modelDisplay.textContent = state.model;
             updateMemoryBadges();
-
-            // Check for active project in current chat
             if (currentChatId && chats[currentChatId] && chats[currentChatId].metadata && chats[currentChatId].metadata
                 .projectId) {
                 activeProjectId = chats[currentChatId].metadata.projectId;
             }
-
-            console.log('👑 Wise King AI — Master Intelligence + Permanent Memory + Master Lock');
-            console.log('🧠 Memory System: Active');
-            console.log(`📊 ${memoryStore.memories.length} memories, ${memoryStore.locks.length} locks, ${memoryStore.projects.length} projects`);
-            console.log('🔒 Master Lock Engine: Active');
-            console.log('📁 Project Continuity: Active');
-            console.log('🔄 Providers: Gemini, DeepSeek, Grok, OpenAI');
-            console.log('🖼️ Image: Replicate Flux + Pollinations');
-            console.log('💬 "Remember this" — saves to permanent memory');
-            console.log('🔒 "Lock this" — creates Master Lock');
-            console.log('📁 "Create project" — starts a new project');
+            console.log('👑 Wise King AI — Image Engine Upgraded (Single Image, Lock-Aware)');
+            console.log('📸 Now generating ONE image per request.');
+            console.log('🔒 Master Locks applied to image prompts.');
+            console.log('🖼️ Image-to-Image, Background Removal, "Another" & "Improve" supported.');
+            console.log('⏹️ Network cancellation and duplicate protection active.');
         }
 
         init();
