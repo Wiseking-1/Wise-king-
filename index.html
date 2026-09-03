@@ -1787,8 +1787,10 @@
                 <select id="providerSelect">
                     <option value="gemini">Gemini (Google)</option>
                     <option value="deepseek">DeepSeek</option>
-                    <option value="grok">Grok (xAI)</option>
+                    <!-- --- REMOVED: Grok AI --- -->
                     <option value="openai">OpenAI</option>
+                    <!-- --- ADDED: Dola AI Systems provider --- -->
+                    <option value="dola">Dola AI Systems</option>
                 </select>
             </div>
             <div class="form-group">
@@ -2155,15 +2157,18 @@
         const OWNER_NAME = 'IBRAHIM ABDULLAHI';
 
         const PROVIDERS = {
-            gemini: { label: 'Gemini', models: ['gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash'],
+            // --- UPDATED: Gemini model list ---
+            gemini: { label: 'Gemini', models: ['gemini-3.1-pro', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.6-flash'],
                 defaultModel: 'gemini-3.5-flash', keyLink: 'https://aistudio.google.com/app/apikey',
                 keyHint: 'Get your Gemini API key from Google AI Studio' },
             deepseek: { label: 'DeepSeek', models: ['deepseek-chat', 'deepseek-v4-flash'], defaultModel: 'deepseek-chat',
                 keyLink: 'https://platform.deepseek.com/api_keys', keyHint: 'Get your DeepSeek API key from platform.deepseek.com' },
-            grok: { label: 'Grok', models: ['grok-2', 'grok-2-latest'], defaultModel: 'grok-2',
-                keyLink: 'https://console.x.ai', keyHint: 'Get your Grok API key from console.x.ai' },
+            // --- REMOVED: Grok AI ---
             openai: { label: 'OpenAI', models: ['gpt-4o-mini', 'gpt-4o', 'gpt-3.5-turbo'], defaultModel: 'gpt-4o-mini',
-                keyLink: 'https://platform.openai.com/api-keys', keyHint: 'Get your OpenAI API key from platform.openai.com' }
+                keyLink: 'https://platform.openai.com/api-keys', keyHint: 'Get your OpenAI API key from platform.openai.com' },
+            // --- ADDED: Dola AI Systems provider ---
+            dola: { label: 'Dola AI', models: ['dola-1', 'dola-2'], defaultModel: 'dola-1',
+                keyLink: 'https://dola.ai/api-keys', keyHint: 'Get your Dola AI API key from dola.ai' }
         };
 
         const state = {
@@ -2482,10 +2487,11 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                         return reply;
                     }
                     case 'deepseek':
-                    case 'grok':
-                    case 'openai': {
+                    case 'openai':
+                    // --- ADDED: Dola AI Systems provider ---
+                    case 'dola': {
                         const endpoint = provider === 'deepseek' ? 'https://api.deepseek.com/chat/completions' :
-                            provider === 'grok' ? 'https://api.x.ai/v1/chat/completions' :
+                            provider === 'dola' ? 'https://api.dola.ai/v1/chat/completions' :
                             'https://api.openai.com/v1/chat/completions';
                         const messages = [{ role: 'system', content: systemPrompt }];
                         for (const msg of history) {
