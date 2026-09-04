@@ -8,38 +8,16 @@
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     
-    <!-- ================================================================
-    FIREBASE SDK (Import Map) — Version 12.18.0
-    ================================================================ -->
-    <script type="importmap">
-        {
-            "imports": {
-                "firebase/app": "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js",
-                "firebase/auth": "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js",
-                "firebase/firestore": "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js"
-            }
-        }
-    </script>
+    <!-- ===== FIREBASE SDK (Google Sign-In) ===== -->
     <script type="module">
-        // ================================================================
-        // PART 0 — FIREBASE INITIALIZATION
-        // ================================================================
-        import { initializeApp } from "firebase/app";
-        import { 
-            getAuth, 
-            GoogleAuthProvider, 
-            signInWithPopup, 
-            signInWithRedirect,
-            getRedirectResult,
-            signOut, 
-            onAuthStateChanged,
-            setPersistence,
-            browserLocalPersistence,
-            browserSessionPersistence,
-            inMemoryPersistence
-        } from "firebase/auth";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-analytics.js";
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
 
+        // Your web app's Firebase configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
         const firebaseConfig = {
             apiKey: "AIzaSyBnl42BZB5BdiRnIUXgfmktAGUTMghROVQ",
             authDomain: "wise-king-ai.firebaseapp.com",
@@ -52,369 +30,13 @@
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const provider = new GoogleAuthProvider();
-
-        // ================================================================
-        // FIX: Set persistence to LOCAL (prevents sessionStorage issues)
-        // ================================================================
-        try {
-            await setPersistence(auth, browserLocalPersistence);
-            console.log('✅ Auth persistence set to LOCAL');
-        } catch (err) {
-            console.warn('⚠️ Could not set persistence, using fallback:', err);
-            // Fallback: try session persistence
-            try {
-                await setPersistence(auth, browserSessionPersistence);
-                console.log('✅ Auth persistence set to SESSION (fallback)');
-            } catch (e2) {
-                console.warn('⚠️ Using in-memory persistence (last resort)');
-                await setPersistence(auth, inMemoryPersistence);
-            }
-        }
-
-        // Provider configuration
-        provider.setCustomParameters({
-            prompt: 'select_account'  // Always show account selection
-        });
+        const analytics = getAnalytics(app);
         
-        // Use device language
-        auth.useDeviceLanguage();
-
-        // Make them globally available
-        window.firebaseAuth = auth;
-        window.firebaseDb = db;
-        window.firebaseProvider = provider;
-        window.signInWithPopup = signInWithPopup;
-        window.signInWithRedirect = signInWithRedirect;
-        window.getRedirectResult = getRedirectResult;
-        window.signOut = signOut;
-        window.onAuthStateChanged = onAuthStateChanged;
-        window.doc = doc;
-        window.setDoc = setDoc;
-        window.getDoc = getDoc;
-        window.updateDoc = updateDoc;
-        window.deleteDoc = deleteDoc;
-        window.collection = collection;
-        window.query = query;
-        window.where = where;
-        window.getDocs = getDocs;
-        window.orderBy = orderBy;
-        window.limit = limit;
-
-        console.log('🔥 Firebase initialized with Auth & Firestore!');
-        console.log('✅ Auth persistence set to LOCAL');
-
-        // ================================================================
-        // PART 1 — GOOGLE SIGN-IN (FIXED: handles redirect result)
-        // ================================================================
-        function showLoginModal() {
-            const modal = document.getElementById('loginModal');
-            if (modal) modal.classList.add('active');
-        }
-
-        function hideLoginModal() {
-            const modal = document.getElementById('loginModal');
-            if (modal) modal.classList.remove('active');
-        }
-
-        // Handle redirect result (for when popup fails or on mobile)
-        async function handleRedirectResult() {
-            try {
-                const result = await getRedirectResult(auth);
-                if (result) {
-                    const user = result.user;
-                    console.log('✅ Signed in via redirect:', user.displayName);
-                    hideLoginModal();
-                    showToast('👋 Welcome ' + user.displayName + '!');
-                    // Reload to load user data
-                    location.reload();
-                }
-            } catch (error) {
-                console.error('Redirect sign-in error:', error);
-                // If error is "missing initial state", try popup as fallback
-                if (error.code === 'auth/argument-error' || error.message.includes('missing initial state')) {
-                    console.warn('Redirect failed, trying popup...');
-                    try {
-                        const result = await signInWithPopup(auth, provider);
-                        const user = result.user;
-                        console.log('✅ Signed in via popup (fallback):', user.displayName);
-                        hideLoginModal();
-                        showToast('👋 Welcome ' + user.displayName + '!');
-                        location.reload();
-                    } catch (popupErr) {
-                        console.error('Popup sign-in also failed:', popupErr);
-                        showToast('❌ Sign-in failed: ' + popupErr.message);
-                    }
-                } else {
-                    showToast('❌ Sign-in failed: ' + error.message);
-                }
-            }
-        }
-
-        // Primary sign-in: try popup first, fallback to redirect
-        window.handleGoogleSignIn = async function() {
-            try {
-                // Try popup first (works on desktop)
-                const result = await signInWithPopup(auth, provider);
-                const user = result.user;
-                console.log('✅ Signed in via popup:', user.displayName);
-                hideLoginModal();
-                showToast('👋 Welcome ' + user.displayName + '!');
-                location.reload();
-            } catch (error) {
-                console.warn('Popup sign-in failed:', error);
-                // If popup fails (mobile or blocked), use redirect
-                if (error.code === 'auth/popup-blocked' || 
-                    error.code === 'auth/popup-closed-by-user' ||
-                    error.code === 'auth/cancelled-popup-request') {
-                    console.log('Popup blocked or closed, using redirect...');
-                    try {
-                        await signInWithRedirect(auth, provider);
-                        // The user will be redirected back after sign-in
-                        // handleRedirectResult will be called after redirect
-                    } catch (redirectErr) {
-                        console.error('Redirect sign-in error:', redirectErr);
-                        showToast('❌ Sign-in failed: ' + redirectErr.message);
-                    }
-                } else {
-                    showToast('❌ Sign-in failed: ' + error.message);
-                }
-            }
-        };
-
-        // Handle redirect result after returning from Google
-        // This runs when the page loads after redirect
-        handleRedirectResult();
-
-        window.handleSignOut = function() {
-            const modal = document.getElementById('signOutModal');
-            if (modal) modal.classList.add('active');
-        };
-
-        window.confirmSignOut = async function() {
-            try {
-                await signOut(auth);
-                const modal = document.getElementById('signOutModal');
-                if (modal) modal.classList.remove('active');
-                showToast('✅ Signed out successfully');
-                // Clear local storage but keep Firestore data
-                localStorage.removeItem('wk_chats');
-                localStorage.removeItem('wk_memory_store');
-                location.reload();
-            } catch (error) {
-                console.error('Sign-out error:', error);
-                showToast('❌ Sign-out failed: ' + error.message);
-            }
-        };
-
-        window.cancelSignOut = function() {
-            const modal = document.getElementById('signOutModal');
-            if (modal) modal.classList.remove('active');
-        };
-
-        // ================================================================
-        // PART 2 — FIRESTORE DATA FUNCTIONS
-        // ================================================================
-        window.saveUserSettings = async function(userId, settings) {
-            try {
-                const userRef = doc(db, 'users', userId);
-                await setDoc(userRef, { settings: settings }, { merge: true });
-                console.log('✅ Settings saved to Firestore');
-                return true;
-            } catch (error) {
-                console.error('Error saving settings:', error);
-                showToast('❌ Failed to save settings: ' + error.message);
-                return false;
-            }
-        };
-
-        window.loadUserSettings = async function(userId) {
-            try {
-                const userRef = doc(db, 'users', userId);
-                const docSnap = await getDoc(userRef);
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    return data.settings || {};
-                }
-                return {};
-            } catch (error) {
-                console.error('Error loading settings:', error);
-                return {};
-            }
-        };
-
-        window.saveChatsToFirestore = async function(userId, chats) {
-            try {
-                const userRef = doc(db, 'users', userId);
-                await setDoc(userRef, { chats: chats }, { merge: true });
-                console.log('✅ Chats saved to Firestore');
-                return true;
-            } catch (error) {
-                console.error('Error saving chats:', error);
-                return false;
-            }
-        };
-
-        window.loadChatsFromFirestore = async function(userId) {
-            try {
-                const userRef = doc(db, 'users', userId);
-                const docSnap = await getDoc(userRef);
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    return data.chats || {};
-                }
-                return {};
-            } catch (error) {
-                console.error('Error loading chats:', error);
-                return {};
-            }
-        };
-
-        // ================================================================
-        // PART 3 — AUTH STATE OBSERVER
-        // ================================================================
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                // USER IS SIGNED IN
-                console.log('👤 User signed in:', user.displayName);
-                hideLoginModal();
-
-                // Update UI with user info
-                const userNameDisplay = document.getElementById('userNameDisplay');
-                const userEmailDisplay = document.getElementById('userEmailDisplay');
-                const userAvatar = document.getElementById('userAvatar');
-                const topAvatarImg = document.getElementById('topAvatarImg');
-                const topAvatarText = document.getElementById('topAvatarText');
-                const authTextSidebar = document.getElementById('authTextSidebar');
-
-                if (userNameDisplay) userNameDisplay.textContent = user.displayName || 'User';
-                if (userEmailDisplay) userEmailDisplay.textContent = user.email || '';
-                if (authTextSidebar) {
-                    authTextSidebar.innerHTML = `<i class="fas fa-user-circle"></i> ${user.displayName || 'User'}`;
-                }
-
-                if (user.photoURL) {
-                    if (userAvatar) {
-                        userAvatar.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
-                    }
-                    if (topAvatarImg) {
-                        topAvatarImg.src = user.photoURL;
-                        topAvatarImg.style.display = 'block';
-                        if (topAvatarText) topAvatarText.style.display = 'none';
-                    }
-                    const avatarImg = document.getElementById('avatarImg');
-                    const avatarText = document.getElementById('avatarText');
-                    if (avatarImg) {
-                        avatarImg.src = user.photoURL;
-                        avatarImg.style.display = 'block';
-                        if (avatarText) avatarText.style.display = 'none';
-                    }
-                }
-
-                window.currentUserId = user.uid;
-                window.currentUser = user;
-
-                // --- LOAD CHATS FROM FIRESTORE ---
-                const chats = await window.loadChatsFromFirestore(user.uid);
-                if (Object.keys(chats).length > 0) {
-                    window.chats = chats;
-                } else {
-                    const localChats = localStorage.getItem('wk_chats');
-                    if (localChats) {
-                        try {
-                            const parsed = JSON.parse(localChats);
-                            if (Object.keys(parsed).length > 0) {
-                                window.chats = parsed;
-                                await window.saveChatsToFirestore(user.uid, parsed);
-                            }
-                        } catch (e) {}
-                    }
-                }
-
-                // --- LOAD SETTINGS FROM FIRESTORE ---
-                const settings = await window.loadUserSettings(user.uid);
-                if (settings && Object.keys(settings).length > 0) {
-                    if (settings.provider) window.state.provider = settings.provider;
-                    if (settings.apiKey) window.state.apiKey = settings.apiKey;
-                    if (settings.model) window.state.model = settings.model;
-                    if (settings.voiceLang) window.state.voiceLang = settings.voiceLang;
-                    if (settings.replicateKey) window.state.replicateKey = settings.replicateKey;
-                    if (settings.userName) window.state.userName = settings.userName;
-                    if (settings.userAvatar) window.state.userAvatar = settings.userAvatar;
-                    localStorage.setItem('wk_provider', window.state.provider);
-                    localStorage.setItem('wk_api_key', window.state.apiKey);
-                    localStorage.setItem('wk_model', window.state.model);
-                    localStorage.setItem('wk_voice_lang', window.state.voiceLang);
-                    localStorage.setItem('wk_replicate_key', window.state.replicateKey);
-                    localStorage.setItem('wk_user_name', window.state.userName);
-                    localStorage.setItem('wk_user_avatar', window.state.userAvatar);
-                } else {
-                    window.state.provider = localStorage.getItem('wk_provider') || 'gemini';
-                    window.state.apiKey = localStorage.getItem('wk_api_key') || '';
-                    window.state.model = localStorage.getItem('wk_model') || 'gemini-3.5-flash';
-                    window.state.voiceLang = localStorage.getItem('wk_voice_lang') || 'ha-NG';
-                    window.state.replicateKey = localStorage.getItem('wk_replicate_key') || '';
-                    window.state.userName = localStorage.getItem('wk_user_name') || 'My Profile';
-                    window.state.userAvatar = localStorage.getItem('wk_user_avatar') || '';
-                }
-
-                window.loadProfile();
-                window.updateProviderUI();
-                window.renderChatList('');
-                window.renderMessages();
-                window.updateMemoryBadges();
-                window.updateBackButton();
-
-                const authBtn = document.getElementById('authBtnSidebar');
-                if (authBtn) {
-                    authBtn.style.display = 'none';
-                }
-
-                window.updateOwnerBadge();
-
-                console.log('✅ All data loaded from Firestore');
-
-            } else {
-                // USER IS SIGNED OUT
-                console.log('👤 User signed out');
-                window.currentUserId = null;
-                window.currentUser = null;
-
-                showLoginModal();
-
-                const authBtn = document.getElementById('authBtnSidebar');
-                if (authBtn) {
-                    authBtn.style.display = 'flex';
-                    authBtn.innerHTML = `<i class="fas fa-sign-in-alt"></i><span>Sign in with Google</span>`;
-                    authBtn.onclick = window.handleGoogleSignIn;
-                }
-
-                const userAvatar = document.getElementById('userAvatar');
-                if (userAvatar) userAvatar.innerHTML = 'WK';
-                const topAvatarImg = document.getElementById('topAvatarImg');
-                if (topAvatarImg) topAvatarImg.style.display = 'none';
-                const topAvatarText = document.getElementById('topAvatarText');
-                if (topAvatarText) {
-                    topAvatarText.style.display = 'block';
-                    topAvatarText.textContent = 'WK';
-                }
-                const userNameDisplay = document.getElementById('userNameDisplay');
-                if (userNameDisplay) userNameDisplay.textContent = 'My Profile';
-                const userEmailDisplay = document.getElementById('userEmailDisplay');
-                if (userEmailDisplay) userEmailDisplay.textContent = 'Click to edit';
-            }
-        });
-
-        window.showLoginModal = showLoginModal;
-        window.hideLoginModal = hideLoginModal;
+        // Optional: Make app available globally if needed
+        window.firebaseApp = app;
+        console.log('🔥 Firebase initialized successfully!');
     </script>
 
-    <!-- ================================================================ -->
-    <!-- REST OF THE CODE: STYLES, HTML BODY, AND REMAINING JAVASCRIPT   -->
-    <!-- (Kept exactly as before, but using the same structure)           -->
-    <!-- ================================================================ -->
     <style>
         /* ===== Royal Theme ===== */
         :root {
@@ -437,7 +59,11 @@
             --memory-blue: #60a5fa;
             --sidebar-width: 280px;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
         body {
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background: radial-gradient(circle at 20% 20%, rgba(236, 72, 153, 0.2), transparent 60%),
@@ -448,7 +74,11 @@
             height: 100vh;
             overflow: hidden;
         }
-        .app-layout { display: flex; height: 100vh; overflow: hidden; }
+        .app-layout {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
 
         /* ===== SIDEBAR ===== */
         .sidebar {
@@ -467,323 +97,1281 @@
             overflow: hidden;
             position: relative;
         }
-        .sidebar.collapsed { transform: translateX(-100%); width: 0; min-width: 0; border-right: none; }
-        .sidebar-top { padding: 16px 16px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-        .brand-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+            width: 0;
+            min-width: 0;
+            border-right: none;
+        }
+        .sidebar-top {
+            padding: 16px 16px 12px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .brand-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
         .brand-logo {
-            width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
-            display: flex; align-items: center; justify-content: center;
-            background: var(--accent); color: white; font-weight: 700; font-size: 16px; overflow: hidden;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--accent);
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            overflow: hidden;
         }
-        .brand-logo img { width: 100%; height: 100%; object-fit: cover; }
-        .brand-name { font-size: 1.05rem; font-weight: 700; color: var(--accent); }
-        .brand-sub { font-size: 0.6rem; color: var(--text-light); opacity: 0.7; display: block; margin-top: -2px; }
-        .sidebar-close-btn { background: transparent; border: none; color: var(--text-light); font-size: 1.1rem; cursor: pointer; display: none; }
-        .sidebar-close-btn:hover { color: var(--accent); }
+        .brand-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .brand-name {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        .brand-sub {
+            font-size: 0.6rem;
+            color: var(--text-light);
+            opacity: 0.7;
+            display: block;
+            margin-top: -2px;
+        }
+        .sidebar-close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-light);
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: none;
+        }
+        .sidebar-close-btn:hover {
+            color: var(--accent);
+        }
         .new-chat-btn {
-            width: 100%; padding: 10px 14px; background: var(--accent); color: white; border: none;
-            border-radius: 10px; font-weight: 600; cursor: pointer; display: flex; align-items: center;
-            justify-content: center; gap: 8px; transition: background 0.2s; font-size: 0.9rem; margin-bottom: 10px;
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
         }
-        .new-chat-btn:hover { background: var(--accent-hover); }
-        .search-chats-wrap { position: relative; width: 100%; }
+        .new-chat-btn:hover {
+            background: var(--accent-hover);
+        }
+        .search-chats-wrap {
+            position: relative;
+            width: 100%;
+        }
         .search-chats-wrap input {
-            width: 100%; padding: 8px 12px 8px 36px; border-radius: 8px; border: 1px solid var(--border);
-            background: rgba(255, 255, 255, 0.05); color: var(--text-main); font-size: 0.85rem; outline: none;
+            width: 100%;
+            padding: 8px 12px 8px 36px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            font-size: 0.85rem;
+            outline: none;
             transition: border 0.2s;
         }
-        .search-chats-wrap input:focus { border-color: var(--accent); background: rgba(255, 255, 255, 0.08); }
-        .search-chats-wrap .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
-        .sidebar-middle { flex: 1; overflow-y: auto; padding: 10px 8px 8px; }
-        .sidebar-middle::-webkit-scrollbar { width: 4px; }
-        .sidebar-middle::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
-        .chat-list-label { font-size: 0.65rem; text-transform: uppercase; color: var(--text-muted); padding: 4px 10px 8px; font-weight: 600; }
+        .search-chats-wrap input:focus {
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .search-chats-wrap .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+        .sidebar-middle {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 8px 8px;
+        }
+        .sidebar-middle::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sidebar-middle::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 10px;
+        }
+        .chat-list-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            padding: 4px 10px 8px;
+            font-weight: 600;
+        }
         .chat-item {
-            padding: 10px 12px; margin-bottom: 2px; border-radius: 8px; cursor: pointer;
-            display: flex; align-items: center; justify-content: space-between; transition: background 0.15s;
-            font-size: 0.88rem; gap: 6px; position: relative;
+            padding: 10px 12px;
+            margin-bottom: 2px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background 0.15s;
+            font-size: 0.88rem;
+            gap: 6px;
+            position: relative;
         }
-        .chat-item:hover { background: var(--surface-hover); }
-        .chat-item.active { background: rgba(236, 72, 153, 0.15); border-left: 3px solid var(--accent); }
-        .chat-item-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--text-main); }
-        .chat-item-actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; position: relative; }
-        .chat-item-actions .more-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 2px 6px; border-radius: 4px; font-size: 1rem; transition: 0.2s; line-height: 1; }
-        .chat-item-actions .more-btn:hover { color: var(--accent); }
+        .chat-item:hover {
+            background: var(--surface-hover);
+        }
+        .chat-item.active {
+            background: rgba(236, 72, 153, 0.15);
+            border-left: 3px solid var(--accent);
+        }
+        .chat-item-title {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+            color: var(--text-main);
+        }
+        .chat-item-actions {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            flex-shrink: 0;
+            position: relative;
+        }
+        .chat-item-actions .more-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: 0.2s;
+            line-height: 1;
+        }
+        .chat-item-actions .more-btn:hover {
+            color: var(--accent);
+        }
         .chat-item .dropdown-menu {
-            display: none; position: absolute; right: 0; top: 100%; background: #1e1b2e;
-            border: 1px solid var(--border); border-radius: 10px; padding: 6px 0; min-width: 170px;
-            z-index: 50; box-shadow: 0 12px 40px rgba(0,0,0,0.6); margin-top: 4px;
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: #1e1b2e;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 6px 0;
+            min-width: 170px;
+            z-index: 50;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+            margin-top: 4px;
         }
-        .chat-item .dropdown-menu.show { display: block; }
+        .chat-item .dropdown-menu.show {
+            display: block;
+        }
         .chat-item .dropdown-menu .menu-item {
-            background: transparent; border: none; color: var(--text-main); padding: 8px 14px;
-            width: 100%; text-align: left; font-size: 0.85rem; cursor: pointer; display: flex;
-            align-items: center; gap: 10px; transition: 0.15s;
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            padding: 8px 14px;
+            width: 100%;
+            text-align: left;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.15s;
         }
-        .chat-item .dropdown-menu .menu-item:hover { background: var(--surface-hover); color: var(--accent); }
-        .chat-item .dropdown-menu .menu-item.danger { color: #f87171; }
-        .chat-item .dropdown-menu .menu-item.danger:hover { background: rgba(248,113,113,0.1); }
-        .chat-item .dropdown-menu .divider { border-top: 1px solid var(--border); margin: 4px 10px; }
-        .no-chats-msg { text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 30px 10px; line-height: 1.6; }
-        .sidebar-bottom { border-top: 1px solid var(--border); padding: 8px 12px 12px; flex-shrink: 0; }
+        .chat-item .dropdown-menu .menu-item:hover {
+            background: var(--surface-hover);
+            color: var(--accent);
+        }
+        .chat-item .dropdown-menu .menu-item.danger {
+            color: #f87171;
+        }
+        .chat-item .dropdown-menu .menu-item.danger:hover {
+            background: rgba(248, 113, 113, 0.1);
+        }
+        .chat-item .dropdown-menu .divider {
+            border-top: 1px solid var(--border);
+            margin: 4px 10px;
+        }
+        .no-chats-msg {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            padding: 30px 10px;
+            line-height: 1.6;
+        }
+        .sidebar-bottom {
+            border-top: 1px solid var(--border);
+            padding: 8px 12px 12px;
+            flex-shrink: 0;
+        }
         .advanced-toggle {
-            display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px;
-            cursor: pointer; transition: 0.2s; color: var(--text-light); font-size: 0.8rem; font-weight: 500;
-            border: none; background: transparent; width: 100%; text-align: left; margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            color: var(--text-light);
+            font-size: 0.8rem;
+            font-weight: 500;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: left;
+            margin-bottom: 4px;
         }
-        .advanced-toggle:hover { background: var(--surface-hover); color: var(--text-main); }
-        .advanced-toggle i { transition: transform 0.3s; }
-        .advanced-toggle.open i { transform: rotate(90deg); }
+        .advanced-toggle:hover {
+            background: var(--surface-hover);
+            color: var(--text-main);
+        }
+        .advanced-toggle i {
+            transition: transform 0.3s;
+        }
+        .advanced-toggle.open i {
+            transform: rotate(90deg);
+        }
         .advanced-content {
-            overflow: hidden; max-height: 0; transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1),
-            opacity 0.25s ease; opacity: 0;
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.25s ease;
+            opacity: 0;
         }
-        .advanced-content.open { max-height: 300px; opacity: 1; }
+        .advanced-content.open {
+            max-height: 300px;
+            opacity: 1;
+        }
         .advanced-content .adv-btn {
-            display: flex; align-items: center; gap: 10px; padding: 7px 12px 7px 36px; border-radius: 6px;
-            border: none; background: transparent; color: var(--text-light); font-size: 0.82rem;
-            cursor: pointer; width: 100%; text-align: left; transition: 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 12px 7px 36px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            color: var(--text-light);
+            font-size: 0.82rem;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+            transition: 0.15s;
         }
-        .advanced-content .adv-btn:hover { background: var(--surface-hover); color: var(--text-main); }
-        .advanced-content .adv-btn .badge-count { font-size: 0.6rem; background: rgba(236,72,153,0.12); color: var(--accent); padding: 1px 8px; border-radius: 12px; margin-left: auto; }
+        .advanced-content .adv-btn:hover {
+            background: var(--surface-hover);
+            color: var(--text-main);
+        }
+        .advanced-content .adv-btn .badge-count {
+            font-size: 0.6rem;
+            background: rgba(236, 72, 153, 0.12);
+            color: var(--accent);
+            padding: 1px 8px;
+            border-radius: 12px;
+            margin-left: auto;
+        }
         .profile-row {
-            display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px;
-            cursor: pointer; transition: 0.15s; margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.15s;
+            margin-top: 4px;
         }
-        .profile-row:hover { background: var(--surface-hover); }
+        .profile-row:hover {
+            background: var(--surface-hover);
+        }
         .profile-avatar {
-            width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: white;
-            display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px;
-            flex-shrink: 0; overflow: hidden;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 13px;
+            flex-shrink: 0;
+            overflow: hidden;
         }
-        .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .profile-info { flex: 1; min-width: 0; }
-        .profile-name { font-size: 0.85rem; font-weight: 500; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .profile-email { font-size: 0.7rem; color: var(--text-muted); }
-        .bottom-actions { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .profile-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .profile-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .profile-email {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+        .bottom-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin-top: 6px;
+        }
         .bottom-action-btn {
-            display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 6px;
-            border: none; background: transparent; color: var(--text-light); font-size: 0.82rem;
-            cursor: pointer; width: 100%; text-align: left; transition: 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 10px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            color: var(--text-light);
+            font-size: 0.82rem;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+            transition: 0.15s;
         }
-        .bottom-action-btn:hover { background: var(--surface-hover); color: var(--text-main); }
-        .bottom-action-btn.danger { color: #f87171; }
-        .bottom-action-btn.danger:hover { background: rgba(248,113,113,0.08); }
+        .bottom-action-btn:hover {
+            background: var(--surface-hover);
+            color: var(--text-main);
+        }
+        .bottom-action-btn.danger {
+            color: #f87171;
+        }
+        .bottom-action-btn.danger:hover {
+            background: rgba(248, 113, 113, 0.08);
+        }
         .auth-btn-sidebar {
-            display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px;
-            border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text-light);
-            cursor: pointer; width: 100%; transition: 0.2s; font-size: 0.85rem; margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-light);
+            cursor: pointer;
+            width: 100%;
+            transition: 0.2s;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
         }
-        .auth-btn-sidebar:hover { background: var(--surface-hover); }
+        .auth-btn-sidebar:hover {
+            background: var(--surface-hover);
+        }
 
         /* ===== MAIN AREA ===== */
-        .main-area { flex: 1; display: flex; flex-direction: column; min-width: 0; background: transparent; height: 100vh; overflow: hidden; }
+        .main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            background: transparent;
+            height: 100vh;
+            overflow: hidden;
+        }
         .top-bar {
-            padding: 8px 16px; background: rgba(13,2,31,0.8); backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;
-            flex-wrap: wrap; gap: 6px; z-index: 10; flex-shrink: 0;
+            padding: 8px 16px;
+            background: rgba(13, 2, 31, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 6px;
+            z-index: 10;
+            flex-shrink: 0;
         }
-        .top-left { display: flex; align-items: center; gap: 6px; }
-        .top-right { display: flex; align-items: center; gap: 8px; }
-        .toggle-sidebar-btn { background: transparent; border: none; color: var(--text-light); font-size: 1.1rem; cursor: pointer; padding: 6px; }
-        .toggle-sidebar-btn:hover { color: var(--accent); }
-        .back-btn { background: transparent; border: none; color: var(--text-light); font-size: 1.1rem; cursor: pointer; padding: 6px; display: none; }
-        .back-btn:hover { color: var(--accent); }
-        .top-title { font-weight: 600; color: var(--accent); font-size: 0.95rem; }
-        .top-model { font-size: 0.7rem; color: var(--text-light); display: flex; align-items: center; gap: 4px; }
-        .mode-toggle { display: flex; gap: 4px; margin-right: 8px; }
+        .top-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .top-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .toggle-sidebar-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-light);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 6px;
+        }
+        .toggle-sidebar-btn:hover {
+            color: var(--accent);
+        }
+        .back-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-light);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 6px;
+            display: none;
+        }
+        .back-btn:hover {
+            color: var(--accent);
+        }
+        .top-title {
+            font-weight: 600;
+            color: var(--accent);
+            font-size: 0.95rem;
+        }
+        .top-model {
+            font-size: 0.7rem;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .mode-toggle {
+            display: flex;
+            gap: 4px;
+            margin-right: 8px;
+        }
         .mode-btn {
-            padding: 4px 10px; border-radius: 16px; border: none; font-size: 0.75rem; cursor: pointer;
-            display: flex; align-items: center; gap: 4px; transition: all 0.2s;
-            background: rgba(255,255,255,0.06); color: var(--text-light);
+            padding: 4px 10px;
+            border-radius: 16px;
+            border: none;
+            font-size: 0.75rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-light);
         }
-        .mode-btn.active { background: var(--accent); color: white; }
-        .mode-btn:hover:not(.active) { background: rgba(255,255,255,0.12); }
-        .lock-badge, .memory-badge, .provider-badge, .replicate-badge, .owner-badge {
-            font-size: 0.6rem; padding: 2px 8px; border-radius: 12px; border: 1px solid var(--border); margin-left: 4px; display: inline-block;
+        .mode-btn.active {
+            background: var(--accent);
+            color: white;
         }
-        .lock-badge { background: rgba(251,191,36,0.15); color: var(--lock-gold); border-color: rgba(251,191,36,0.25); }
-        .memory-badge { background: rgba(96,165,250,0.15); color: var(--memory-blue); border-color: rgba(96,165,250,0.25); }
-        .provider-badge { background: rgba(236,72,153,0.12); color: var(--text-light); border-color: rgba(236,72,153,0.15); }
-        .replicate-badge { background: rgba(16,163,127,0.15); color: #34d399; border-color: rgba(16,163,127,0.2); }
-        .owner-badge { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #1e1b2e; font-weight: 700; }
+        .mode-btn:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .lock-badge,
+        .memory-badge,
+        .provider-badge,
+        .replicate-badge,
+        .owner-badge {
+            font-size: 0.6rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-left: 4px;
+            display: inline-block;
+        }
+        .lock-badge {
+            background: rgba(251, 191, 36, 0.15);
+            color: var(--lock-gold);
+            border-color: rgba(251, 191, 36, 0.25);
+        }
+        .memory-badge {
+            background: rgba(96, 165, 250, 0.15);
+            color: var(--memory-blue);
+            border-color: rgba(96, 165, 250, 0.25);
+        }
+        .provider-badge {
+            background: rgba(236, 72, 153, 0.12);
+            color: var(--text-light);
+            border-color: rgba(236, 72, 153, 0.15);
+        }
+        .replicate-badge {
+            background: rgba(16, 163, 127, 0.15);
+            color: #34d399;
+            border-color: rgba(16, 163, 127, 0.2);
+        }
+        .owner-badge {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #1e1b2e;
+            font-weight: 700;
+        }
         .top-avatar {
-            width: 28px; height: 28px; border-radius: 50%; overflow: hidden; cursor: pointer;
-            flex-shrink: 0; border: 1px solid var(--border); background: var(--accent);
-            display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            overflow: hidden;
+            cursor: pointer;
+            flex-shrink: 0;
+            border: 1px solid var(--border);
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: white;
         }
-        .top-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .top-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
 
-        .chat-container { flex: 1; overflow-y: auto; padding: 8px 16px; max-width: 850px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; scroll-behavior: smooth; }
-        .chat-container::-webkit-scrollbar { width: 4px; }
-        .chat-container::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
-        .disclaimer-bar { background: rgba(236,72,153,0.08); border: 1px solid rgba(236,72,153,0.12); border-radius: 10px; padding: 6px 12px; margin: 0 0 10px 0; text-align: center; font-size: 0.75rem; color: var(--text-light); flex-shrink: 0; }
-        .disclaimer-bar i { color: var(--accent); }
-        .welcome-screen { text-align: center; padding: 20px 12px 12px; color: var(--text-light); flex: 1; }
-        .welcome-icon { font-size: 40px; margin-bottom: 12px; }
-        .welcome-title { color: var(--accent); margin-bottom: 6px; font-size: 1.2rem; }
-        .welcome-desc { max-width: 500px; margin: 0 auto; line-height: 1.6; font-size: 0.95rem; }
-        .messages-area { flex: 1; display: flex; flex-direction: column; }
-        .message { display: flex; gap: 12px; margin-bottom: 20px; animation: fadeIn 0.25s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-        .message.user { flex-direction: row-reverse; }
-        .msg-avatar {
-            width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-weight: 700; font-size: 13px; flex-shrink: 0; overflow: hidden; background: var(--accent); color: white;
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 16px;
+            max-width: 850px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            scroll-behavior: smooth;
         }
-        .msg-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .message.user .msg-avatar { background: var(--user-bubble); color: white; }
-        .message.ai .msg-avatar { background: linear-gradient(135deg, var(--accent), #8b5cf6); color: white; }
-        .msg-bubble-wrap { max-width: 88%; min-width: 0; }
+        .chat-container::-webkit-scrollbar {
+            width: 4px;
+        }
+        .chat-container::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 10px;
+        }
+        .disclaimer-bar {
+            background: rgba(236, 72, 153, 0.08);
+            border: 1px solid rgba(236, 72, 153, 0.12);
+            border-radius: 10px;
+            padding: 6px 12px;
+            margin: 0 0 10px 0;
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-light);
+            flex-shrink: 0;
+        }
+        .disclaimer-bar i {
+            color: var(--accent);
+        }
+        .welcome-screen {
+            text-align: center;
+            padding: 20px 12px 12px;
+            color: var(--text-light);
+            flex: 1;
+        }
+        .welcome-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+        .welcome-title {
+            color: var(--accent);
+            margin-bottom: 6px;
+            font-size: 1.2rem;
+        }
+        .welcome-desc {
+            max-width: 500px;
+            margin: 0 auto;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+        .messages-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .message {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            animation: fadeIn 0.25s ease;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .message.user {
+            flex-direction: row-reverse;
+        }
+        .msg-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 13px;
+            flex-shrink: 0;
+            overflow: hidden;
+            background: var(--accent);
+            color: white;
+        }
+        .msg-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .message.user .msg-avatar {
+            background: var(--user-bubble);
+            color: white;
+        }
+        .message.ai .msg-avatar {
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            color: white;
+        }
+        .msg-bubble-wrap {
+            max-width: 88%;
+            min-width: 0;
+        }
         .msg-bubble-user {
-            background: var(--user-bubble); color: var(--user-text); border-radius: 20px 20px 4px 20px;
-            padding: 12px 16px; line-height: 1.6; word-wrap: break-word; font-size: 0.95rem; width: 100%;
+            background: var(--user-bubble);
+            color: var(--user-text);
+            border-radius: 20px 20px 4px 20px;
+            padding: 12px 16px;
+            line-height: 1.6;
+            word-wrap: break-word;
+            font-size: 0.95rem;
+            width: 100%;
         }
         .msg-bubble-ai {
-            background: var(--ai-bubble); backdrop-filter: blur(10px); color: var(--ai-text);
-            border-radius: 20px 20px 20px 4px; padding: 14px 18px; line-height: 1.7; border: 1px solid var(--border);
-            font-size: 0.95rem; width: 100%;
+            background: var(--ai-bubble);
+            backdrop-filter: blur(10px);
+            color: var(--ai-text);
+            border-radius: 20px 20px 20px 4px;
+            padding: 14px 18px;
+            line-height: 1.7;
+            border: 1px solid var(--border);
+            font-size: 0.95rem;
+            width: 100%;
         }
-        .msg-time { font-size: 10px; color: var(--text-light); margin-top: 4px; }
-        .image-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 12px; max-width: 512px; }
-        .generated-image-card { position: relative; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); background: var(--surface-alt); }
-        .generated-image-card img { width: 100%; height: auto; display: block; max-height: 600px; object-fit: cover; }
+        .msg-time {
+            font-size: 10px;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+        .image-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-top: 12px;
+            max-width: 512px;
+        }
+        .generated-image-card {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            background: var(--surface-alt);
+        }
+        .generated-image-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+            max-height: 600px;
+            object-fit: cover;
+        }
         .image-card-overlay {
-            position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.7));
-            padding: 8px; display: flex; justify-content: center; gap: 8px; opacity: 0; transition: opacity 0.2s;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+            padding: 8px;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
         }
-        .generated-image-card:hover .image-card-overlay { opacity: 1; }
-        .download-btn, .retry-btn {
-            background: white; color: var(--text-main); border: none; padding: 6px 12px; border-radius: 16px;
-            font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: 500;
+        .generated-image-card:hover .image-card-overlay {
+            opacity: 1;
+        }
+        .download-btn,
+        .retry-btn {
+            background: white;
+            color: var(--text-main);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 500;
             transition: all 0.2s;
         }
-        .download-btn:hover { background: var(--accent); color: white; }
-        .retry-btn { background: var(--accent); color: white; }
-        .retry-btn:hover { background: var(--accent-hover); }
-        .msg-actions { display: flex; align-items: center; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
+        .download-btn:hover {
+            background: var(--accent);
+            color: white;
+        }
+        .retry-btn {
+            background: var(--accent);
+            color: white;
+        }
+        .retry-btn:hover {
+            background: var(--accent-hover);
+        }
+        .msg-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
         .action-btn {
-            background: transparent; border: none; padding: 4px 8px; border-radius: 16px; font-size: 11px;
-            color: var(--text-light); cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.15s;
+            background: transparent;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 16px;
+            font-size: 11px;
+            color: var(--text-light);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.15s;
         }
-        .action-btn:hover { background: rgba(255,255,255,0.06); color: var(--accent); }
-        .action-btn.liked { color: #3b82f6; background: rgba(59,130,246,0.15); }
-        .action-btn.disliked { color: #ef4444; background: rgba(239,68,68,0.15); }
-        .action-btn.memory-btn { color: var(--memory-blue); }
-        .action-btn.lock-btn { color: var(--lock-gold); }
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--accent);
+        }
+        .action-btn.liked {
+            color: #3b82f6;
+            background: rgba(59, 130, 246, 0.15);
+        }
+        .action-btn.disliked {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.15);
+        }
+        .action-btn.memory-btn {
+            color: var(--memory-blue);
+        }
+        .action-btn.lock-btn {
+            color: var(--lock-gold);
+        }
 
-        .typing-row { display: flex; gap: 12px; margin-bottom: 20px; }
-        .typing-bubble { background: var(--ai-bubble); border-radius: 20px 20px 20px 4px; padding: 14px 18px; border: 1px solid var(--border); }
-        .typing-dots span { display: inline-block; width: 8px; height: 8px; background: var(--accent); border-radius: 50%; margin: 0 2px; animation: bounceDot 1.4s infinite ease-in-out both; }
-        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
-        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes bounceDot { 0%,80%,100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
-        .hidden { display: none !important; }
+        .typing-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .typing-bubble {
+            background: var(--ai-bubble);
+            border-radius: 20px 20px 20px 4px;
+            padding: 14px 18px;
+            border: 1px solid var(--border);
+        }
+        .typing-dots span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: bounceDot 1.4s infinite ease-in-out both;
+        }
+        .typing-dots span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+        .typing-dots span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+        @keyframes bounceDot {
+            0%,
+            80%,
+            100% {
+                transform: scale(0.6);
+                opacity: 0.4;
+            }
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        .hidden {
+            display: none !important;
+        }
 
-        .input-wrapper { background: rgba(13,2,31,0.9); backdrop-filter: blur(12px); border-top: 1px solid var(--border); padding: 8px 12px 12px; flex-shrink: 0; }
+        .input-wrapper {
+            background: rgba(13, 2, 31, 0.9);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid var(--border);
+            padding: 8px 12px 12px;
+            flex-shrink: 0;
+        }
         .input-inner {
-            max-width: 850px; margin: 0 auto; display: flex; align-items: center; gap: 6px;
-            background: rgba(255,255,255,0.06); border-radius: 28px; padding: 4px 8px 4px 16px;
-            border: 1px solid var(--border); transition: border 0.2s;
+            max-width: 850px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 28px;
+            padding: 4px 8px 4px 16px;
+            border: 1px solid var(--border);
+            transition: border 0.2s;
         }
-        .input-inner:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(236,72,153,0.1); }
+        .input-inner:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
+        }
         #chatInput {
-            flex: 1; border: none; outline: none; background: transparent; font-size: 0.95rem;
-            padding: 8px 0; color: var(--text-main); min-width: 0; resize: none; overflow-y: auto;
-            max-height: 120px; line-height: 1.5; font-family: inherit;
+            flex: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 0.95rem;
+            padding: 8px 0;
+            color: var(--text-main);
+            min-width: 0;
+            resize: none;
+            overflow-y: auto;
+            max-height: 120px;
+            line-height: 1.5;
+            font-family: inherit;
         }
         .icon-btn {
-            width: 34px; height: 34px; border-radius: 50%; background: transparent; border: none;
-            color: var(--text-light); font-size: 16px; cursor: pointer; display: flex; align-items: center;
-            justify-content: center; transition: all 0.2s; flex-shrink: 0;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: transparent;
+            border: none;
+            color: var(--text-light);
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
         }
-        .icon-btn:hover { background: rgba(255,255,255,0.06); color: var(--accent); }
-        .icon-btn.recording { background: #fef2f2; color: #dc2626; }
+        .icon-btn:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--accent);
+        }
+        .icon-btn.recording {
+            background: #fef2f2;
+            color: #dc2626;
+        }
         .send-btn {
-            width: 36px; height: 36px; border-radius: 50%; background: var(--accent); color: white;
-            border: none; font-size: 14px; cursor: pointer; display: flex; align-items: center;
-            justify-content: center; transition: background 0.2s; flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: white;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+            flex-shrink: 0;
         }
-        .send-btn:hover { background: var(--accent-hover); }
-        .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        #fileInput { display: none; }
-        .preview-area { display: none; gap: 6px; padding: 4px 12px; background: rgba(13,2,31,0.9); border-top: 1px solid var(--border); flex-wrap: wrap; }
-        .preview-area.show { display: flex; }
-        .preview-item { position: relative; width: 56px; height: 56px; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
-        .preview-item img { width: 100%; height: 100%; object-fit: cover; }
-        .preview-remove { position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.6); color: white; border: none; width: 18px; height: 18px; border-radius: 50%; cursor: pointer; font-size: 10px; display: flex; align-items: center; justify-content: center; }
+        .send-btn:hover {
+            background: var(--accent-hover);
+        }
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        #fileInput {
+            display: none;
+        }
+        .preview-area {
+            display: none;
+            gap: 6px;
+            padding: 4px 12px;
+            background: rgba(13, 2, 31, 0.9);
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+        .preview-area.show {
+            display: flex;
+        }
+        .preview-item {
+            position: relative;
+            width: 56px;
+            height: 56px;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .preview-remove {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            border: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
         /* ===== MODALS ===== */
-        .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
-        .modal-backdrop.active { display: flex; }
-        .modal { background: #1e1b2e; border: 1px solid var(--border); border-radius: 16px; max-width: 480px; width: 100%; max-height: 80vh; overflow-y: auto; padding: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
-        .modal.wide { max-width: 640px; }
-        .modal h2 { font-size: 1.1rem; font-weight: 700; color: var(--accent); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
-        .modal p { color: var(--text-light); font-size: 0.95rem; line-height: 1.6; margin-bottom: 16px; }
-        .form-group { margin-bottom: 16px; }
-        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 6px; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; outline: none; background: rgba(0,0,0,0.3); color: var(--text-main); transition: border 0.2s; font-family: inherit; }
-        .form-group textarea { min-height: 80px; resize: vertical; }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(236,72,153,0.1); }
-        .form-hint { font-size: 0.75rem; color: var(--text-light); margin-top: 4px; line-height: 1.4; }
-        .form-hint a { color: var(--accent); text-decoration: underline; }
-        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
-        .btn { padding: 10px 20px; border-radius: 8px; border: none; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-        .btn-secondary { background: rgba(255,255,255,0.06); color: var(--text-main); }
-        .btn-secondary:hover { background: rgba(255,255,255,0.12); }
-        .btn-primary { background: var(--accent); color: white; }
-        .btn-primary:hover { background: var(--accent-hover); }
-        .btn-danger { background: #dc2626; color: white; }
-        .btn-danger:hover { background: #b91c1c; }
-        .btn-gold { background: #fbbf24; color: #1e1b2e; }
-        .btn-gold:hover { background: #f59e0b; }
-        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #1e1b2e; border: 1px solid var(--border); color: white; padding: 12px 24px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 200; opacity: 0; transition: all 0.3s ease; font-size: 0.9rem; max-width: 90%; text-align: center; }
-        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 16px;
+        }
+        .modal-backdrop.active {
+            display: flex;
+        }
+        .modal {
+            background: #1e1b2e;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            max-width: 480px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        .modal.wide {
+            max-width: 640px;
+        }
+        .modal h2 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .modal p {
+            color: var(--text-light);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 6px;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            outline: none;
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--text-main);
+            transition: border 0.2s;
+            font-family: inherit;
+        }
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
+        }
+        .form-hint {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+        .form-hint a {
+            color: var(--accent);
+            text-decoration: underline;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-main);
+        }
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+        .btn-gold {
+            background: #fbbf24;
+            color: #1e1b2e;
+        }
+        .btn-gold:hover {
+            background: #f59e0b;
+        }
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1e1b2e;
+            border: 1px solid var(--border);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            z-index: 200;
+            opacity: 0;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            max-width: 90%;
+            text-align: center;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
 
-        .share-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
-        .share-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 8px; border-radius: 12px; border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text-main); cursor: pointer; transition: all 0.2s; font-size: 0.8rem; text-decoration: none; }
-        .share-btn:hover { background: rgba(255,255,255,0.08); transform: scale(1.02); }
-        .share-btn i { font-size: 24px; }
-        .share-btn .fab.fa-whatsapp { color: #25d366; }
-        .share-btn .fab.fa-facebook { color: #1877f2; }
-        .share-btn .fab.fa-x-twitter { color: #000; }
-        .share-btn .fab.fa-tiktok { color: #010101; text-shadow: 0 0 6px rgba(255,255,255,0.3); }
-        .share-btn .fab.fa-instagram { color: #e4405f; }
-        .share-btn .fas.fa-copy { color: var(--text-light); }
-        .memory-list-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; gap: 10px; }
-        .memory-list-item .mem-content { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .memory-list-item .mem-tag { font-size: 0.6rem; padding: 2px 8px; border-radius: 12px; flex-shrink: 0; }
-        .memory-list-item .mem-tag.lock { background: rgba(251,191,36,0.12); color: var(--lock-gold); border: 1px solid rgba(251,191,36,0.15); }
-        .memory-list-item .mem-tag.memory { background: rgba(96,165,250,0.12); color: var(--memory-blue); border: 1px solid rgba(96,165,250,0.15); }
-        .memory-list-item .mem-tag.preference { background: rgba(52,211,153,0.12); color: #34d399; border: 1px solid rgba(52,211,153,0.15); }
-        .memory-list-item .mem-actions button { background: transparent; border: none; color: var(--text-light); cursor: pointer; padding: 2px 6px; border-radius: 4px; transition: 0.15s; }
-        .memory-list-item .mem-actions button:hover { background: var(--surface-hover); color: var(--accent); }
-        .memory-list-item .mem-actions button.danger:hover { color: #f87171; }
-        .delete-modal .modal .icon-warning { font-size: 48px; color: #f87171; text-align: center; display: block; margin-bottom: 12px; }
+        .share-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 16px 0;
+        }
+        .share-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 12px 8px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.8rem;
+            text-decoration: none;
+        }
+        .share-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: scale(1.02);
+        }
+        .share-btn i {
+            font-size: 24px;
+        }
+        .share-btn .fab.fa-whatsapp {
+            color: #25d366;
+        }
+        .share-btn .fab.fa-facebook {
+            color: #1877f2;
+        }
+        .share-btn .fab.fa-x-twitter {
+            color: #000;
+        }
+        .share-btn .fab.fa-tiktok {
+            color: #010101;
+            text-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
+        }
+        .share-btn .fab.fa-instagram {
+            color: #e4405f;
+        }
+        .share-btn .fas.fa-copy {
+            color: var(--text-light);
+        }
+        .memory-list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.85rem;
+            gap: 10px;
+        }
+        .memory-list-item .mem-content {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .memory-list-item .mem-tag {
+            font-size: 0.6rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            flex-shrink: 0;
+        }
+        .memory-list-item .mem-tag.lock {
+            background: rgba(251, 191, 36, 0.12);
+            color: var(--lock-gold);
+            border: 1px solid rgba(251, 191, 36, 0.15);
+        }
+        .memory-list-item .mem-tag.memory {
+            background: rgba(96, 165, 250, 0.12);
+            color: var(--memory-blue);
+            border: 1px solid rgba(96, 165, 250, 0.15);
+        }
+        .memory-list-item .mem-tag.preference {
+            background: rgba(52, 211, 153, 0.12);
+            color: #34d399;
+            border: 1px solid rgba(52, 211, 153, 0.15);
+        }
+        .memory-list-item .mem-actions button {
+            background: transparent;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: 0.15s;
+        }
+        .memory-list-item .mem-actions button:hover {
+            background: var(--surface-hover);
+            color: var(--accent);
+        }
+        .memory-list-item .mem-actions button.danger:hover {
+            color: #f87171;
+        }
+        .delete-modal .modal .icon-warning {
+            font-size: 48px;
+            color: #f87171;
+            text-align: center;
+            display: block;
+            margin-bottom: 12px;
+        }
 
         @media (max-width: 768px) {
-            .sidebar { position: fixed; top: 0; left: 0; height: 100vh; z-index: 40; transform: translateX(-100%); width: 280px; min-width: 280px; box-shadow: 4px 0 30px rgba(0,0,0,0.4); border-right: 1px solid var(--border); }
-            .sidebar.open { transform: translateX(0); }
-            .sidebar.collapsed { transform: translateX(-100%); width: 280px; min-width: 280px; }
-            .sidebar-close-btn { display: block !important; }
-            .toggle-sidebar-btn { display: flex !important; }
-            .top-bar { padding: 6px 12px; }
-            .mode-btn { font-size: 0.65rem; padding: 3px 8px; }
-            .chat-container { padding: 6px 10px; }
-            .msg-bubble-wrap { max-width: 92%; }
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                z-index: 40;
+                transform: translateX(-100%);
+                width: 280px;
+                min-width: 280px;
+                box-shadow: 4px 0 30px rgba(0, 0, 0, 0.4);
+                border-right: 1px solid var(--border);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .sidebar.collapsed {
+                transform: translateX(-100%);
+                width: 280px;
+                min-width: 280px;
+            }
+            .sidebar-close-btn {
+                display: block !important;
+            }
+            .toggle-sidebar-btn {
+                display: flex !important;
+            }
+            .top-bar {
+                padding: 6px 12px;
+            }
+            .mode-btn {
+                font-size: 0.65rem;
+                padding: 3px 8px;
+            }
+            .chat-container {
+                padding: 6px 10px;
+            }
+            .msg-bubble-wrap {
+                max-width: 92%;
+            }
         }
         @media (min-width: 769px) {
-            .sidebar-close-btn { display: none !important; }
-            .toggle-sidebar-btn { display: none !important; }
-            .sidebar.collapsed { transform: translateX(-100%); width: 0; min-width: 0; }
-            .sidebar.collapsed+.main-area .toggle-sidebar-btn { display: flex !important; }
+            .sidebar-close-btn {
+                display: none !important;
+            }
+            .toggle-sidebar-btn {
+                display: none !important;
+            }
+            .sidebar.collapsed {
+                transform: translateX(-100%);
+                width: 0;
+                min-width: 0;
+            }
+            .sidebar.collapsed+.main-area .toggle-sidebar-btn {
+                display: flex !important;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- ================================================================ -->
-    <!-- HTML BODY (kept exactly as before) -->
-    <!-- ================================================================ -->
     <div class="app-layout">
         <!-- SIDEBAR -->
         <aside class="sidebar" id="sidebar">
@@ -801,7 +1389,7 @@
                 <button class="new-chat-btn" id="newChatBtn">
                     <i class="fas fa-plus"></i> New Chat
                 </button>
-                <button class="auth-btn-sidebar" id="authBtnSidebar" onclick="window.handleGoogleSignIn()">
+                <button class="auth-btn-sidebar" id="authBtnSidebar">
                     <i class="fas fa-sign-in-alt"></i>
                     <span id="authTextSidebar">Sign in with Google</span>
                 </button>
@@ -835,7 +1423,7 @@
                 </div>
                 <div class="bottom-actions">
                     <button class="bottom-action-btn" id="settingsBtn"><i class="fas fa-cog"></i> Settings</button>
-                    <button class="bottom-action-btn danger" id="signOutBtn" onclick="window.handleSignOut()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+                    <button class="bottom-action-btn danger" id="signOutBtn"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
                 </div>
             </div>
         </aside>
@@ -906,22 +1494,6 @@
     </div>
 
     <!-- ===== MODALS ===== -->
-    <!-- LOGIN MODAL -->
-    <div class="modal-backdrop" id="loginModal" style="display:flex;">
-        <div class="modal" style="max-width:400px;text-align:center;">
-            <div style="margin-bottom:20px;">
-                <div style="font-size:48px;margin-bottom:10px;">👑</div>
-                <h2 style="font-size:1.3rem;color:var(--accent);">Welcome to Wise King AI</h2>
-                <p style="color:var(--text-light);font-size:0.95rem;">Sign in to save your chats, memories, and settings across all devices.</p>
-            </div>
-            <button onclick="window.handleGoogleSignIn()" class="google-btn" style="display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:14px;border-radius:40px;border:none;background:white;color:#1e1b2e;font-size:1rem;font-weight:600;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.2);margin:10px 0;">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width:24px;height:24px;" />
-                Sign in with Google
-            </button>
-            <p style="font-size:0.7rem;color:var(--text-muted);margin-top:16px;">🔒 Your data is private and secure.</p>
-        </div>
-    </div>
-
     <!-- Settings Modal -->
     <div class="modal-backdrop" id="settingsModal">
         <div class="modal">
@@ -1012,7 +1584,7 @@
         </div>
     </div>
 
-    <!-- Delete Chat Modal -->
+    <!-- Delete Confirmation Modal -->
     <div class="modal-backdrop delete-modal" id="deleteModal">
         <div class="modal">
             <i class="fas fa-exclamation-triangle icon-warning"></i>
@@ -1044,15 +1616,15 @@
         </div>
     </div>
 
-    <!-- Sign Out Confirmation Modal -->
+    <!-- Sign-Out Confirmation Modal -->
     <div class="modal-backdrop delete-modal" id="signOutModal">
         <div class="modal">
             <i class="fas fa-sign-out-alt icon-warning" style="color:var(--accent);"></i>
             <h2 style="text-align:center;justify-content:center;">Fita?</h2>
-            <p style="text-align:center;">Shin kana da tabbacin kana son fita? Za a cire kayanka na gida amma za a ajiye su a Firestore.</p>
+            <p style="text-align:center;">Shin kana da tabbacin kana son fita? Za a share API keys ɗin ka a nan gida.</p>
             <div class="modal-actions" style="justify-content:center;gap:12px;">
-                <button class="btn btn-secondary" id="cancelSignOutBtn" onclick="window.cancelSignOut()">A'a, Ci gaba</button>
-                <button class="btn btn-danger" id="confirmSignOutBtn" onclick="window.confirmSignOut()">Ee, Fita</button>
+                <button class="btn btn-secondary" id="cancelSignOut">A'a, Ci gaba</button>
+                <button class="btn btn-danger" id="confirmSignOut">Ee, Fita</button>
             </div>
         </div>
     </div>
@@ -1123,12 +1695,9 @@
 
     <div class="toast" id="toast"></div>
 
-    <!-- ================================================================ -->
-    <!-- REMAINING JAVASCRIPT (Your existing app logic) -->
-    <!-- ================================================================ -->
     <script>
         // ================================================================
-        // MEMORY SYSTEM (unchanged)
+        // MEMORY SYSTEM
         // ================================================================
         const MEMORY_TYPES = { MEMORY: 'memory', LOCK: 'lock', PREFERENCE: 'preference' };
         const MEMORY_PRIORITY = { SYSTEM: 1, CORE: 2, MASTER_LOCK: 3, PROJECT_LOCK: 4, PREFERENCE: 5, TASK: 6, TEMPORARY: 7 };
@@ -1278,22 +1847,14 @@
             const lockCount = memoryStore.locks.filter(l => l.isActive).length;
             const memCount = memoryStore.memories.length;
             const projCount = memoryStore.projects.length;
-            const elLock = document.getElementById('lockCountTop');
-            const elMem = document.getElementById('memoryCountTop');
-            const elLockBadge = document.getElementById('lockBadgeTop');
-            const elMemBadge = document.getElementById('memoryBadgeTop');
-            const elLockBadgeCount = document.getElementById('lockBadgeCount');
-            const elMemBadgeCount = document.getElementById('memBadgeCount');
-            const elProjBadgeCount = document.getElementById('projBadgeCount');
-            const elAdvBadge = document.getElementById('advBadge');
-            if (elLock) elLock.textContent = lockCount;
-            if (elMem) elMem.textContent = memCount;
-            if (elLockBadge) elLockBadge.style.display = lockCount > 0 ? 'inline' : 'none';
-            if (elMemBadge) elMemBadge.style.display = memCount > 0 ? 'inline' : 'none';
-            if (elLockBadgeCount) elLockBadgeCount.textContent = lockCount;
-            if (elMemBadgeCount) elMemBadgeCount.textContent = memCount;
-            if (elProjBadgeCount) elProjBadgeCount.textContent = projCount;
-            if (elAdvBadge) elAdvBadge.textContent = lockCount + memCount + projCount;
+            document.getElementById('lockCountTop').textContent = lockCount;
+            document.getElementById('memoryCountTop').textContent = memCount;
+            document.getElementById('lockBadgeTop').style.display = lockCount > 0 ? 'inline' : 'none';
+            document.getElementById('memoryBadgeTop').style.display = memCount > 0 ? 'inline' : 'none';
+            document.getElementById('lockBadgeCount').textContent = lockCount;
+            document.getElementById('memBadgeCount').textContent = memCount;
+            document.getElementById('projBadgeCount').textContent = projCount;
+            document.getElementById('advBadge').textContent = lockCount + memCount + projCount;
         }
 
         // ================================================================
@@ -1423,6 +1984,12 @@
         const advancedToggle = document.getElementById('advancedToggle');
         const advancedContent = document.getElementById('advancedContent');
 
+        // Sign-out modal
+        const signOutModal = document.getElementById('signOutModal');
+        const cancelSignOut = document.getElementById('cancelSignOut');
+        const confirmSignOut = document.getElementById('confirmSignOut');
+
+        // Top bar avatar
         const topBarAvatar = document.getElementById('topBarAvatar');
         const topAvatarImg = document.getElementById('topAvatarImg');
         const topAvatarText = document.getElementById('topAvatarText');
@@ -1482,23 +2049,16 @@
 
         function loadProfile() {
             userNameDisplay.textContent = state.userName;
-            userEmailDisplay.textContent = window.currentUser ? window.currentUser.email : 'Click to edit';
+            userEmailDisplay.textContent = 'Click to edit';
             profileNameInput.value = state.userName;
+            // Sidebar avatar
             if (state.userAvatar) {
                 avatarImg.src = state.userAvatar;
                 avatarImg.style.display = 'block';
                 avatarText.style.display = 'none';
                 userAvatar.innerHTML = `<img src="${state.userAvatar}" style="width:100%;height:100%;object-fit:cover;" />`;
+                // Top bar avatar
                 topAvatarImg.src = state.userAvatar;
-                topAvatarImg.style.display = 'block';
-                topAvatarText.style.display = 'none';
-            } else if (window.currentUser && window.currentUser.photoURL) {
-                const photo = window.currentUser.photoURL;
-                avatarImg.src = photo;
-                avatarImg.style.display = 'block';
-                avatarText.style.display = 'none';
-                userAvatar.innerHTML = `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;" />`;
-                topAvatarImg.src = photo;
                 topAvatarImg.style.display = 'block';
                 topAvatarText.style.display = 'none';
             } else {
@@ -1522,34 +2082,14 @@
         }
 
         function loadChats() {
-            if (Object.keys(chats).length === 0) {
-                const saved = localStorage.getItem('wk_chats');
-                if (saved) { try { chats = JSON.parse(saved); } catch (e) { chats = {}; } }
-            }
+            const saved = localStorage.getItem('wk_chats');
+            if (saved) { try { chats = JSON.parse(saved); } catch (e) { chats = {}; } }
             renderChatList('');
         }
 
         function saveChats() {
             localStorage.setItem('wk_chats', JSON.stringify(chats));
-            if (window.currentUserId) {
-                window.saveChatsToFirestore(window.currentUserId, chats);
-            }
             renderChatList(searchChatsInput.value);
-        }
-
-        function saveSettingsToFirestore() {
-            if (window.currentUserId) {
-                const settings = {
-                    provider: state.provider,
-                    apiKey: state.apiKey,
-                    model: state.model,
-                    voiceLang: state.voiceLang,
-                    replicateKey: state.replicateKey,
-                    userName: state.userName,
-                    userAvatar: state.userAvatar
-                };
-                window.saveUserSettings(window.currentUserId, settings);
-            }
         }
 
         function fileToBase64(file) {
@@ -1927,7 +2467,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         // ================================================================
-        // RENDER MESSAGES (unchanged)
+        // RENDER MESSAGES
         // ================================================================
         function renderMessage(role, content, extra = {}, msgIndex) {
             const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -2141,7 +2681,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         // ================================================================
-        // SPEECH & VOICE (unchanged)
+        // SPEECH & VOICE
         // ================================================================
         function speakText(text) {
             if (!window.speechSynthesis) { showToast('❌ Speech not supported'); return; }
@@ -2181,7 +2721,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
 
         // ================================================================
-        // FILE UPLOAD (unchanged)
+        // FILE UPLOAD
         // ================================================================
         attachBtn.addEventListener('click', (e) => { e.preventDefault();
             fileInput.click(); });
@@ -2219,7 +2759,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         // ================================================================
-        // CHAT LIST RENDERING (unchanged)
+        // CHAT LIST RENDERING
         // ================================================================
         function renderChatList(filter = '') {
             chatList.innerHTML = '';
@@ -2380,7 +2920,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         // ================================================================
-        // CHAT MANAGEMENT (unchanged)
+        // CHAT MANAGEMENT
         // ================================================================
         function createNewChat() {
             currentChatId = 'chat-' + Date.now();
@@ -2518,7 +3058,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
 
         // ================================================================
-        // SEND MESSAGE (unchanged)
+        // SEND MESSAGE
         // ================================================================
         async function sendMessage() {
             if (imageState.isGenerating) { showToast('⏳ An image is already generating. Please wait.'); return; }
@@ -2543,25 +3083,113 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
             renderMessage('user', text, userMsg.extra, chats[currentChatId].messages.length - 1);
 
             const isImageRequest = /create|generate|make|draw|paint|render|picture|image|photo|photograph|art|illustration|design|visual|scene|portrait|landscape|fantasy|concept art|character|environment|background|style|beautiful|aesthetic|digital art|sketch|painting|realistic|real person|live picture|front view|photorealistic|view/i.test(text) && !/code|programming|function|api|database|sql|debug|fix bug/i.test(text);
-            const shouldGenerateImage = isImageMode || isImageRequest;
             const removeBgMatch = text.match(/remove\s+(?:the\s+)?background|erase\s+background|delete\s+background/i);
             const replaceBgMatch = text.match(/replace\s+(?:the\s+)?background|change\s+background|new\s+background/i);
             const anotherMatch = text.match(/another|other one|next one|one more|again|different one/i);
             const improveMatch = text.match(/make it better|improve|enhance|upgrade|refine/i);
 
-            if (shouldGenerateImage) {
-                if (removeBgMatch && imagesForApi.length > 0) {
+            // Background removal
+            if (removeBgMatch && imagesForApi.length > 0) {
+                typingIndicator.classList.remove('hidden');
+                typingIndicator.querySelector('.typing-bubble').innerHTML =
+                    '<div style="display:flex;align-items:center;gap:8px;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Removing background...</div>';
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                try {
+                    const result = await generateImage(text, imagesForApi[0], 'remove_bg', activeProjectId);
+                    typingIndicator.classList.add('hidden');
+                    typingIndicator.querySelector('.typing-bubble').innerHTML =
+                        `<div class="typing-dots"><span></span><span></span><span></span></div>`;
+                    if (result && result.imageUrl) {
+                        const aiMsg = { role: 'assistant', content: `✅ Background removed successfully.`,
+                            extra: { generatedImage: result.imageUrl } };
+                        chats[currentChatId].messages.push(aiMsg);
+                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
+                        .length - 1);
+                    } else if (result && result.error) {
+                        const aiMsg = { role: 'assistant', content: `❌ ${result.error}`, extra: {} };
+                        chats[currentChatId].messages.push(aiMsg);
+                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
+                        .length - 1);
+                    } else { const aiMsg = { role: 'assistant', content: `❌ Background removal failed.`,
+                            extra: {} };
+                        chats[currentChatId].messages.push(aiMsg);
+                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
+                        .length - 1); }
+                    saveChats();
+                    return;
+                } catch (err) {
+                    typingIndicator.classList.add('hidden');
+                    typingIndicator.querySelector('.typing-bubble').innerHTML =
+                        `<div class="typing-dots"><span></span><span></span><span></span></div>`;
+                    const aiMsg = { role: 'assistant', content: `❌ ${err.message || 'Background removal failed.'}`,
+                        extra: {} };
+                    chats[currentChatId].messages.push(aiMsg);
+                    renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
+                    saveChats();
+                    return;
+                }
+            }
+
+            // Background replacement
+            if (replaceBgMatch && imagesForApi.length > 0) {
+                typingIndicator.classList.remove('hidden');
+                typingIndicator.querySelector('.typing-bubble').innerHTML =
+                    '<div style="display:flex;align-items:center;gap:8px;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Replacing background...</div>';
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                try {
+                    const result = await generateImage(text, imagesForApi[0], 'replace_bg', activeProjectId);
+                    typingIndicator.classList.add('hidden');
+                    typingIndicator.querySelector('.typing-bubble').innerHTML =
+                        `<div class="typing-dots"><span></span><span></span><span></span></div>`;
+                    if (result && result.imageUrl) {
+                        const aiMsg = { role: 'assistant', content: `✅ Background replaced successfully.`,
+                            extra: { generatedImage: result.imageUrl } };
+                        chats[currentChatId].messages.push(aiMsg);
+                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
+                        .length - 1);
+                    } else if (result && result.error) {
+                        const aiMsg = { role: 'assistant', content: `❌ ${result.error}`, extra: {} };
+                        chats[currentChatId].messages.push(aiMsg);
+                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
+                        .length - 1);
+                    } else { const aiMsg = { role: 'assistant', content: `❌ Background replacement failed.`,
+                            extra: {} };
+                        chats[currentChatId].messages.push(aiMsg);
+                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
+                        .length - 1); }
+                    saveChats();
+                    return;
+                } catch (err) {
+                    typingIndicator.classList.add('hidden');
+                    typingIndicator.querySelector('.typing-bubble').innerHTML =
+                        `<div class="typing-dots"><span></span><span></span><span></span></div>`;
+                    const aiMsg = { role: 'assistant', content: `❌ ${err.message || 'Background replacement failed.'}`,
+                        extra: {} };
+                    chats[currentChatId].messages.push(aiMsg);
+                    renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
+                    saveChats();
+                    return;
+                }
+            }
+
+            // "Another" or "Make it better"
+            if ((anotherMatch || improveMatch) && imageState.lastResult) {
+                const lastImageUrl = imageState.lastResult.imageUrl;
+                if (lastImageUrl) {
+                    const operation = anotherMatch ? 'another' : 'improve';
                     typingIndicator.classList.remove('hidden');
                     typingIndicator.querySelector('.typing-bubble').innerHTML =
-                        '<div style="display:flex;align-items:center;gap:8px;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Removing background...</div>';
+                        `<div style="display:flex;align-items:center;gap:8px;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Generating ${operation === 'another' ? 'new variation' : 'improved version'}...</div>`;
                     chatContainer.scrollTop = chatContainer.scrollHeight;
                     try {
-                        const result = await generateImage(text, imagesForApi[0], 'remove_bg', activeProjectId);
+                        const result = await generateImage(text, lastImageUrl, operation, activeProjectId);
                         typingIndicator.classList.add('hidden');
                         typingIndicator.querySelector('.typing-bubble').innerHTML =
                             `<div class="typing-dots"><span></span><span></span><span></span></div>`;
                         if (result && result.imageUrl) {
-                            const aiMsg = { role: 'assistant', content: `✅ Background removed successfully.`,
+                            const aiMsg = { role: 'assistant',
+                                content: operation === 'another' ? `✅ New variation created.` :
+                                    `✅ Improved version created.`,
                                 extra: { generatedImage: result.imageUrl } };
                             chats[currentChatId].messages.push(aiMsg);
                             renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
@@ -2571,7 +3199,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                             chats[currentChatId].messages.push(aiMsg);
                             renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
                             .length - 1);
-                        } else { const aiMsg = { role: 'assistant', content: `❌ Background removal failed.`,
+                        } else { const aiMsg = { role: 'assistant', content: `❌ Failed to generate.`,
                                 extra: {} };
                             chats[currentChatId].messages.push(aiMsg);
                             renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
@@ -2582,7 +3210,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                         typingIndicator.classList.add('hidden');
                         typingIndicator.querySelector('.typing-bubble').innerHTML =
                             `<div class="typing-dots"><span></span><span></span><span></span></div>`;
-                        const aiMsg = { role: 'assistant', content: `❌ ${err.message || 'Background removal failed.'}`,
+                        const aiMsg = { role: 'assistant', content: `❌ ${err.message || 'Generation failed.'}`,
                             extra: {} };
                         chats[currentChatId].messages.push(aiMsg);
                         renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
@@ -2591,97 +3219,10 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                         return;
                     }
                 }
+            }
 
-                if (replaceBgMatch && imagesForApi.length > 0) {
-                    typingIndicator.classList.remove('hidden');
-                    typingIndicator.querySelector('.typing-bubble').innerHTML =
-                        '<div style="display:flex;align-items:center;gap:8px;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Replacing background...</div>';
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                    try {
-                        const result = await generateImage(text, imagesForApi[0], 'replace_bg', activeProjectId);
-                        typingIndicator.classList.add('hidden');
-                        typingIndicator.querySelector('.typing-bubble').innerHTML =
-                            `<div class="typing-dots"><span></span><span></span><span></span></div>`;
-                        if (result && result.imageUrl) {
-                            const aiMsg = { role: 'assistant', content: `✅ Background replaced successfully.`,
-                                extra: { generatedImage: result.imageUrl } };
-                            chats[currentChatId].messages.push(aiMsg);
-                            renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
-                            .length - 1);
-                        } else if (result && result.error) {
-                            const aiMsg = { role: 'assistant', content: `❌ ${result.error}`, extra: {} };
-                            chats[currentChatId].messages.push(aiMsg);
-                            renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
-                            .length - 1);
-                        } else { const aiMsg = { role: 'assistant', content: `❌ Background replacement failed.`,
-                                extra: {} };
-                            chats[currentChatId].messages.push(aiMsg);
-                            renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
-                            .length - 1); }
-                        saveChats();
-                        return;
-                    } catch (err) {
-                        typingIndicator.classList.add('hidden');
-                        typingIndicator.querySelector('.typing-bubble').innerHTML =
-                            `<div class="typing-dots"><span></span><span></span><span></span></div>`;
-                        const aiMsg = { role: 'assistant', content: `❌ ${err.message || 'Background replacement failed.'}`,
-                            extra: {} };
-                        chats[currentChatId].messages.push(aiMsg);
-                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
-                        .length - 1);
-                        saveChats();
-                        return;
-                    }
-                }
-
-                if ((anotherMatch || improveMatch) && imageState.lastResult) {
-                    const lastImageUrl = imageState.lastResult.imageUrl;
-                    if (lastImageUrl) {
-                        const operation = anotherMatch ? 'another' : 'improve';
-                        typingIndicator.classList.remove('hidden');
-                        typingIndicator.querySelector('.typing-bubble').innerHTML =
-                            `<div style="display:flex;align-items:center;gap:8px;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Generating ${operation === 'another' ? 'new variation' : 'improved version'}...</div>`;
-                        chatContainer.scrollTop = chatContainer.scrollHeight;
-                        try {
-                            const result = await generateImage(text, lastImageUrl, operation, activeProjectId);
-                            typingIndicator.classList.add('hidden');
-                            typingIndicator.querySelector('.typing-bubble').innerHTML =
-                                `<div class="typing-dots"><span></span><span></span><span></span></div>`;
-                            if (result && result.imageUrl) {
-                                const aiMsg = { role: 'assistant',
-                                    content: operation === 'another' ? `✅ New variation created.` :
-                                        `✅ Improved version created.`,
-                                    extra: { generatedImage: result.imageUrl } };
-                                chats[currentChatId].messages.push(aiMsg);
-                                renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId]
-                                    .messages.length - 1);
-                            } else if (result && result.error) {
-                                const aiMsg = { role: 'assistant', content: `❌ ${result.error}`, extra: {} };
-                                chats[currentChatId].messages.push(aiMsg);
-                                renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId]
-                                    .messages.length - 1);
-                            } else { const aiMsg = { role: 'assistant', content: `❌ Failed to generate.`,
-                                    extra: {} };
-                                chats[currentChatId].messages.push(aiMsg);
-                                renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId]
-                                    .messages.length - 1); }
-                            saveChats();
-                            return;
-                        } catch (err) {
-                            typingIndicator.classList.add('hidden');
-                            typingIndicator.querySelector('.typing-bubble').innerHTML =
-                                `<div class="typing-dots"><span></span><span></span><span></span></div>`;
-                            const aiMsg = { role: 'assistant', content: `❌ ${err.message || 'Generation failed.'}`,
-                                extra: {} };
-                            chats[currentChatId].messages.push(aiMsg);
-                            renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
-                            .length - 1);
-                            saveChats();
-                            return;
-                        }
-                    }
-                }
-
+            // Standard image generation
+            if (isImageRequest) {
                 typingIndicator.classList.remove('hidden');
                 typingIndicator.querySelector('.typing-bubble').innerHTML =
                     '<div style="display:flex;align-items:center;gap:8px;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Generating image...</div>';
@@ -2736,7 +3277,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 }
             }
 
-            // Normal chat
+            // Chat AI
             const history = [];
             const allMessages = chats[currentChatId].messages;
             for (let i = 0; i < allMessages.length - 1; i++) { const msg = allMessages[i];
@@ -2771,7 +3312,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         // ================================================================
-        // SETTINGS (unchanged)
+        // SETTINGS & PROFILE
         // ================================================================
         settingsBtn.addEventListener('click', () => {
             apiKeyInput.value = state.apiKey;
@@ -2783,7 +3324,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
         closeSettings.addEventListener('click', () => settingsModal.classList.remove('active'));
 
-        saveSettingsBtn.addEventListener('click', async () => {
+        saveSettingsBtn.addEventListener('click', () => {
             const provider = providerSelect.value;
             const key = apiKeyInput.value.trim();
             if (!key) { showToast('⚠️ Please enter an API key'); return; }
@@ -2797,9 +3338,6 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
             localStorage.setItem('wk_model', state.model);
             localStorage.setItem('wk_voice_lang', state.voiceLang);
             localStorage.setItem('wk_replicate_key', state.replicateKey);
-            if (window.currentUserId) {
-                await saveSettingsToFirestore();
-            }
             settingsModal.classList.remove('active');
             updateProviderUI();
             replicateBadge.style.display = state.replicateKey ? 'inline' : 'none';
@@ -2844,9 +3382,6 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 topAvatarImg.style.display = 'block';
                 topAvatarText.style.display = 'none';
                 userAvatar.innerHTML = `<img src="${ev.target.result}" style="width:100%;height:100%;object-fit:cover;" />`;
-                if (window.currentUserId) {
-                    saveSettingsToFirestore();
-                }
             };
             reader.readAsDataURL(file);
         });
@@ -2856,9 +3391,6 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
             if (name) state.userName = name;
             localStorage.setItem('wk_user_name', state.userName);
             if (state.userAvatar) localStorage.setItem('wk_user_avatar', state.userAvatar);
-            if (window.currentUserId) {
-                saveSettingsToFirestore();
-            }
             loadProfile();
             profileModal.classList.remove('active');
             showToast('✅ Profile saved!');
@@ -2866,7 +3398,44 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
 
         // ================================================================
-        // SHARE MODAL (unchanged)
+        // SIGN-OUT WITH CONFIRMATION
+        // ================================================================
+        signOutBtn.addEventListener('click', () => {
+            signOutModal.classList.add('active');
+        });
+
+        cancelSignOut.addEventListener('click', () => {
+            signOutModal.classList.remove('active');
+        });
+
+        confirmSignOut.addEventListener('click', () => {
+            signOutModal.classList.remove('active');
+            localStorage.removeItem('wk_api_key');
+            localStorage.removeItem('wk_user_name');
+            localStorage.removeItem('wk_user_avatar');
+            localStorage.removeItem('wk_provider');
+            localStorage.removeItem('wk_model');
+            localStorage.removeItem('wk_voice_lang');
+            localStorage.removeItem('wk_replicate_key');
+            state.apiKey = '';
+            state.userName = 'My Profile';
+            state.userAvatar = '';
+            state.provider = 'gemini';
+            state.model = 'gemini-3.5-flash';
+            state.replicateKey = '';
+            loadProfile();
+            showToast('✅ Signed out');
+            updateOwnerBadge();
+            updateProviderUI();
+            replicateBadge.style.display = 'none';
+        });
+
+        signOutModal.addEventListener('click', (e) => {
+            if (e.target === signOutModal) signOutModal.classList.remove('active');
+        });
+
+        // ================================================================
+        // SHARE MODAL
         // ================================================================
         function openShareModal(text) { shareTextCache = text;
             shareModal.classList.add('active'); }
@@ -2943,7 +3512,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
 
         // ================================================================
-        // MEMORY MANAGER UI (unchanged)
+        // MEMORY MANAGER UI
         // ================================================================
         function renderMemoryManager() {
             const search = memorySearchInput.value.toLowerCase();
@@ -2999,7 +3568,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         memoryFilterSelect.addEventListener('change', renderMemoryManager);
 
         // ================================================================
-        // LOCKS MANAGER UI (unchanged)
+        // LOCKS MANAGER UI
         // ================================================================
         function renderLocksManager() {
             const locks = getActiveLocks();
@@ -3056,7 +3625,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 addLockBtn.click(); } });
 
         // ================================================================
-        // PROJECTS MANAGER UI (unchanged)
+        // PROJECTS MANAGER UI
         // ================================================================
         function renderProjectsManager() {
             const projects = getProjects();
@@ -3123,7 +3692,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 addProjectBtn.click(); } });
 
         // ================================================================
-        // MODE TOGGLE (unchanged)
+        // MODE TOGGLE
         // ================================================================
         function setMode(imageMode) {
             isImageMode = imageMode;
@@ -3150,7 +3719,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         imageModeBtn.addEventListener('click', () => setMode(true));
 
         // ================================================================
-        // SIDEBAR TOGGLE (unchanged)
+        // SIDEBAR TOGGLE
         // ================================================================
         toggleSidebarBtn.addEventListener('click', () => {
             if (window.innerWidth <= 768) {
@@ -3173,7 +3742,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
 
         // ================================================================
-        // ADVANCED TOGGLE (unchanged)
+        // ADVANCED TOGGLE
         // ================================================================
         let advancedOpen = false;
         advancedToggle.addEventListener('click', () => {
@@ -3183,17 +3752,25 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
 
         // ================================================================
-        // SEARCH CHATS (unchanged)
+        // SEARCH CHATS
         // ================================================================
         searchChatsInput.addEventListener('input', (e) => {
             renderChatList(e.target.value);
         });
 
         // ================================================================
-        // EVENT BINDINGS (unchanged)
+        // AUTH BUTTON
+        // ================================================================
+        authBtnSidebar.addEventListener('click', () => {
+            showToast('🔐 Google Sign-In coming soon! Configure Firebase to enable.');
+        });
+
+        // ================================================================
+        // EVENT BINDINGS
         // ================================================================
         sendBtn.addEventListener('click', sendMessage);
 
+        // Enter key: Shift+Enter = newline, Enter = send
         chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -3246,11 +3823,10 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 advancedContent.classList.add('open');
                 advancedToggle.classList.add('open');
             }
-            console.log('👑 Wise King AI — Firebase Login + Cloud Sync fully active!');
-            console.log('📌 Fixed "missing initial state" error with mixed popup/redirect flow.');
+            console.log('👑 Wise King AI — Firebase added. Google Sign-In ready.');
         }
 
         init();
     </script>
 </body>
-        </html>
+    </html>
