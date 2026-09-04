@@ -28,7 +28,6 @@
             --lock-gold: #fbbf24;
             --memory-blue: #60a5fa;
             --sidebar-width: 280px;
-            --sidebar-width-collapsed: 0px;
         }
         * {
             box-sizing: border-box;
@@ -44,7 +43,6 @@
             min-height: 100vh;
             height: 100vh;
             overflow: hidden;
-            font-size: 16px;
         }
         .app-layout {
             display: flex;
@@ -52,7 +50,7 @@
             overflow: hidden;
         }
 
-        /* ===== SIDEBAR — GEMINI-STYLE REDESIGN ===== */
+        /* ===== SIDEBAR ===== */
         .sidebar {
             width: var(--sidebar-width);
             min-width: var(--sidebar-width);
@@ -75,8 +73,6 @@
             min-width: 0;
             border-right: none;
         }
-
-        /* ---- TOP SECTION ---- */
         .sidebar-top {
             padding: 16px 16px 12px;
             border-bottom: 1px solid var(--border);
@@ -92,12 +88,10 @@
             font-size: 1.05rem;
             font-weight: 700;
             color: var(--accent);
-            letter-spacing: -0.3px;
         }
         .brand-sub {
             font-size: 0.6rem;
             color: var(--text-light);
-            font-weight: 400;
             opacity: 0.7;
             display: block;
             margin-top: -2px;
@@ -108,17 +102,11 @@
             color: var(--text-light);
             font-size: 1.1rem;
             cursor: pointer;
-            padding: 4px 6px;
-            border-radius: 6px;
-            transition: 0.2s;
             display: none;
         }
         .sidebar-close-btn:hover {
-            background: var(--surface-hover);
             color: var(--accent);
         }
-
-        /* New Chat button */
         .new-chat-btn {
             width: 100%;
             padding: 10px 14px;
@@ -132,19 +120,13 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            transition: background 0.2s, transform 0.15s;
+            transition: background 0.2s;
             font-size: 0.9rem;
             margin-bottom: 10px;
         }
         .new-chat-btn:hover {
             background: var(--accent-hover);
-            transform: scale(1.01);
         }
-        .new-chat-btn:active {
-            transform: scale(0.98);
-        }
-
-        /* Search Chats box */
         .search-chats-wrap {
             position: relative;
             width: 100%;
@@ -158,10 +140,7 @@
             color: var(--text-main);
             font-size: 0.85rem;
             outline: none;
-            transition: border 0.2s, background 0.2s;
-        }
-        .search-chats-wrap input::placeholder {
-            color: var(--text-muted);
+            transition: border 0.2s;
         }
         .search-chats-wrap input:focus {
             border-color: var(--accent);
@@ -173,37 +152,27 @@
             top: 50%;
             transform: translateY(-50%);
             color: var(--text-muted);
-            font-size: 0.85rem;
             pointer-events: none;
         }
-
-        /* ---- MIDDLE: CHAT LIST ---- */
         .sidebar-middle {
             flex: 1;
             overflow-y: auto;
             padding: 10px 8px 8px;
-            min-height: 0;
         }
         .sidebar-middle::-webkit-scrollbar {
             width: 4px;
-        }
-        .sidebar-middle::-webkit-scrollbar-track {
-            background: transparent;
         }
         .sidebar-middle::-webkit-scrollbar-thumb {
             background: var(--accent);
             border-radius: 10px;
         }
-
         .chat-list-label {
             font-size: 0.65rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
             color: var(--text-muted);
             padding: 4px 10px 8px;
             font-weight: 600;
         }
-
         .chat-item {
             padding: 10px 12px;
             margin-bottom: 2px;
@@ -234,31 +203,7 @@
             gap: 8px;
             min-width: 0;
             color: var(--text-main);
-            font-weight: 400;
         }
-        .chat-item-title .chat-icon {
-            color: var(--text-muted);
-            font-size: 0.75rem;
-            flex-shrink: 0;
-        }
-        .chat-item.active .chat-item-title .chat-icon {
-            color: var(--accent);
-        }
-        .chat-item-title .edit-title-input {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid var(--accent);
-            border-radius: 6px;
-            padding: 2px 8px;
-            color: var(--text-main);
-            font-size: 0.85rem;
-            outline: none;
-            width: 100%;
-            min-width: 60px;
-        }
-        .chat-item-title .edit-title-input:focus {
-            box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.2);
-        }
-
         .chat-item-actions {
             display: flex;
             align-items: center;
@@ -278,7 +223,6 @@
             line-height: 1;
         }
         .chat-item-actions .more-btn:hover {
-            background: var(--surface-hover);
             color: var(--accent);
         }
         .chat-item .dropdown-menu {
@@ -326,16 +270,6 @@
             border-top: 1px solid var(--border);
             margin: 4px 10px;
         }
-        .chat-item .dropdown-menu .menu-item i {
-            width: 18px;
-            text-align: center;
-            font-size: 0.9rem;
-        }
-        .chat-item .dropdown-menu .menu-item .fab {
-            width: 18px;
-            text-align: center;
-        }
-
         .no-chats-msg {
             text-align: center;
             color: var(--text-muted);
@@ -343,21 +277,11 @@
             padding: 30px 10px;
             line-height: 1.6;
         }
-        .no-chats-msg i {
-            font-size: 2rem;
-            display: block;
-            margin-bottom: 10px;
-            opacity: 0.4;
-        }
-
-        /* ---- BOTTOM SECTION: Profile, Settings, Sign Out ---- */
         .sidebar-bottom {
             border-top: 1px solid var(--border);
             padding: 8px 12px 12px;
             flex-shrink: 0;
         }
-
-        /* Advanced Features collapsible section */
         .advanced-toggle {
             display: flex;
             align-items: center;
@@ -380,24 +304,11 @@
             color: var(--text-main);
         }
         .advanced-toggle i {
-            font-size: 0.85rem;
             transition: transform 0.3s;
-            color: var(--text-muted);
-        }
-        .advanced-toggle .toggle-label {
-            flex: 1;
-        }
-        .advanced-toggle .toggle-badge {
-            font-size: 0.6rem;
-            background: rgba(236, 72, 153, 0.15);
-            color: var(--accent);
-            padding: 1px 8px;
-            border-radius: 12px;
         }
         .advanced-toggle.open i {
             transform: rotate(90deg);
         }
-
         .advanced-content {
             overflow: hidden;
             max-height: 0;
@@ -409,7 +320,6 @@
             max-height: 300px;
             opacity: 1;
         }
-
         .advanced-content .adv-btn {
             display: flex;
             align-items: center;
@@ -429,12 +339,6 @@
             background: var(--surface-hover);
             color: var(--text-main);
         }
-        .advanced-content .adv-btn i {
-            width: 18px;
-            text-align: center;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
         .advanced-content .adv-btn .badge-count {
             font-size: 0.6rem;
             background: rgba(236, 72, 153, 0.12);
@@ -443,8 +347,6 @@
             border-radius: 12px;
             margin-left: auto;
         }
-
-        /* Profile row */
         .profile-row {
             display: flex;
             align-items: center;
@@ -492,16 +394,7 @@
         .profile-email {
             font-size: 0.7rem;
             color: var(--text-muted);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
-        .profile-row .chevron {
-            color: var(--text-muted);
-            font-size: 0.7rem;
-        }
-
-        /* Bottom action buttons */
         .bottom-actions {
             display: flex;
             flex-direction: column;
@@ -527,23 +420,12 @@
             background: var(--surface-hover);
             color: var(--text-main);
         }
-        .bottom-action-btn i {
-            width: 18px;
-            text-align: center;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-        }
         .bottom-action-btn.danger {
             color: #f87171;
         }
         .bottom-action-btn.danger:hover {
             background: rgba(248, 113, 113, 0.08);
         }
-        .bottom-action-btn.danger i {
-            color: #f87171;
-        }
-
-        /* Auth button in sidebar */
         .auth-btn-sidebar {
             display: flex;
             align-items: center;
@@ -561,26 +443,6 @@
         }
         .auth-btn-sidebar:hover {
             background: var(--surface-hover);
-            color: var(--text-main);
-        }
-        .auth-btn-sidebar img {
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-        .auth-btn-sidebar .user-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex: 1;
-            overflow: hidden;
-        }
-        .auth-btn-sidebar .user-name {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            font-weight: 500;
         }
 
         /* ===== MAIN AREA ===== */
@@ -611,18 +473,6 @@
             align-items: center;
             gap: 6px;
         }
-        .top-left .back-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-light);
-            font-size: 1.1rem;
-            cursor: pointer;
-            padding: 6px;
-            display: none;
-        }
-        .top-left .back-btn:hover {
-            color: var(--accent);
-        }
         .toggle-sidebar-btn {
             background: transparent;
             border: none;
@@ -634,11 +484,22 @@
         .toggle-sidebar-btn:hover {
             color: var(--accent);
         }
+        .back-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-light);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 6px;
+            display: none;
+        }
+        .back-btn:hover {
+            color: var(--accent);
+        }
         .top-title {
             font-weight: 600;
             color: var(--accent);
             font-size: 0.95rem;
-            margin-left: 2px;
         }
         .top-model {
             font-size: 0.7rem;
@@ -672,94 +533,62 @@
         .mode-btn:hover:not(.active) {
             background: rgba(255, 255, 255, 0.12);
         }
-        .top-badges {
-            display: flex;
-            align-items: center;
-            gap: 4px;
+        .lock-badge,
+        .memory-badge,
+        .provider-badge,
+        .replicate-badge,
+        .owner-badge {
+            font-size: 0.6rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-left: 4px;
+            display: inline-block;
         }
         .lock-badge {
-            font-size: 0.6rem;
             background: rgba(251, 191, 36, 0.15);
-            padding: 2px 8px;
-            border-radius: 12px;
-            border: 1px solid rgba(251, 191, 36, 0.25);
             color: var(--lock-gold);
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .lock-badge:hover {
-            background: rgba(251, 191, 36, 0.25);
+            border-color: rgba(251, 191, 36, 0.25);
         }
         .memory-badge {
-            font-size: 0.6rem;
             background: rgba(96, 165, 250, 0.15);
-            padding: 2px 8px;
-            border-radius: 12px;
-            border: 1px solid rgba(96, 165, 250, 0.25);
             color: var(--memory-blue);
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .memory-badge:hover {
-            background: rgba(96, 165, 250, 0.25);
+            border-color: rgba(96, 165, 250, 0.25);
         }
         .provider-badge {
-            font-size: 0.65rem;
             background: rgba(236, 72, 153, 0.12);
-            padding: 2px 8px;
-            border-radius: 12px;
-            border: 1px solid rgba(236, 72, 153, 0.15);
             color: var(--text-light);
-            margin-left: 4px;
-        }
-        .provider-badge.active-provider {
-            color: var(--accent);
-            border-color: var(--accent);
+            border-color: rgba(236, 72, 153, 0.15);
         }
         .replicate-badge {
-            font-size: 0.6rem;
             background: rgba(16, 163, 127, 0.15);
-            padding: 2px 8px;
-            border-radius: 12px;
-            border: 1px solid rgba(16, 163, 127, 0.2);
             color: #34d399;
-            margin-left: 4px;
+            border-color: rgba(16, 163, 127, 0.2);
         }
         .owner-badge {
-            display: inline-block;
             background: linear-gradient(135deg, #fbbf24, #f59e0b);
             color: #1e1b2e;
-            font-size: 0.6rem;
             font-weight: 700;
-            padding: 2px 8px;
-            border-radius: 12px;
-            margin-left: 4px;
         }
 
-        /* ===== CHAT CONTAINER ===== */
         .chat-container {
             flex: 1;
             overflow-y: auto;
-            padding: 8px 16px 8px;
+            padding: 8px 16px;
             max-width: 850px;
             margin: 0 auto;
             width: 100%;
-            -webkit-overflow-scrolling: touch;
             display: flex;
             flex-direction: column;
-            scroll-behavior: smooth; /* Added for smooth scrolling */
+            scroll-behavior: smooth;
         }
         .chat-container::-webkit-scrollbar {
             width: 4px;
-        }
-        .chat-container::-webkit-scrollbar-track {
-            background: transparent;
         }
         .chat-container::-webkit-scrollbar-thumb {
             background: var(--accent);
             border-radius: 10px;
         }
-
         .disclaimer-bar {
             background: rgba(236, 72, 153, 0.08);
             border: 1px solid rgba(236, 72, 153, 0.12);
@@ -770,16 +599,10 @@
             font-size: 0.75rem;
             color: var(--text-light);
             flex-shrink: 0;
-            backdrop-filter: blur(4px);
         }
         .disclaimer-bar i {
             color: var(--accent);
-            margin-right: 4px;
         }
-        .disclaimer-bar strong {
-            color: var(--accent);
-        }
-
         .welcome-screen {
             text-align: center;
             padding: 20px 12px 12px;
@@ -801,13 +624,11 @@
             line-height: 1.6;
             font-size: 0.95rem;
         }
-
         .messages-area {
             flex: 1;
             display: flex;
             flex-direction: column;
         }
-
         .message {
             display: flex;
             gap: 12px;
@@ -850,11 +671,6 @@
             max-width: 88%;
             min-width: 0;
         }
-        .message.user .msg-bubble-wrap {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-        }
         .msg-bubble-user {
             background: var(--user-bubble);
             color: var(--user-text);
@@ -876,44 +692,17 @@
             font-size: 0.95rem;
             width: 100%;
         }
-        .msg-bubble-ai p {
-            margin-bottom: 8px;
-        }
-        .msg-bubble-ai p:last-child {
-            margin-bottom: 0;
-        }
-        .msg-bubble-ai ul,
-        .msg-bubble-ai ol {
-            padding-left: 20px;
-            margin: 8px 0;
-        }
-        .msg-bubble-ai li {
-            margin-bottom: 4px;
-        }
-        .msg-bubble-ai strong {
-            color: var(--accent);
-        }
-        .msg-bubble-ai blockquote {
-            border-left: 3px solid var(--accent);
-            padding-left: 12px;
-            margin: 10px 0;
-            color: var(--text-light);
-        }
         .msg-time {
             font-size: 10px;
             color: var(--text-light);
             margin-top: 4px;
         }
-
         .image-grid {
             display: grid;
             grid-template-columns: 1fr;
             gap: 10px;
             margin-top: 12px;
-            width: 100%;
             max-width: 512px;
-            margin-left: auto;
-            margin-right: auto;
         }
         .generated-image-card {
             position: relative;
@@ -926,8 +715,8 @@
             width: 100%;
             height: auto;
             display: block;
-            object-fit: cover;
             max-height: 600px;
+            object-fit: cover;
         }
         .image-card-overlay {
             position: absolute;
@@ -970,6 +759,44 @@
         }
         .retry-btn:hover {
             background: var(--accent-hover);
+        }
+        .msg-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+        .action-btn {
+            background: transparent;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 16px;
+            font-size: 11px;
+            color: var(--text-light);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.15s;
+        }
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--accent);
+        }
+        .action-btn.liked {
+            color: #3b82f6;
+            background: rgba(59, 130, 246, 0.15);
+        }
+        .action-btn.disliked {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.15);
+        }
+        .action-btn.memory-btn {
+            color: var(--memory-blue);
+        }
+        .action-btn.lock-btn {
+            color: var(--lock-gold);
         }
 
         .typing-row {
@@ -1014,52 +841,6 @@
             display: none !important;
         }
 
-        .msg-actions {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            margin-top: 8px;
-            flex-wrap: wrap;
-        }
-        .action-btn {
-            background: transparent;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 16px;
-            font-size: 11px;
-            color: var(--text-light);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            transition: all 0.15s;
-        }
-        .action-btn:hover {
-            background: rgba(255, 255, 255, 0.06);
-            color: var(--accent);
-        }
-        .action-btn.liked {
-            color: #3b82f6;
-            background: rgba(59, 130, 246, 0.15);
-        }
-        .action-btn.disliked {
-            color: #ef4444;
-            background: rgba(239, 68, 68, 0.15);
-        }
-        .action-btn.memory-btn {
-            color: var(--memory-blue);
-        }
-        .action-btn.memory-btn:hover {
-            background: rgba(96, 165, 250, 0.12);
-        }
-        .action-btn.lock-btn {
-            color: var(--lock-gold);
-        }
-        .action-btn.lock-btn:hover {
-            background: rgba(251, 191, 36, 0.12);
-        }
-
-        /* ===== INPUT AREA ===== */
         .input-wrapper {
             background: rgba(13, 2, 31, 0.9);
             backdrop-filter: blur(12px);
@@ -1083,7 +864,6 @@
             border-color: var(--accent);
             box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
         }
-        /* --- FIX: Auto-scroll input box --- */
         #chatInput {
             flex: 1;
             border: none;
@@ -1095,23 +875,9 @@
             min-width: 0;
             resize: none;
             overflow-y: auto;
-            overflow-x: hidden;
-            max-height: 120px; /* Prevents it from growing too large; will scroll instead */
+            max-height: 120px;
             line-height: 1.5;
             font-family: inherit;
-        }
-        .input-inner input[type="text"] {
-            flex: 1;
-            border: none;
-            outline: none;
-            background: transparent;
-            font-size: 0.95rem;
-            padding: 8px 0;
-            color: var(--text-main);
-            min-width: 0;
-        }
-        .input-inner input::placeholder {
-            color: var(--text-muted);
         }
         .icon-btn {
             width: 34px;
@@ -1148,10 +914,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background 0.2s, opacity 0.2s;
+            transition: background 0.2s;
             flex-shrink: 0;
         }
-        .send-btn:hover:not(:disabled) {
+        .send-btn:hover {
             background: var(--accent-hover);
         }
         .send-btn:disabled {
@@ -1162,12 +928,11 @@
             display: none;
         }
         .preview-area {
-            display: flex;
+            display: none;
             gap: 6px;
             padding: 4px 12px;
             background: rgba(13, 2, 31, 0.9);
             border-top: 1px solid var(--border);
-            display: none;
             flex-wrap: wrap;
         }
         .preview-area.show {
@@ -1328,13 +1093,12 @@
             background: #b91c1c;
         }
         .btn-gold {
-            background: var(--lock-gold-dark);
+            background: #fbbf24;
             color: #1e1b2e;
         }
         .btn-gold:hover {
-            background: var(--lock-gold);
+            background: #f59e0b;
         }
-
         .toast {
             position: fixed;
             bottom: 30px;
@@ -1356,39 +1120,6 @@
         .toast.show {
             transform: translateX(-50%) translateY(0);
             opacity: 1;
-        }
-
-        .avatar-upload-area {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin-bottom: 16px;
-        }
-        .avatar-preview {
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            background: var(--accent);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: white;
-            overflow: hidden;
-        }
-        .avatar-preview img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: none;
-        }
-        .avatar-actions {
-            flex: 1;
-        }
-        .avatar-actions p {
-            font-size: 0.8rem;
-            color: var(--text-light);
-            margin-top: 4px;
         }
 
         .share-grid {
@@ -1419,34 +1150,25 @@
         .share-btn i {
             font-size: 24px;
         }
+        .share-btn .fab.fa-whatsapp {
+            color: #25d366;
+        }
         .share-btn .fab.fa-facebook {
             color: #1877f2;
         }
-        .share-btn .fab.fa-instagram {
-            color: #e4405f;
-        }
-        .share-btn .fab.fa-whatsapp {
-            color: #25d366;
+        .share-btn .fab.fa-x-twitter {
+            color: #000;
         }
         .share-btn .fab.fa-tiktok {
             color: #010101;
             text-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
         }
-        .share-btn .fab.fa-x-twitter {
-            color: #000;
+        .share-btn .fab.fa-instagram {
+            color: #e4405f;
         }
         .share-btn .fas.fa-copy {
             color: var(--text-light);
         }
-        .share-btn .fas.fa-share-alt {
-            color: var(--accent);
-        }
-        @media (max-width: 400px) {
-            .share-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
         .memory-list-item {
             display: flex;
             align-items: center;
@@ -1499,10 +1221,6 @@
         .memory-list-item .mem-actions button.danger:hover {
             color: #f87171;
         }
-
-        .delete-modal .modal {
-            max-width: 380px;
-        }
         .delete-modal .modal .icon-warning {
             font-size: 48px;
             color: #f87171;
@@ -1511,75 +1229,6 @@
             margin-bottom: 12px;
         }
 
-        .edit-input-wrap {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            width: 100%;
-        }
-        .edit-input-wrap input {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid var(--accent);
-            border-radius: 12px;
-            padding: 6px 12px;
-            color: var(--text-main);
-            font-size: 0.9rem;
-            outline: none;
-        }
-        .edit-input-wrap input:focus {
-            box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.15);
-        }
-        .edit-input-wrap button {
-            background: var(--accent);
-            border: none;
-            color: white;
-            border-radius: 16px;
-            padding: 4px 12px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            transition: 0.2s;
-        }
-        .edit-input-wrap button:hover {
-            background: var(--accent-hover);
-        }
-        .edit-input-wrap .cancel-edit {
-            background: transparent;
-            color: var(--text-light);
-        }
-        .edit-input-wrap .cancel-edit:hover {
-            background: rgba(255, 255, 255, 0.06);
-        }
-
-        .msg-bubble-ai .owner-greeting {
-            color: #fbbf24;
-            font-weight: 700;
-            font-size: 1rem;
-            display: block;
-            margin-bottom: 4px;
-        }
-        .msg-bubble-ai .memory-tag {
-            display: inline-block;
-            background: rgba(96, 165, 250, 0.12);
-            border: 1px solid rgba(96, 165, 250, 0.2);
-            border-radius: 4px;
-            padding: 0 6px;
-            font-size: 0.7rem;
-            color: var(--memory-blue);
-            margin-left: 4px;
-        }
-        .msg-bubble-ai .lock-tag {
-            display: inline-block;
-            background: rgba(251, 191, 36, 0.12);
-            border: 1px solid rgba(251, 191, 36, 0.2);
-            border-radius: 4px;
-            padding: 0 6px;
-            font-size: 0.7rem;
-            color: var(--lock-gold);
-            margin-left: 4px;
-        }
-
-        /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
             .sidebar {
                 position: fixed;
@@ -1604,7 +1253,7 @@
             .sidebar-close-btn {
                 display: block !important;
             }
-            .top-left .toggle-sidebar-btn {
+            .toggle-sidebar-btn {
                 display: flex !important;
             }
             .top-bar {
@@ -1621,12 +1270,11 @@
                 max-width: 92%;
             }
         }
-
         @media (min-width: 769px) {
             .sidebar-close-btn {
                 display: none !important;
             }
-            .top-left .toggle-sidebar-btn {
+            .toggle-sidebar-btn {
                 display: none !important;
             }
             .sidebar.collapsed {
@@ -1634,7 +1282,7 @@
                 width: 0;
                 min-width: 0;
             }
-            .sidebar.collapsed+.main-area .top-left .toggle-sidebar-btn {
+            .sidebar.collapsed+.main-area .toggle-sidebar-btn {
                 display: flex !important;
             }
         }
@@ -1642,9 +1290,8 @@
 </head>
 <body>
     <div class="app-layout">
-        <!-- ===== SIDEBAR — REDESIGNED GEMINI-STYLE ===== -->
+        <!-- SIDEBAR -->
         <aside class="sidebar" id="sidebar">
-            <!-- TOP: Brand + New Chat + Search -->
             <div class="sidebar-top">
                 <div class="brand-row">
                     <div>
@@ -1653,46 +1300,33 @@
                     </div>
                     <button class="sidebar-close-btn" id="sidebarCloseBtn"><i class="fas fa-times"></i></button>
                 </div>
-
-                <!-- New Chat -->
                 <button class="new-chat-btn" id="newChatBtn">
                     <i class="fas fa-plus"></i> New Chat
                 </button>
-
-                <!-- Sign in with Google (inside sidebar) -->
                 <button class="auth-btn-sidebar" id="authBtnSidebar">
                     <i class="fas fa-sign-in-alt"></i>
                     <span id="authTextSidebar">Sign in with Google</span>
                 </button>
-
-                <!-- Search Chats -->
                 <div class="search-chats-wrap">
                     <i class="fas fa-search search-icon"></i>
                     <input type="text" id="searchChatsInput" placeholder="Search chats..." />
                 </div>
             </div>
-
-            <!-- MIDDLE: Chat List -->
             <div class="sidebar-middle" id="sidebarMiddle">
                 <div class="chat-list-label">Recent Chats</div>
                 <div id="chatList"></div>
             </div>
-
-            <!-- BOTTOM: Advanced Features (collapsible) + Profile + Settings + Sign Out -->
             <div class="sidebar-bottom">
-                <!-- Advanced Features toggle -->
                 <button class="advanced-toggle" id="advancedToggle">
                     <i class="fas fa-chevron-right"></i>
                     <span class="toggle-label">Advanced</span>
-                    <span class="toggle-badge" id="advBadge">0</span>
+                    <span class="badge-count" id="advBadge">0</span>
                 </button>
                 <div class="advanced-content" id="advancedContent">
                     <button class="adv-btn" id="memoryManagerBtn"><i class="fas fa-brain"></i> Memory Manager <span class="badge-count" id="memBadgeCount">0</span></button>
                     <button class="adv-btn" id="locksManagerBtn"><i class="fas fa-lock"></i> Master Locks <span class="badge-count" id="lockBadgeCount">0</span></button>
                     <button class="adv-btn" id="projectsManagerBtn"><i class="fas fa-folder-open"></i> Projects <span class="badge-count" id="projBadgeCount">0</span></button>
                 </div>
-
-                <!-- Profile row -->
                 <div class="profile-row" id="profileBtn">
                     <div class="profile-avatar" id="userAvatar">WK</div>
                     <div class="profile-info">
@@ -1701,8 +1335,6 @@
                     </div>
                     <i class="fas fa-chevron-right chevron"></i>
                 </div>
-
-                <!-- Bottom actions -->
                 <div class="bottom-actions">
                     <button class="bottom-action-btn" id="settingsBtn"><i class="fas fa-cog"></i> Settings</button>
                     <button class="bottom-action-btn danger" id="signOutBtn"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
@@ -1710,19 +1342,18 @@
             </div>
         </aside>
 
-        <!-- ===== MAIN AREA ===== -->
+        <!-- MAIN AREA -->
         <main class="main-area" id="mainArea">
-            <!-- Top Bar -->
             <div class="top-bar">
                 <div class="top-left">
-                    <button class="toggle-sidebar-btn" id="toggleSidebar"><i class="fas fa-bars"></i></button>
-                    <button class="back-btn" id="backBtn" title="Go back to public view"><i class="fas fa-arrow-left"></i></button>
+                    <button class="toggle-sidebar-btn" id="toggleSidebarBtn"><i class="fas fa-bars"></i></button>
+                    <button class="back-btn" id="backBtn"><i class="fas fa-arrow-left"></i></button>
                     <span class="top-title">Wise King AI</span>
-                    <span id="ownerBadgeTop" class="owner-badge hidden">👑 Owner</span>
+                    <span class="owner-badge" id="ownerBadgeTop" style="display:none;">👑 Owner</span>
                     <span class="provider-badge" id="providerBadge">Gemini</span>
                     <span class="replicate-badge" id="replicateBadge" style="display:none;">Flux</span>
-                    <span class="lock-badge" id="lockBadgeTop" style="display:none;" title="Active Master Locks"><i class="fas fa-lock"></i> <span id="lockCountTop">0</span></span>
-                    <span class="memory-badge" id="memoryBadgeTop" title="Stored Memories"><i class="fas fa-brain"></i> <span id="memoryCountTop">0</span></span>
+                    <span class="lock-badge" id="lockBadgeTop" style="display:none;"><i class="fas fa-lock"></i> <span id="lockCountTop">0</span></span>
+                    <span class="memory-badge" id="memoryBadgeTop"><i class="fas fa-brain"></i> <span id="memoryCountTop">0</span></span>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;">
                     <div class="mode-toggle">
@@ -1733,24 +1364,20 @@
                 </div>
             </div>
 
-            <!-- Chat container -->
             <div class="chat-container" id="chatContainer">
-                <div class="disclaimer-bar" id="disclaimerBar">
+                <div class="disclaimer-bar">
                     <i class="fas fa-info-circle"></i>
                     <strong>Wise King AI</strong> is an AI. Please double‑check important information.
                 </div>
-
                 <div class="welcome-screen" id="welcomeScreen">
-                    <div class="welcome-icon" id="welcomeIcon">👑</div>
-                    <h2 class="welcome-title" id="welcomeTitle">Sannu! Welcome to Wise King AI</h2>
-                    <p class="welcome-desc" id="welcomeDesc">
+                    <div class="welcome-icon">👑</div>
+                    <h2 class="welcome-title">Sannu! Welcome to Wise King AI</h2>
+                    <p class="welcome-desc">
                         I'm your persistent, intelligent assistant — created by <strong style="color:var(--accent);">IBRAHIM ABDULLAHI</strong> from Nigeria 🇳🇬<br>
                         I remember projects, Master Locks, and your preferences across all chats. 🧠🔒
                     </p>
                 </div>
-
                 <div id="messagesTarget" class="messages-area"></div>
-
                 <div class="typing-row hidden" id="typingIndicator">
                     <div class="msg-avatar">WK</div>
                     <div class="typing-bubble">
@@ -1759,26 +1386,22 @@
                 </div>
             </div>
 
-            <!-- Image preview area -->
             <div class="preview-area" id="previewArea"></div>
 
-            <!-- Input area -->
             <div class="input-wrapper">
                 <div class="input-inner">
-                    <button class="icon-btn" id="attachBtn" title="Attach image"><i class="fas fa-paperclip"></i></button>
+                    <button class="icon-btn" id="attachBtn"><i class="fas fa-paperclip"></i></button>
                     <input type="file" id="fileInput" accept="image/*" multiple />
-                    <!-- --- FIX: Auto-scroll input box (changed input to textarea) --- -->
-                    <textarea id="chatInput" rows="1" placeholder="Message Wise King AI..." autocomplete="off" style="resize: none; overflow-y: auto; overflow-x: hidden; max-height: 120px;"></textarea>
-                    <button class="icon-btn" id="voiceBtn" title="Voice input"><i class="fas fa-microphone"></i></button>
-                    <button class="icon-btn" id="stopVoiceBtn" title="Stop speaking" style="display:none;"><i class="fas fa-stop-circle"></i></button>
-                    <button class="send-btn" id="sendBtn" title="Send"><i class="fas fa-paper-plane"></i></button>
+                    <textarea id="chatInput" rows="1" placeholder="Message Wise King AI..." style="resize:none;overflow-y:auto;max-height:120px;"></textarea>
+                    <button class="icon-btn" id="voiceBtn"><i class="fas fa-microphone"></i></button>
+                    <button class="icon-btn" id="stopVoiceBtn" style="display:none;"><i class="fas fa-stop-circle"></i></button>
+                    <button class="send-btn" id="sendBtn"><i class="fas fa-paper-plane"></i></button>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- ===== MODALS (unchanged) ===== -->
-    <!-- Settings Modal -->
+    <!-- MODALS -->
     <div class="modal-backdrop" id="settingsModal">
         <div class="modal">
             <h2><i class="fas fa-cog"></i> Settings</h2>
@@ -1787,10 +1410,8 @@
                 <select id="providerSelect">
                     <option value="gemini">Gemini (Google)</option>
                     <option value="deepseek">DeepSeek</option>
-                    <!-- --- REMOVED: Grok AI --- -->
+                    <option value="grok">Grok (xAI)</option>
                     <option value="openai">OpenAI</option>
-                    <!-- --- ADDED: Dola AI Systems provider --- -->
-                    <option value="dola">Dola AI Systems</option>
                 </select>
             </div>
             <div class="form-group">
@@ -1805,7 +1426,7 @@
             <div class="form-group">
                 <label for="replicateKeyInput">Replicate API Key <span style="font-weight:400;color:var(--text-light);">(for Flux image generation)</span></label>
                 <input type="password" id="replicateKeyInput" placeholder="r8_..." />
-                <p class="form-hint">Get your key from <a href="https://replicate.com/account/api-tokens" target="_blank" style="color:var(--accent);">replicate.com/account/api-tokens</a></p>
+                <p class="form-hint">Get your key from <a href="https://replicate.com/account/api-tokens" target="_blank" style="color:var(--accent);">replicate.com</a></p>
             </div>
             <div class="form-group">
                 <label for="voiceLangSelect">Voice Language</label>
@@ -1823,21 +1444,20 @@
         </div>
     </div>
 
-    <!-- Profile Modal -->
     <div class="modal-backdrop" id="profileModal">
         <div class="modal">
             <h2><i class="fas fa-user-edit"></i> Edit Profile</h2>
-            <div class="avatar-upload-area">
-                <div class="avatar-preview" id="avatarPreview">
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+                <div class="profile-avatar" id="avatarPreview" style="width:64px;height:64px;font-size:24px;">
                     <span id="avatarText">WK</span>
-                    <img id="avatarImg" alt="Avatar" />
+                    <img id="avatarImg" style="display:none;width:100%;height:100%;object-fit:cover;" alt="Avatar" />
                 </div>
-                <div class="avatar-actions">
+                <div>
                     <label for="avatarFileInput" class="btn btn-primary" style="display:inline-block;cursor:pointer;font-size:0.85rem;padding:8px 16px;">
                         <i class="fas fa-upload mr-1"></i> Upload
                     </label>
                     <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" />
-                    <p>Click to upload your profile picture.</p>
+                    <p style="font-size:0.8rem;color:var(--text-light);margin-top:4px;">Click to upload profile picture.</p>
                 </div>
             </div>
             <div class="form-group">
@@ -1851,11 +1471,10 @@
         </div>
     </div>
 
-    <!-- Share Modal -->
     <div class="modal-backdrop" id="shareModal">
         <div class="modal">
             <h2><i class="fas fa-share-alt"></i> Share This Wisdom</h2>
-            <p style="color:var(--text-light);margin-bottom:8px;font-size:0.9rem;line-height:1.5;">Share this message with your friends and community!</p>
+            <p style="color:var(--text-light);margin-bottom:8px;font-size:0.9rem;">Share this message with your friends!</p>
             <div class="share-grid" id="shareGrid">
                 <button class="share-btn" data-platform="whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</button>
                 <button class="share-btn" data-platform="facebook"><i class="fab fa-facebook"></i> Facebook</button>
@@ -1870,7 +1489,6 @@
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
     <div class="modal-backdrop delete-modal" id="deleteModal">
         <div class="modal">
             <i class="fas fa-exclamation-triangle icon-warning"></i>
@@ -1883,11 +1501,10 @@
         </div>
     </div>
 
-    <!-- Share Chat Modal -->
     <div class="modal-backdrop" id="shareChatModal">
         <div class="modal">
             <h2><i class="fas fa-share-alt"></i> Share Chat</h2>
-            <p style="color:var(--text-light);margin-bottom:8px;font-size:0.9rem;line-height:1.5;">Share this chat with your friends!</p>
+            <p style="color:var(--text-light);margin-bottom:8px;font-size:0.9rem;">Share this chat with your friends!</p>
             <div class="share-grid" id="shareChatGrid">
                 <button class="share-btn" data-share-platform="whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</button>
                 <button class="share-btn" data-share-platform="facebook"><i class="fab fa-facebook"></i> Facebook</button>
@@ -1902,11 +1519,10 @@
         </div>
     </div>
 
-    <!-- Memory Manager Modal -->
     <div class="modal-backdrop" id="memoryManagerModal">
         <div class="modal wide">
             <h2><i class="fas fa-brain"></i> Memory Manager</h2>
-            <div class="form-group" style="display:flex;gap:8px;flex-wrap:wrap;">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
                 <input type="text" id="memorySearchInput" placeholder="Search memories..." style="flex:1;padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text-main);outline:none;" />
                 <select id="memoryFilterSelect" style="padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text-main);outline:none;">
                     <option value="all">All Types</option>
@@ -1924,7 +1540,6 @@
         </div>
     </div>
 
-    <!-- Master Locks Modal -->
     <div class="modal-backdrop" id="locksManagerModal">
         <div class="modal wide">
             <h2><i class="fas fa-lock"></i> Master Locks</h2>
@@ -1938,7 +1553,6 @@
                     <input type="text" id="newLockInput" placeholder="e.g. All scenes must be 10 seconds" style="flex:1;padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text-main);outline:none;" />
                     <button class="btn btn-gold" id="addLockBtn"><i class="fas fa-plus"></i> Lock</button>
                 </div>
-                <p class="form-hint">Locked instructions remain active until explicitly changed or unlocked.</p>
             </div>
             <div class="modal-actions">
                 <button class="btn btn-secondary" id="closeLocksManager">Close</button>
@@ -1946,7 +1560,6 @@
         </div>
     </div>
 
-    <!-- Projects Modal -->
     <div class="modal-backdrop" id="projectsManagerModal">
         <div class="modal wide">
             <h2><i class="fas fa-folder-open"></i> Projects</h2>
@@ -1967,17 +1580,11 @@
         </div>
     </div>
 
-    <!-- Toast -->
     <div class="toast" id="toast"></div>
 
     <script>
         // ================================================================
-        // FULL APPLICATION — SIDEBAR REDESIGNED (Gemini-style)
-        // All existing functionality preserved; layout organized.
-        // ================================================================
-
-        // ================================================================
-        // MEMORY SYSTEM (unchanged)
+        // MEMORY SYSTEM
         // ================================================================
         const MEMORY_TYPES = { MEMORY: 'memory', LOCK: 'lock', PREFERENCE: 'preference' };
         const MEMORY_PRIORITY = { SYSTEM: 1, CORE: 2, MASTER_LOCK: 3, PROJECT_LOCK: 4, PREFERENCE: 5, TASK: 6, TEMPORARY: 7 };
@@ -2069,7 +1676,7 @@
                 lock.description = updates.content;
                 lock.updatedAt = new Date().toISOString();
                 const mems = memoryStore.memories.filter(m => m.content.includes(lock.title) && m.type === MEMORY_TYPES
-                .LOCK);
+                    .LOCK);
                 if (mems.length > 0) { const mem = mems[0];
                     mem.content = `🔒 MASTER LOCK: ${lock.title} — ${lock.content}`;
                     mem.updatedAt = new Date().toISOString();
@@ -2157,18 +1764,15 @@
         const OWNER_NAME = 'IBRAHIM ABDULLAHI';
 
         const PROVIDERS = {
-            // --- UPDATED: Gemini model list ---
-            gemini: { label: 'Gemini', models: ['gemini-3.1-pro', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.6-flash'],
+            gemini: { label: 'Gemini', models: ['gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash'],
                 defaultModel: 'gemini-3.5-flash', keyLink: 'https://aistudio.google.com/app/apikey',
                 keyHint: 'Get your Gemini API key from Google AI Studio' },
             deepseek: { label: 'DeepSeek', models: ['deepseek-chat', 'deepseek-v4-flash'], defaultModel: 'deepseek-chat',
                 keyLink: 'https://platform.deepseek.com/api_keys', keyHint: 'Get your DeepSeek API key from platform.deepseek.com' },
-            // --- REMOVED: Grok AI ---
+            grok: { label: 'Grok', models: ['grok-2', 'grok-2-latest'], defaultModel: 'grok-2',
+                keyLink: 'https://console.x.ai', keyHint: 'Get your Grok API key from console.x.ai' },
             openai: { label: 'OpenAI', models: ['gpt-4o-mini', 'gpt-4o', 'gpt-3.5-turbo'], defaultModel: 'gpt-4o-mini',
-                keyLink: 'https://platform.openai.com/api-keys', keyHint: 'Get your OpenAI API key from platform.openai.com' },
-            // --- ADDED: Dola AI Systems provider ---
-            dola: { label: 'Dola AI', models: ['dola-1', 'dola-2'], defaultModel: 'dola-1',
-                keyLink: 'https://dola.ai/api-keys', keyHint: 'Get your Dola AI API key from dola.ai' }
+                keyLink: 'https://platform.openai.com/api-keys', keyHint: 'Get your OpenAI API key from platform.openai.com' }
         };
 
         const state = {
@@ -2182,9 +1786,11 @@
             replicateKey: localStorage.getItem('wk_replicate_key') || ''
         };
 
-        // DOM refs
+        // ================================================================
+        // DOM REFS
+        // ================================================================
         const sidebar = document.getElementById('sidebar');
-        const toggleSidebarBtn = document.getElementById('toggleSidebar');
+        const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
         const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
         const newChatBtn = document.getElementById('newChatBtn');
         const chatList = document.getElementById('chatList');
@@ -2227,9 +1833,6 @@
         const toast = document.getElementById('toast');
         const chatModeBtn = document.getElementById('chatModeBtn');
         const imageModeBtn = document.getElementById('imageModeBtn');
-        const welcomeIcon = document.getElementById('welcomeIcon');
-        const welcomeTitle = document.getElementById('welcomeTitle');
-        const welcomeDesc = document.getElementById('welcomeDesc');
         const shareModal = document.getElementById('shareModal');
         const closeShare = document.getElementById('closeShare');
         const shareGrid = document.getElementById('shareGrid');
@@ -2287,7 +1890,7 @@
         function isOwner() { return state.userName.trim().toUpperCase() === OWNER_NAME; }
 
         function updateOwnerBadge() {
-            if (isOwner()) { ownerBadgeTop.classList.remove('hidden'); } else { ownerBadgeTop.classList.add('hidden'); }
+            if (isOwner()) { ownerBadgeTop.style.display = 'inline'; } else { ownerBadgeTop.style.display = 'none'; }
         }
 
         function updateBackButton() {
@@ -2299,7 +1902,6 @@
             const prov = PROVIDERS[state.provider];
             if (!prov) return;
             providerBadge.textContent = prov.label;
-            providerBadge.classList.add('active-provider');
             modelDisplay.textContent = state.model || prov.defaultModel;
             providerSelect.value = state.provider;
             modelSelect.innerHTML = '';
@@ -2337,7 +1939,6 @@
             replicateKeyInput.value = state.replicateKey;
             replicateBadge.style.display = state.replicateKey ? 'inline' : 'none';
             updateMemoryBadges();
-            // Update auth button
             if (state.userName !== 'My Profile') {
                 authTextSidebar.innerHTML = `<i class="fas fa-user-circle"></i> ${state.userName}`;
             } else {
@@ -2348,12 +1949,12 @@
         function loadChats() {
             const saved = localStorage.getItem('wk_chats');
             if (saved) { try { chats = JSON.parse(saved); } catch (e) { chats = {}; } }
-            renderChatList();
+            renderChatList('');
         }
 
         function saveChats() {
             localStorage.setItem('wk_chats', JSON.stringify(chats));
-            renderChatList();
+            renderChatList(searchChatsInput.value);
         }
 
         function fileToBase64(file) {
@@ -2366,7 +1967,7 @@
         }
 
         // ================================================================
-        // IDENTITY INTERCEPTOR
+        // IDENTITY
         // ================================================================
         function detectIdentityQuestion(text) {
             const lower = text.toLowerCase();
@@ -2438,7 +2039,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         // ================================================================
-        // API CALL (chat)
+        // API CALL
         // ================================================================
         async function callAI(userText, history = [], context = null) {
             if (detectIdentityQuestion(userText)) {
@@ -2487,11 +2088,10 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                         return reply;
                     }
                     case 'deepseek':
-                    case 'openai':
-                    // --- ADDED: Dola AI Systems provider ---
-                    case 'dola': {
+                    case 'grok':
+                    case 'openai': {
                         const endpoint = provider === 'deepseek' ? 'https://api.deepseek.com/chat/completions' :
-                            provider === 'dola' ? 'https://api.dola.ai/v1/chat/completions' :
+                            provider === 'grok' ? 'https://api.x.ai/v1/chat/completions' :
                             'https://api.openai.com/v1/chat/completions';
                         const messages = [{ role: 'system', content: systemPrompt }];
                         for (const msg of history) {
@@ -2538,7 +2138,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         // ================================================================
-        // IMAGE ENGINE (single image, lock-aware)
+        // IMAGE ENGINE
         // ================================================================
         function getImageLocks(projectId) {
             const locks = getActiveLocks(projectId);
@@ -2702,7 +2302,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         // ================================================================
-        // RENDER MESSAGES (with image support)
+        // RENDER MESSAGES
         // ================================================================
         function renderMessage(role, content, extra = {}, msgIndex) {
             const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -2721,10 +2321,10 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 let contentHtml;
                 if (isEditing) {
                     contentHtml = `
-                        <div class="edit-input-wrap">
-                            <input type="text" id="editInput_${msgIndex}" value="${escapeHtml(content)}" />
-                            <button class="save-edit" data-index="${msgIndex}">Save</button>
-                            <button class="cancel-edit" data-index="${msgIndex}">Cancel</button>
+                        <div style="display:flex;align-items:center;gap:6px;width:100%;">
+                            <input type="text" id="editInput_${msgIndex}" value="${escapeHtml(content)}" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid var(--accent);border-radius:12px;padding:6px 12px;color:var(--text-main);outline:none;" />
+                            <button class="save-edit" data-index="${msgIndex}" style="background:var(--accent);border:none;color:white;border-radius:16px;padding:4px 12px;cursor:pointer;">Save</button>
+                            <button class="cancel-edit" data-index="${msgIndex}" style="background:transparent;border:none;color:var(--text-light);cursor:pointer;">Cancel</button>
                         </div>
                     `;
                 } else {
@@ -2992,7 +2592,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         // ================================================================
-        // CHAT LIST RENDERING (with search)
+        // CHAT LIST RENDERING
         // ================================================================
         function renderChatList(filter = '') {
             chatList.innerHTML = '';
@@ -3013,7 +2613,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 let titleHtml;
                 if (isEditing) {
                     titleHtml = `
-                        <input type="text" class="edit-title-input" id="renameInput_${id}" value="${escapeHtml(chat.title)}" />
+                        <input type="text" class="edit-title-input" id="renameInput_${id}" value="${escapeHtml(chat.title)}" style="background:rgba(255,255,255,0.08);border:1px solid var(--accent);border-radius:6px;padding:2px 8px;color:var(--text-main);outline:none;width:100%;min-width:60px;" />
                         <button class="save-rename-btn" data-id="${id}" style="background:transparent;border:none;color:var(--accent);cursor:pointer;padding:0 4px;"><i class="fas fa-check"></i></button>
                         <button class="cancel-rename-btn" data-id="${id}" style="background:transparent;border:none;color:var(--text-light);cursor:pointer;padding:0 4px;"><i class="fas fa-times"></i></button>
                     `;
@@ -3041,7 +2641,6 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                         !e.target.closest('.save-rename-btn') && !e.target.closest('.cancel-rename-btn') &&
                         !e.target.closest('.edit-title-input')) {
                         switchToChat(id);
-                        // Close sidebar on mobile after selection
                         if (window.innerWidth <= 768) { sidebar.classList.remove('open'); }
                     }
                 });
@@ -3077,7 +2676,6 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 }
             });
 
-            // Dropdown events
             document.querySelectorAll('.more-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -3317,7 +2915,6 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
             updateImagePreview();
             renderMessage('user', text, userMsg.extra, chats[currentChatId].messages.length - 1);
 
-            // --- FIX: Image mode generation (updated regex to include more keywords) ---
             const isImageRequest = /create|generate|make|draw|paint|render|picture|image|photo|photograph|art|illustration|design|visual|scene|portrait|landscape|fantasy|concept art|character|environment|background|style|beautiful|aesthetic|digital art|sketch|painting|realistic|real person|live picture|front view|photorealistic|view/i.test(text) && !/code|programming|function|api|database|sql|debug|fix bug/i.test(text);
             const removeBgMatch = text.match(/remove\s+(?:the\s+)?background|erase\s+background|delete\s+background/i);
             const replaceBgMatch = text.match(/replace\s+(?:the\s+)?background|change\s+background|new\s+background/i);
@@ -3458,7 +3055,6 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
             }
 
             // Standard image generation
-            // --- FIX: Image mode generation (allows Pollinations fallback if no Replicate key) ---
             if (isImageRequest) {
                 typingIndicator.classList.remove('hidden');
                 typingIndicator.querySelector('.typing-bubble').innerHTML =
@@ -3614,6 +3210,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 avatarImg.src = ev.target.result;
                 avatarImg.style.display = 'block';
                 avatarText.style.display = 'none';
+                avatarPreview.innerHTML = `<img src="${ev.target.result}" style="width:100%;height:100%;object-fit:cover;" />`;
             };
             reader.readAsDataURL(file);
         });
@@ -3917,17 +3514,17 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 imageModeBtn.classList.add('active');
                 chatModeBtn.classList.remove('active');
                 chatInput.placeholder = "Describe the image you want to create... e.g. 'A beautiful palace in Nigeria'";
-                welcomeIcon.textContent = "🎨";
-                welcomeTitle.textContent = "Image Generation Mode";
-                welcomeDesc.innerHTML =
+                document.querySelector('.welcome-icon').textContent = "🎨";
+                document.querySelector('.welcome-title').textContent = "Image Generation Mode";
+                document.querySelector('.welcome-desc').innerHTML =
                     "Type a description and I'll generate 1 beautiful image instantly using Pollinations AI (free!).";
             } else {
                 chatModeBtn.classList.add('active');
                 imageModeBtn.classList.remove('active');
                 chatInput.placeholder = "Message Wise King AI...";
-                welcomeIcon.textContent = "👑";
-                welcomeTitle.textContent = "Sannu! Welcome to Wise King AI";
-                welcomeDesc.innerHTML =
+                document.querySelector('.welcome-icon').textContent = "👑";
+                document.querySelector('.welcome-title').textContent = "Sannu! Welcome to Wise King AI";
+                document.querySelector('.welcome-desc').innerHTML =
                     `I'm your persistent, intelligent assistant — created by <strong style="color:var(--accent);">IBRAHIM ABDULLAHI</strong> from Nigeria 🇳🇬<br>I remember projects, Master Locks, and your preferences across all chats. 🧠🔒`;
             }
         }
@@ -3936,7 +3533,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         imageModeBtn.addEventListener('click', () => setMode(true));
 
         // ================================================================
-        // SIDEBAR TOGGLE (responsive)
+        // SIDEBAR TOGGLE
         // ================================================================
         toggleSidebarBtn.addEventListener('click', () => {
             if (window.innerWidth <= 768) {
@@ -3950,7 +3547,6 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
             sidebar.classList.remove('open');
         });
 
-        // Close sidebar on outside click (mobile)
         document.addEventListener('click', (e) => {
             if (window.innerWidth <= 768) {
                 if (!sidebar.contains(e.target) && !toggleSidebarBtn.contains(e.target)) {
@@ -3977,7 +3573,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
 
         // ================================================================
-        // AUTH BUTTON (sidebar)
+        // AUTH BUTTON
         // ================================================================
         authBtnSidebar.addEventListener('click', () => {
             showToast('🔐 Google Sign-In coming soon! Configure Firebase to enable.');
@@ -3993,19 +3589,15 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
         newChatBtn.addEventListener('click', createNewChat);
 
-        // --- FIX: Auto-scroll input box (auto-expand and scroll to see last line) ---
         chatInput.addEventListener('input', function() {
-            this.style.height = 'auto'; // Reset height to auto
-            this.style.height = (this.scrollHeight) + 'px'; // Set height based on content
-            // If it exceeds max-height, it will scroll automatically
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
         });
-        // Initial height adjustment (in case of preset text)
         if (chatInput.value) {
             chatInput.style.height = 'auto';
             chatInput.style.height = (chatInput.scrollHeight) + 'px';
         }
 
-        // Close modals on backdrop click
         document.querySelectorAll('.modal-backdrop').forEach(modal => {
             modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
         });
@@ -4029,17 +3621,13 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 .projectId) {
                 activeProjectId = chats[currentChatId].metadata.projectId;
             }
-            // Open advanced section by default if there are items
             const totalItems = memoryStore.locks.length + memoryStore.memories.length + memoryStore.projects.length;
             if (totalItems > 0) {
                 advancedOpen = true;
                 advancedContent.classList.add('open');
                 advancedToggle.classList.add('open');
             }
-            console.log('👑 Wise King AI — Sidebar Redesigned (Gemini-style)');
-            console.log('📁 Advanced features grouped under "Advanced" toggle');
-            console.log('🔍 Search chats box added');
-            console.log('📱 Responsive sidebar with mobile overlay');
+            console.log('👑 Wise King AI — All features integrated successfully.');
         }
 
         init();
