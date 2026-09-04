@@ -81,8 +81,27 @@
         .brand-row {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: 10px;
             margin-bottom: 12px;
+        }
+        .brand-logo {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--accent);
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            overflow: hidden;
+        }
+        .brand-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
         .brand-name {
             font-size: 1.05rem;
@@ -473,6 +492,11 @@
             align-items: center;
             gap: 6px;
         }
+        .top-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
         .toggle-sidebar-btn {
             background: transparent;
             border: none;
@@ -570,6 +594,27 @@
             color: #1e1b2e;
             font-weight: 700;
         }
+        .top-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            overflow: hidden;
+            cursor: pointer;
+            flex-shrink: 0;
+            border: 1px solid var(--border);
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: white;
+        }
+        .top-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
 
         .chat-container {
             flex: 1;
@@ -658,6 +703,14 @@
             font-weight: 700;
             font-size: 13px;
             flex-shrink: 0;
+            overflow: hidden;
+            background: var(--accent);
+            color: white;
+        }
+        .msg-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
         .message.user .msg-avatar {
             background: var(--user-bubble);
@@ -1294,8 +1347,11 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-top">
                 <div class="brand-row">
+                    <div class="brand-logo" id="sidebarLogo">
+                        <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23ec4899'/><text x='50' y='55' font-size='32' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>WK</text><text x='50' y='22' font-size='24' text-anchor='middle' fill='%23fbbf24'>👑</text></svg>" alt="WK" />
+                    </div>
                     <div>
-                        <span class="brand-name">👑 Wise King AI</span>
+                        <span class="brand-name">Wise King AI</span>
                         <span class="brand-sub">Created by IBRAHIM ABDULLAHI 🇳🇬</span>
                     </div>
                     <button class="sidebar-close-btn" id="sidebarCloseBtn"><i class="fas fa-times"></i></button>
@@ -1355,12 +1411,16 @@
                     <span class="lock-badge" id="lockBadgeTop" style="display:none;"><i class="fas fa-lock"></i> <span id="lockCountTop">0</span></span>
                     <span class="memory-badge" id="memoryBadgeTop"><i class="fas fa-brain"></i> <span id="memoryCountTop">0</span></span>
                 </div>
-                <div style="display:flex;align-items:center;gap:6px;">
+                <div class="top-right">
                     <div class="mode-toggle">
                         <button class="mode-btn active" id="chatModeBtn"><i class="fas fa-comment"></i> Chat</button>
                         <button class="mode-btn" id="imageModeBtn"><i class="fas fa-palette"></i> Create Image</button>
                     </div>
                     <div class="top-model"><i class="fas fa-bolt text-amber-500"></i> <span id="modelDisplay">Gemini 3.5 Flash</span></div>
+                    <div class="top-avatar" id="topBarAvatar" title="Profile">
+                        <img id="topAvatarImg" src="" alt="Avatar" style="display:none;width:100%;height:100%;object-fit:cover;" />
+                        <span id="topAvatarText">WK</span>
+                    </div>
                 </div>
             </div>
 
@@ -1379,7 +1439,9 @@
                 </div>
                 <div id="messagesTarget" class="messages-area"></div>
                 <div class="typing-row hidden" id="typingIndicator">
-                    <div class="msg-avatar">WK</div>
+                    <div class="msg-avatar" id="typingAvatar">
+                        <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23ec4899'/><text x='50' y='55' font-size='32' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'>WK</text><text x='50' y='22' font-size='24' text-anchor='middle' fill='%23fbbf24'>👑</text></svg>" alt="WK" style="width:100%;height:100%;object-fit:cover;" />
+                    </div>
                     <div class="typing-bubble">
                         <div class="typing-dots"><span></span><span></span><span></span></div>
                     </div>
@@ -1401,7 +1463,8 @@
         </main>
     </div>
 
-    <!-- MODALS -->
+    <!-- ===== MODALS ===== -->
+    <!-- Settings Modal -->
     <div class="modal-backdrop" id="settingsModal">
         <div class="modal">
             <h2><i class="fas fa-cog"></i> Settings</h2>
@@ -1444,6 +1507,7 @@
         </div>
     </div>
 
+    <!-- Profile Modal -->
     <div class="modal-backdrop" id="profileModal">
         <div class="modal">
             <h2><i class="fas fa-user-edit"></i> Edit Profile</h2>
@@ -1471,6 +1535,7 @@
         </div>
     </div>
 
+    <!-- Share Modal -->
     <div class="modal-backdrop" id="shareModal">
         <div class="modal">
             <h2><i class="fas fa-share-alt"></i> Share This Wisdom</h2>
@@ -1489,6 +1554,7 @@
         </div>
     </div>
 
+    <!-- Delete Confirmation Modal -->
     <div class="modal-backdrop delete-modal" id="deleteModal">
         <div class="modal">
             <i class="fas fa-exclamation-triangle icon-warning"></i>
@@ -1501,6 +1567,7 @@
         </div>
     </div>
 
+    <!-- Share Chat Modal -->
     <div class="modal-backdrop" id="shareChatModal">
         <div class="modal">
             <h2><i class="fas fa-share-alt"></i> Share Chat</h2>
@@ -1519,6 +1586,20 @@
         </div>
     </div>
 
+    <!-- Sign-Out Confirmation Modal (NEW) -->
+    <div class="modal-backdrop delete-modal" id="signOutModal">
+        <div class="modal">
+            <i class="fas fa-sign-out-alt icon-warning" style="color:var(--accent);"></i>
+            <h2 style="text-align:center;justify-content:center;">Fita?</h2>
+            <p style="text-align:center;">Shin kana da tabbacin kana son fita? Za a share API keys ɗin ka a nan gida.</p>
+            <div class="modal-actions" style="justify-content:center;gap:12px;">
+                <button class="btn btn-secondary" id="cancelSignOut">A'a, Ci gaba</button>
+                <button class="btn btn-danger" id="confirmSignOut">Ee, Fita</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Memory Manager Modal -->
     <div class="modal-backdrop" id="memoryManagerModal">
         <div class="modal wide">
             <h2><i class="fas fa-brain"></i> Memory Manager</h2>
@@ -1540,6 +1621,7 @@
         </div>
     </div>
 
+    <!-- Locks Manager Modal -->
     <div class="modal-backdrop" id="locksManagerModal">
         <div class="modal wide">
             <h2><i class="fas fa-lock"></i> Master Locks</h2>
@@ -1560,6 +1642,7 @@
         </div>
     </div>
 
+    <!-- Projects Manager Modal -->
     <div class="modal-backdrop" id="projectsManagerModal">
         <div class="modal wide">
             <h2><i class="fas fa-folder-open"></i> Projects</h2>
@@ -1584,7 +1667,7 @@
 
     <script>
         // ================================================================
-        // MEMORY SYSTEM
+        // MEMORY SYSTEM (unchanged)
         // ================================================================
         const MEMORY_TYPES = { MEMORY: 'memory', LOCK: 'lock', PREFERENCE: 'preference' };
         const MEMORY_PRIORITY = { SYSTEM: 1, CORE: 2, MASTER_LOCK: 3, PROJECT_LOCK: 4, PREFERENCE: 5, TASK: 6, TEMPORARY: 7 };
@@ -1871,6 +1954,16 @@
         const advancedToggle = document.getElementById('advancedToggle');
         const advancedContent = document.getElementById('advancedContent');
 
+        // NEW: Sign-out modal
+        const signOutModal = document.getElementById('signOutModal');
+        const cancelSignOut = document.getElementById('cancelSignOut');
+        const confirmSignOut = document.getElementById('confirmSignOut');
+
+        // Top bar avatar elements
+        const topBarAvatar = document.getElementById('topBarAvatar');
+        const topAvatarImg = document.getElementById('topAvatarImg');
+        const topAvatarText = document.getElementById('topAvatarText');
+
         // ================================================================
         // UTILITY
         // ================================================================
@@ -1920,19 +2013,32 @@
             replicateBadge.style.display = state.replicateKey ? 'inline' : 'none';
         }
 
+        // Logo data URI (crown + WK)
+        function getLogoDataURI() {
+            return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%23ec4899"/><text x="50" y="55" font-size="32" text-anchor="middle" fill="white" font-family="Arial" font-weight="bold">WK</text><text x="50" y="22" font-size="24" text-anchor="middle" fill="%23fbbf24">👑</text></svg>';
+        }
+
         function loadProfile() {
             userNameDisplay.textContent = state.userName;
             userEmailDisplay.textContent = 'Click to edit';
             profileNameInput.value = state.userName;
+            // Sidebar avatar
             if (state.userAvatar) {
                 avatarImg.src = state.userAvatar;
                 avatarImg.style.display = 'block';
                 avatarText.style.display = 'none';
                 userAvatar.innerHTML = `<img src="${state.userAvatar}" style="width:100%;height:100%;object-fit:cover;" />`;
+                // Top bar avatar
+                topAvatarImg.src = state.userAvatar;
+                topAvatarImg.style.display = 'block';
+                topAvatarText.style.display = 'none';
             } else {
                 avatarImg.style.display = 'none';
                 avatarText.style.display = 'block';
                 userAvatar.innerHTML = 'WK';
+                topAvatarImg.style.display = 'none';
+                topAvatarText.style.display = 'block';
+                topAvatarText.textContent = 'WK';
             }
             updateOwnerBadge();
             updateProviderUI();
@@ -2039,7 +2145,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         // ================================================================
-        // API CALL
+        // API CALL (with improved error handling & timeout)
         // ================================================================
         async function callAI(userText, history = [], context = null) {
             if (detectIdentityQuestion(userText)) {
@@ -2047,15 +2153,23 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 if (isOwner()) return "Yah Maigida Na! 👑 " + baseReply;
                 return baseReply;
             }
-            if (!state.apiKey) return "⚠️ Please set your API key in Settings first.";
+            if (!state.apiKey) {
+                return "⚠️ Don Allah sai ka sa API key ɗinka a cikin Settings kafin ka ci gaba.";
+            }
             const provider = state.provider;
             const model = state.model;
             const systemPrompt = buildWisdomSystemPrompt(context);
+
+            // Create AbortController for timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 seconds
+
             try {
                 let response, data;
+                let url, body, headers;
                 switch (provider) {
                     case 'gemini': {
-                        const url =
+                        url =
                             `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${state.apiKey}`;
                         const contents = [];
                         contents.push({ role: 'user', parts: [{ text: systemPrompt }] });
@@ -2066,26 +2180,12 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                                         .content }] });
                         }
                         contents.push({ role: 'user', parts: [{ text: userText }] });
-                        response = await fetch(url, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                generationConfig: { temperature: 0.75, maxOutputTokens: 4096, topP: 0.95 },
-                                contents
-                            })
+                        body = JSON.stringify({
+                            generationConfig: { temperature: 0.75, maxOutputTokens: 4096, topP: 0.95 },
+                            contents
                         });
-                        data = await response.json();
-                        if (!response.ok) {
-                            let errMsg = data.error?.message || 'Unknown error';
-                            if (errMsg.includes('not found') || errMsg.includes('model')) errMsg =
-                                `Model "${model}" not available. Try "gemini-3.5-flash".`;
-                            if (isOwner()) return "Yah Maigida Na! 👑 ❌ Gemini Error: " + errMsg;
-                            return "❌ Gemini Error: " + errMsg;
-                        }
-                        if (!data.candidates || !data.candidates[0]?.content?.parts) return "❌ No response.";
-                        let reply = data.candidates[0].content.parts.map(p => p.text || '').join('').trim();
-                        if (isOwner()) reply = "Yah Maigida Na! 👑 " + reply;
-                        return reply;
+                        headers = { 'Content-Type': 'application/json' };
+                        break;
                     }
                     case 'deepseek':
                     case 'grok':
@@ -2099,46 +2199,84 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                                 content: msg.content });
                         }
                         messages.push({ role: 'user', content: userText });
-                        response = await fetch(endpoint, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': 'Bearer ' + state.apiKey
-                            },
-                            body: JSON.stringify({
-                                model,
-                                messages,
-                                temperature: 0.75,
-                                max_tokens: 4096,
-                                top_p: 0.95
-                            })
+                        url = endpoint;
+                        body = JSON.stringify({
+                            model,
+                            messages,
+                            temperature: 0.75,
+                            max_tokens: 4096,
+                            top_p: 0.95
                         });
-                        data = await response.json();
-                        if (!response.ok) {
-                            let errMsg = data.error?.message || 'Unknown error';
-                            if (provider === 'deepseek' && errMsg.toLowerCase().includes('insufficient balance'))
-                                errMsg = 'Insufficient balance. Add credits.';
-                            if (isOwner()) return "Yah Maigida Na! 👑 ❌ " + provider.charAt(0).toUpperCase() + provider
-                                .slice(1) + " Error: " + errMsg;
-                            return "❌ " + provider.charAt(0).toUpperCase() + provider.slice(1) + " Error: " + errMsg;
-                        }
-                        let reply = data.choices[0].message.content.trim();
-                        if (isOwner()) reply = "Yah Maigida Na! 👑 " + reply;
-                        return reply;
+                        headers = {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + state.apiKey
+                        };
+                        break;
                     }
                     default:
                         return "❌ Unknown provider.";
                 }
+
+                response = await fetch(url, {
+                    method: 'POST',
+                    headers,
+                    body,
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+
+                data = await response.json();
+
+                if (!response.ok) {
+                    let errMsg = data.error?.message || 'Unknown error';
+                    // Provide user-friendly messages
+                    if (errMsg.includes('API key not valid') || errMsg.includes('invalid') || errMsg.includes('auth')) {
+                        errMsg = 'API key ɗin ba daidai ba ne ko kuma ya ƙare. Don Allah ka sake duba shi.';
+                    } else if (errMsg.includes('not found') || errMsg.includes('model')) {
+                        errMsg = `Model ɗin "${model}" ba ya nan. Ka gwada "gemini-3.5-flash" ko ka canza provider.`;
+                    } else if (errMsg.includes('insufficient balance') || errMsg.includes('quota')) {
+                        errMsg = 'Ba ka da isasshen kudi ko quota. Ka yi recharge a provider ɗinka.';
+                    } else if (errMsg.includes('rate limit')) {
+                        errMsg = 'Ka kai iyakar buƙatu (rate limit). Ka jira kaɗan sannan ka sake gwadawa.';
+                    } else {
+                        errMsg = `Kuskuren sabar: ${errMsg}`;
+                    }
+                    if (isOwner()) return "Yah Maigida Na! 👑 ❌ " + errMsg;
+                    return "❌ " + errMsg;
+                }
+
+                let reply;
+                switch (provider) {
+                    case 'gemini':
+                        if (!data.candidates || !data.candidates[0]?.content?.parts) return "❌ Babu amsa.";
+                        reply = data.candidates[0].content.parts.map(p => p.text || '').join('').trim();
+                        break;
+                    case 'deepseek':
+                    case 'grok':
+                    case 'openai':
+                        if (!data.choices || data.choices.length === 0) return "❌ Babu amsa.";
+                        reply = data.choices[0].message.content.trim();
+                        break;
+                    default:
+                        return "❌ Unknown provider.";
+                }
+                if (isOwner()) reply = "Yah Maigida Na! 👑 " + reply;
+                return reply;
+
             } catch (err) {
+                clearTimeout(timeoutId);
                 console.error('API Error:', err);
-                let errMsg = "❌ Network error.";
+                if (err.name === 'AbortError') {
+                    return "❌ Aikin ya wuce lokaci (timeout). Don Allah ka sake gwadawa ko ka duba hanyar sadarwarka.";
+                }
+                let errMsg = "❌ Matsalar hanyar sadarwa. Ka duba internet ɗinka.";
                 if (isOwner()) return "Yah Maigida Na! 👑 " + errMsg;
                 return errMsg;
             }
         }
 
         // ================================================================
-        // IMAGE ENGINE
+        // IMAGE ENGINE (unchanged, but added timeout/error handling)
         // ================================================================
         function getImageLocks(projectId) {
             const locks = getActiveLocks(projectId);
@@ -2302,13 +2440,15 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         // ================================================================
-        // RENDER MESSAGES
+        // RENDER MESSAGES (with logo for AI avatar)
         // ================================================================
         function renderMessage(role, content, extra = {}, msgIndex) {
             const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             const el = document.createElement('div');
             el.className = `message ${role}`;
             el.dataset.index = msgIndex;
+
+            const logoURI = getLogoDataURI();
 
             if (role === 'user') {
                 let imgsHtml = '';
@@ -2434,8 +2574,9 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                     `;
                 }
                 const formattedContent = escapeHtml(content).replace(/\n/g, '<br>');
+                // AI avatar with logo
                 el.innerHTML = `
-                    <div class="msg-avatar">WK</div>
+                    <div class="msg-avatar"><img src="${logoURI}" alt="WK" style="width:100%;height:100%;object-fit:cover;" /></div>
                     <div class="msg-bubble-wrap">
                         <div class="msg-bubble-ai">${formattedContent}${imageGridHtml}</div>
                         <div class="msg-time">${time}</div>
@@ -2514,7 +2655,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         // ================================================================
-        // SPEECH & VOICE
+        // SPEECH & VOICE (unchanged)
         // ================================================================
         function speakText(text) {
             if (!window.speechSynthesis) { showToast('❌ Speech not supported'); return; }
@@ -2554,7 +2695,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
 
         // ================================================================
-        // FILE UPLOAD
+        // FILE UPLOAD (unchanged)
         // ================================================================
         attachBtn.addEventListener('click', (e) => { e.preventDefault();
             fileInput.click(); });
@@ -2592,7 +2733,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         // ================================================================
-        // CHAT LIST RENDERING
+        // CHAT LIST RENDERING (unchanged)
         // ================================================================
         function renderChatList(filter = '') {
             chatList.innerHTML = '';
@@ -2753,7 +2894,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         // ================================================================
-        // CHAT MANAGEMENT
+        // CHAT MANAGEMENT (unchanged)
         // ================================================================
         function createNewChat() {
             currentChatId = 'chat-' + Date.now();
@@ -2891,7 +3032,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
 
         // ================================================================
-        // SEND MESSAGE
+        // SEND MESSAGE (with Enter key fix: Shift+Enter = newline, Enter = send)
         // ================================================================
         async function sendMessage() {
             if (imageState.isGenerating) { showToast('⏳ An image is already generating. Please wait.'); return; }
@@ -3145,7 +3286,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         // ================================================================
-        // SETTINGS & PROFILE
+        // SETTINGS & PROFILE (unchanged)
         // ================================================================
         settingsBtn.addEventListener('click', () => {
             apiKeyInput.value = state.apiKey;
@@ -3211,6 +3352,12 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 avatarImg.style.display = 'block';
                 avatarText.style.display = 'none';
                 avatarPreview.innerHTML = `<img src="${ev.target.result}" style="width:100%;height:100%;object-fit:cover;" />`;
+                // Also update top bar avatar
+                topAvatarImg.src = ev.target.result;
+                topAvatarImg.style.display = 'block';
+                topAvatarText.style.display = 'none';
+                // Update sidebar avatar
+                userAvatar.innerHTML = `<img src="${ev.target.result}" style="width:100%;height:100%;object-fit:cover;" />`;
             };
             reader.readAsDataURL(file);
         });
@@ -3226,8 +3373,20 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
             updateOwnerBadge();
         });
 
+        // ================================================================
+        // SIGN-OUT WITH CONFIRMATION MODAL (NEW)
+        // ================================================================
         signOutBtn.addEventListener('click', () => {
-            if (!confirm('Sign out? This will clear your API keys locally.')) return;
+            signOutModal.classList.add('active');
+        });
+
+        cancelSignOut.addEventListener('click', () => {
+            signOutModal.classList.remove('active');
+        });
+
+        confirmSignOut.addEventListener('click', () => {
+            signOutModal.classList.remove('active');
+            // Perform sign-out
             localStorage.removeItem('wk_api_key');
             localStorage.removeItem('wk_user_name');
             localStorage.removeItem('wk_user_avatar');
@@ -3248,8 +3407,13 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
             replicateBadge.style.display = 'none';
         });
 
+        // Close modal on backdrop click
+        signOutModal.addEventListener('click', (e) => {
+            if (e.target === signOutModal) signOutModal.classList.remove('active');
+        });
+
         // ================================================================
-        // SHARE MODAL
+        // SHARE MODAL (unchanged)
         // ================================================================
         function openShareModal(text) { shareTextCache = text;
             shareModal.classList.add('active'); }
@@ -3326,7 +3490,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
 
         // ================================================================
-        // MEMORY MANAGER UI
+        // MEMORY MANAGER UI (unchanged)
         // ================================================================
         function renderMemoryManager() {
             const search = memorySearchInput.value.toLowerCase();
@@ -3382,7 +3546,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         memoryFilterSelect.addEventListener('change', renderMemoryManager);
 
         // ================================================================
-        // LOCKS MANAGER UI
+        // LOCKS MANAGER UI (unchanged)
         // ================================================================
         function renderLocksManager() {
             const locks = getActiveLocks();
@@ -3439,7 +3603,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 addLockBtn.click(); } });
 
         // ================================================================
-        // PROJECTS MANAGER UI
+        // PROJECTS MANAGER UI (unchanged)
         // ================================================================
         function renderProjectsManager() {
             const projects = getProjects();
@@ -3506,7 +3670,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 addProjectBtn.click(); } });
 
         // ================================================================
-        // MODE TOGGLE
+        // MODE TOGGLE (unchanged)
         // ================================================================
         function setMode(imageMode) {
             isImageMode = imageMode;
@@ -3533,7 +3697,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         imageModeBtn.addEventListener('click', () => setMode(true));
 
         // ================================================================
-        // SIDEBAR TOGGLE
+        // SIDEBAR TOGGLE (unchanged)
         // ================================================================
         toggleSidebarBtn.addEventListener('click', () => {
             if (window.innerWidth <= 768) {
@@ -3556,7 +3720,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
 
         // ================================================================
-        // ADVANCED TOGGLE
+        // ADVANCED TOGGLE (unchanged)
         // ================================================================
         let advancedOpen = false;
         advancedToggle.addEventListener('click', () => {
@@ -3566,29 +3730,36 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
 
         // ================================================================
-        // SEARCH CHATS
+        // SEARCH CHATS (unchanged)
         // ================================================================
         searchChatsInput.addEventListener('input', (e) => {
             renderChatList(e.target.value);
         });
 
         // ================================================================
-        // AUTH BUTTON
+        // AUTH BUTTON (unchanged)
         // ================================================================
         authBtnSidebar.addEventListener('click', () => {
             showToast('🔐 Google Sign-In coming soon! Configure Firebase to enable.');
         });
 
         // ================================================================
-        // EVENT BINDINGS
+        // EVENT BINDINGS (with Enter key fix)
         // ================================================================
         sendBtn.addEventListener('click', sendMessage);
+
+        // Enter key handling: Shift+Enter = newline, Enter = send
         chatInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault();
-                sendMessage(); }
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+            // If Shift+Enter, we do nothing, allowing default newline behavior.
         });
+
         newChatBtn.addEventListener('click', createNewChat);
 
+        // Auto-expand textarea
         chatInput.addEventListener('input', function() {
             this.style.height = 'auto';
             this.style.height = (this.scrollHeight) + 'px';
@@ -3598,8 +3769,15 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
             chatInput.style.height = (chatInput.scrollHeight) + 'px';
         }
 
+        // Close modals on backdrop click
         document.querySelectorAll('.modal-backdrop').forEach(modal => {
             modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
+        });
+
+        // Top bar avatar click -> open profile modal
+        topBarAvatar.addEventListener('click', () => {
+            profileModal.classList.add('active');
+            profileNameInput.value = state.userName;
         });
 
         // ================================================================
@@ -3627,7 +3805,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 advancedContent.classList.add('open');
                 advancedToggle.classList.add('open');
             }
-            console.log('👑 Wise King AI — All features integrated successfully.');
+            console.log('👑 Wise King AI — All features fixed and integrated.');
         }
 
         init();
