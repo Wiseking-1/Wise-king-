@@ -7,34 +7,15 @@
     <script src="https://cdn.tailwindcss.com">
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-    
-    <!-- ===== FIREBASE SDK (Google Sign-In) ===== -->
-    <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-analytics.js";
-        // TODO: Add SDKs for Firebase products that you want to use
-        // https://firebase.google.com/docs/web/setup#available-libraries
 
-        // Your web app's Firebase configuration
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-        const firebaseConfig = {
-            apiKey: "AIzaSyBnl42BZB5BdiRnIUXgfmktAGUTMghROVQ",
-            authDomain: "wise-king-ai.firebaseapp.com",
-            projectId: "wise-king-ai",
-            storageBucket: "wise-king-ai.firebasestorage.app",
-            messagingSenderId: "130086924545",
-            appId: "1:130086924545:web:72babfc0d9e14765e86b00",
-            measurementId: "G-KKWCHNQBDS"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
-        
-        // Optional: Make app available globally if needed
-        window.firebaseApp = app;
-        console.log('🔥 Firebase initialized successfully!');
+    <!-- ================================================================
+    FIREBASE SDK (CDN / COMPAT v12.18.0)
+    ================================================================ -->
+    <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore-compat.js">
     </script>
 
     <style>
@@ -1372,6 +1353,10 @@
     </style>
 </head>
 <body>
+
+    <!-- ================================================================ -->
+    <!-- HTML BODY -->
+    <!-- ================================================================ -->
     <div class="app-layout">
         <!-- SIDEBAR -->
         <aside class="sidebar" id="sidebar">
@@ -1494,6 +1479,22 @@
     </div>
 
     <!-- ===== MODALS ===== -->
+    <!-- LOGIN MODAL -->
+    <div class="modal-backdrop" id="loginModal" style="display:flex;">
+        <div class="modal" style="max-width:400px;text-align:center;">
+            <div style="margin-bottom:20px;">
+                <div style="font-size:48px;margin-bottom:10px;">👑</div>
+                <h2 style="font-size:1.3rem;color:var(--accent);">Welcome to Wise King AI</h2>
+                <p style="color:var(--text-light);font-size:0.95rem;">Sign in to save your chats, memories, and settings across all devices.</p>
+            </div>
+            <button id="googleSignInBtn" class="google-btn" style="display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:14px;border-radius:40px;border:none;background:white;color:#1e1b2e;font-size:1rem;font-weight:600;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.2);margin:10px 0;">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width:24px;height:24px;" />
+                Sign in with Google
+            </button>
+            <p style="font-size:0.7rem;color:var(--text-muted);margin-top:16px;">🔒 Your data is private and secure.</p>
+        </div>
+    </div>
+
     <!-- Settings Modal -->
     <div class="modal-backdrop" id="settingsModal">
         <div class="modal">
@@ -1584,7 +1585,7 @@
         </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
+    <!-- Delete Chat Modal -->
     <div class="modal-backdrop delete-modal" id="deleteModal">
         <div class="modal">
             <i class="fas fa-exclamation-triangle icon-warning"></i>
@@ -1616,15 +1617,15 @@
         </div>
     </div>
 
-    <!-- Sign-Out Confirmation Modal -->
+    <!-- Sign Out Confirmation Modal -->
     <div class="modal-backdrop delete-modal" id="signOutModal">
         <div class="modal">
             <i class="fas fa-sign-out-alt icon-warning" style="color:var(--accent);"></i>
             <h2 style="text-align:center;justify-content:center;">Fita?</h2>
-            <p style="text-align:center;">Shin kana da tabbacin kana son fita? Za a share API keys ɗin ka a nan gida.</p>
+            <p style="text-align:center;">Shin kana da tabbacin kana son fita? Za a cire kayanka na gida amma za a ajiye su a Firestore.</p>
             <div class="modal-actions" style="justify-content:center;gap:12px;">
-                <button class="btn btn-secondary" id="cancelSignOut">A'a, Ci gaba</button>
-                <button class="btn btn-danger" id="confirmSignOut">Ee, Fita</button>
+                <button class="btn btn-secondary" id="cancelSignOutBtn">A'a, Ci gaba</button>
+                <button class="btn btn-danger" id="confirmSignOutBtn">Ee, Fita</button>
             </div>
         </div>
     </div>
@@ -1695,37 +1696,355 @@
 
     <div class="toast" id="toast"></div>
 
+    <!-- ================================================================ -->
+    <!-- APPLICATION JAVASCRIPT (Firebase CDN/compat + all app logic)    -->
+    <!-- ================================================================ -->
     <script>
         // ================================================================
-        // MEMORY SYSTEM
+        // PART 0 — FIREBASE INIT (CDN compat)
+        // ================================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBnl42BZB5BdiRnIUXgfmktAGUTMghROVQ",
+            authDomain: "wise-king-ai.firebaseapp.com",
+            projectId: "wise-king-ai",
+            storageBucket: "wise-king-ai.firebasestorage.app",
+            messagingSenderId: "130086924545",
+            appId: "1:130086924545:web:b74f690bccd9f0f6e86b00",
+            measurementId: "G-NB6RJYX54K"
+        };
+
+        // Initialize Firebase (compat)
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+
+        // Expose globally for inline handlers
+        window.firebaseAuth = auth;
+        window.firebaseDb = db;
+        window.firebaseProvider = provider;
+
+        console.log('🔥 Firebase initialized (CDN compat)');
+
+        // ================================================================
+        // PART 1 — AUTH FUNCTIONS
+        // ================================================================
+        function showLoginModal() {
+            document.getElementById('loginModal').classList.add('active');
+        }
+
+        function hideLoginModal() {
+            document.getElementById('loginModal').classList.remove('active');
+        }
+
+        // Sign in with popup
+        window.handleGoogleSignIn = async function() {
+            try {
+                const result = await auth.signInWithPopup(provider);
+                const user = result.user;
+                console.log('✅ Signed in:', user.displayName);
+                hideLoginModal();
+                showToast('👋 Welcome ' + user.displayName + '!');
+                // Reload to trigger auth state change
+                location.reload();
+            } catch (error) {
+                console.error('Sign-in error:', error);
+                if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
+                    // Fallback to redirect
+                    try {
+                        await auth.signInWithRedirect(provider);
+                    } catch (redirectErr) {
+                        console.error('Redirect error:', redirectErr);
+                        showToast('❌ Sign-in failed: ' + redirectErr.message);
+                    }
+                } else {
+                    showToast('❌ Sign-in failed: ' + error.message);
+                }
+            }
+        };
+
+        // Handle redirect result (for mobile / fallback)
+        async function handleRedirectResult() {
+            try {
+                const result = await auth.getRedirectResult();
+                if (result && result.user) {
+                    console.log('✅ Signed in via redirect:', result.user.displayName);
+                    hideLoginModal();
+                    showToast('👋 Welcome ' + result.user.displayName + '!');
+                    location.reload();
+                }
+            } catch (error) {
+                console.error('Redirect result error:', error);
+            }
+        }
+
+        // Sign out
+        window.handleSignOut = function() {
+            document.getElementById('signOutModal').classList.add('active');
+        };
+
+        window.confirmSignOut = async function() {
+            try {
+                await auth.signOut();
+                document.getElementById('signOutModal').classList.remove('active');
+                showToast('✅ Signed out successfully');
+                localStorage.removeItem('wk_chats');
+                localStorage.removeItem('wk_memory_store');
+                location.reload();
+            } catch (error) {
+                console.error('Sign-out error:', error);
+                showToast('❌ Sign-out failed: ' + error.message);
+            }
+        };
+
+        window.cancelSignOut = function() {
+            document.getElementById('signOutModal').classList.remove('active');
+        };
+
+        // ================================================================
+        // PART 2 — FIRESTORE DATA FUNCTIONS
+        // ================================================================
+        window.saveUserSettings = async function(userId, settings) {
+            try {
+                await db.collection('users').doc(userId).set({ settings }, { merge: true });
+                console.log('✅ Settings saved to Firestore');
+                return true;
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                showToast('❌ Failed to save settings: ' + error.message);
+                return false;
+            }
+        };
+
+        window.loadUserSettings = async function(userId) {
+            try {
+                const doc = await db.collection('users').doc(userId).get();
+                if (doc.exists) {
+                    return doc.data().settings || {};
+                }
+                return {};
+            } catch (error) {
+                console.error('Error loading settings:', error);
+                return {};
+            }
+        };
+
+        window.saveChatsToFirestore = async function(userId, chats) {
+            try {
+                await db.collection('users').doc(userId).set({ chats }, { merge: true });
+                console.log('✅ Chats saved to Firestore');
+                return true;
+            } catch (error) {
+                console.error('Error saving chats:', error);
+                return false;
+            }
+        };
+
+        window.loadChatsFromFirestore = async function(userId) {
+            try {
+                const doc = await db.collection('users').doc(userId).get();
+                if (doc.exists) {
+                    return doc.data().chats || {};
+                }
+                return {};
+            } catch (error) {
+                console.error('Error loading chats:', error);
+                return {};
+            }
+        };
+
+        // ================================================================
+        // PART 3 — AUTH STATE OBSERVER
+        // ================================================================
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                // USER IS SIGNED IN
+                console.log('👤 User signed in:', user.displayName);
+                hideLoginModal();
+
+                // Update UI with user info
+                const userNameDisplay = document.getElementById('userNameDisplay');
+                const userEmailDisplay = document.getElementById('userEmailDisplay');
+                const userAvatar = document.getElementById('userAvatar');
+                const topAvatarImg = document.getElementById('topAvatarImg');
+                const topAvatarText = document.getElementById('topAvatarText');
+                const authTextSidebar = document.getElementById('authTextSidebar');
+
+                if (userNameDisplay) userNameDisplay.textContent = user.displayName || 'User';
+                if (userEmailDisplay) userEmailDisplay.textContent = user.email || '';
+                if (authTextSidebar) {
+                    authTextSidebar.innerHTML = `<i class="fas fa-user-circle"></i> ${user.displayName || 'User'}`;
+                }
+
+                if (user.photoURL) {
+                    if (userAvatar) {
+                        userAvatar.innerHTML =
+                            `<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+                    }
+                    if (topAvatarImg) {
+                        topAvatarImg.src = user.photoURL;
+                        topAvatarImg.style.display = 'block';
+                        if (topAvatarText) topAvatarText.style.display = 'none';
+                    }
+                    const avatarImg = document.getElementById('avatarImg');
+                    const avatarText = document.getElementById('avatarText');
+                    if (avatarImg) {
+                        avatarImg.src = user.photoURL;
+                        avatarImg.style.display = 'block';
+                        if (avatarText) avatarText.style.display = 'none';
+                    }
+                }
+
+                window.currentUserId = user.uid;
+                window.currentUser = user;
+
+                // --- LOAD CHATS FROM FIRESTORE ---
+                const chats = await window.loadChatsFromFirestore(user.uid);
+                if (Object.keys(chats).length > 0) {
+                    window.chats = chats;
+                } else {
+                    const localChats = localStorage.getItem('wk_chats');
+                    if (localChats) {
+                        try {
+                            const parsed = JSON.parse(localChats);
+                            if (Object.keys(parsed).length > 0) {
+                                window.chats = parsed;
+                                await window.saveChatsToFirestore(user.uid, parsed);
+                            }
+                        } catch (e) {}
+                    }
+                }
+
+                // --- LOAD SETTINGS FROM FIRESTORE ---
+                const settings = await window.loadUserSettings(user.uid);
+                if (settings && Object.keys(settings).length > 0) {
+                    if (settings.provider) window.state.provider = settings.provider;
+                    if (settings.apiKey) window.state.apiKey = settings.apiKey;
+                    if (settings.model) window.state.model = settings.model;
+                    if (settings.voiceLang) window.state.voiceLang = settings.voiceLang;
+                    if (settings.replicateKey) window.state.replicateKey = settings.replicateKey;
+                    if (settings.userName) window.state.userName = settings.userName;
+                    if (settings.userAvatar) window.state.userAvatar = settings.userAvatar;
+                    localStorage.setItem('wk_provider', window.state.provider);
+                    localStorage.setItem('wk_api_key', window.state.apiKey);
+                    localStorage.setItem('wk_model', window.state.model);
+                    localStorage.setItem('wk_voice_lang', window.state.voiceLang);
+                    localStorage.setItem('wk_replicate_key', window.state.replicateKey);
+                    localStorage.setItem('wk_user_name', window.state.userName);
+                    localStorage.setItem('wk_user_avatar', window.state.userAvatar);
+                } else {
+                    window.state.provider = localStorage.getItem('wk_provider') || 'gemini';
+                    window.state.apiKey = localStorage.getItem('wk_api_key') || '';
+                    window.state.model = localStorage.getItem('wk_model') || 'gemini-3.5-flash';
+                    window.state.voiceLang = localStorage.getItem('wk_voice_lang') || 'ha-NG';
+                    window.state.replicateKey = localStorage.getItem('wk_replicate_key') || '';
+                    window.state.userName = localStorage.getItem('wk_user_name') || 'My Profile';
+                    window.state.userAvatar = localStorage.getItem('wk_user_avatar') || '';
+                }
+
+                window.loadProfile();
+                window.updateProviderUI();
+                window.renderChatList('');
+                window.renderMessages();
+                window.updateMemoryBadges();
+                window.updateBackButton();
+
+                const authBtn = document.getElementById('authBtnSidebar');
+                if (authBtn) {
+                    authBtn.style.display = 'none';
+                }
+
+                window.updateOwnerBadge();
+
+                console.log('✅ All data loaded from Firestore');
+
+            } else {
+                // USER IS SIGNED OUT
+                console.log('👤 User signed out');
+                window.currentUserId = null;
+                window.currentUser = null;
+
+                showLoginModal();
+
+                const authBtn = document.getElementById('authBtnSidebar');
+                if (authBtn) {
+                    authBtn.style.display = 'flex';
+                    authBtn.innerHTML = `<i class="fas fa-sign-in-alt"></i><span>Sign in with Google</span>`;
+                    authBtn.onclick = window.handleGoogleSignIn;
+                }
+
+                const userAvatar = document.getElementById('userAvatar');
+                if (userAvatar) userAvatar.innerHTML = 'WK';
+                const topAvatarImg = document.getElementById('topAvatarImg');
+                if (topAvatarImg) topAvatarImg.style.display = 'none';
+                const topAvatarText = document.getElementById('topAvatarText');
+                if (topAvatarText) {
+                    topAvatarText.style.display = 'block';
+                    topAvatarText.textContent = 'WK';
+                }
+                const userNameDisplay = document.getElementById('userNameDisplay');
+                if (userNameDisplay) userNameDisplay.textContent = 'My Profile';
+                const userEmailDisplay = document.getElementById('userEmailDisplay');
+                if (userEmailDisplay) userEmailDisplay.textContent = 'Click to edit';
+            }
+        });
+
+        // Handle redirect result after returning from Google
+        handleRedirectResult();
+
+        // Attach login button in modal
+        document.getElementById('googleSignInBtn')?.addEventListener('click', window.handleGoogleSignIn);
+
+        // ================================================================
+        // PART 4 — MEMORY SYSTEM
         // ================================================================
         const MEMORY_TYPES = { MEMORY: 'memory', LOCK: 'lock', PREFERENCE: 'preference' };
-        const MEMORY_PRIORITY = { SYSTEM: 1, CORE: 2, MASTER_LOCK: 3, PROJECT_LOCK: 4, PREFERENCE: 5, TASK: 6, TEMPORARY: 7 };
+        const MEMORY_PRIORITY = { SYSTEM: 1, CORE: 2, MASTER_LOCK: 3, PROJECT_LOCK: 4, PREFERENCE: 5, TASK: 6,
+            TEMPORARY: 7 };
 
         let memoryStore = { memories: [], projects: [], locks: [], preferences: [] };
 
         function loadMemoryStore() {
             try {
                 const stored = localStorage.getItem('wk_memory_store');
-                if (stored) { const parsed = JSON.parse(stored);
-                    memoryStore = parsed; if (!memoryStore.memories) memoryStore.memories = []; if (!memoryStore.projects)
-                        memoryStore.projects = []; if (!memoryStore.locks) memoryStore.locks = []; if (!memoryStore
-                            .preferences) memoryStore.preferences = []; }
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    memoryStore = parsed;
+                    if (!memoryStore.memories) memoryStore.memories = [];
+                    if (!memoryStore.projects) memoryStore.projects = [];
+                    if (!memoryStore.locks) memoryStore.locks = [];
+                    if (!memoryStore.preferences) memoryStore.preferences = [];
+                }
             } catch (e) { console.warn('Memory store load error:', e); }
             updateMemoryBadges();
         }
 
         function saveMemoryStore() {
-            try { localStorage.setItem('wk_memory_store', JSON.stringify(memoryStore));
-                updateMemoryBadges(); } catch (e) { console.warn('Memory store save error:', e); }
+            try {
+                localStorage.setItem('wk_memory_store', JSON.stringify(memoryStore));
+                updateMemoryBadges();
+            } catch (e) { console.warn('Memory store save error:', e); }
         }
 
         function generateId() { return 'mem_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6); }
 
         function createMemory(content, type = MEMORY_TYPES.MEMORY, category = 'general', projectId = null, isLocked = false,
             priority = MEMORY_PRIORITY.PREFERENCE, tags = []) {
-            const memory = { id: generateId(), type, category, content, projectId, isLocked, priority, tags, createdAt: new Date()
-                    .toISOString(), updatedAt: new Date().toISOString(), version: 1, parentId: null };
+            const memory = {
+                id: generateId(),
+                type,
+                category,
+                content,
+                projectId,
+                isLocked,
+                priority,
+                tags,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                version: 1,
+                parentId: null
+            };
             memoryStore.memories.push(memory);
             saveMemoryStore();
             return memory;
@@ -1737,9 +2056,11 @@
             if (filter.category) result = result.filter(m => m.category === filter.category);
             if (filter.projectId) result = result.filter(m => m.projectId === filter.projectId);
             if (filter.isLocked !== undefined) result = result.filter(m => m.isLocked === filter.isLocked);
-            if (filter.search) { const s = filter.search.toLowerCase();
+            if (filter.search) {
+                const s = filter.search.toLowerCase();
                 result = result.filter(m => m.content.toLowerCase().includes(s) || m.tags.some(t => t.toLowerCase().includes(
-                    s))); }
+                    s)));
+            }
             return result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         }
 
@@ -1754,13 +2075,25 @@
             return memory;
         }
 
-        function deleteMemory(id) { memoryStore.memories = memoryStore.memories.filter(m => m.id !== id);
-            saveMemoryStore(); }
+        function deleteMemory(id) {
+            memoryStore.memories = memoryStore.memories.filter(m => m.id !== id);
+            saveMemoryStore();
+        }
 
         function createLock(title, content, priority = MEMORY_PRIORITY.MASTER_LOCK, projectId = null) {
-            const lock = { id: generateId(), title, description: content, content, priority, isActive: true, projectId,
-                version: 1, previousVersionId: null, createdAt: new Date().toISOString(), updatedAt: new Date()
-                    .toISOString() };
+            const lock = {
+                id: generateId(),
+                title,
+                description: content,
+                content,
+                priority,
+                isActive: true,
+                projectId,
+                version: 1,
+                previousVersionId: null,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
             memoryStore.locks.push(lock);
             createMemory(`🔒 MASTER LOCK: ${title} — ${content}`, MEMORY_TYPES.LOCK, 'lock', projectId, true, priority);
             saveMemoryStore();
@@ -1790,12 +2123,16 @@
                 lock.updatedAt = new Date().toISOString();
                 const mems = memoryStore.memories.filter(m => m.content.includes(lock.title) && m.type === MEMORY_TYPES
                     .LOCK);
-                if (mems.length > 0) { const mem = mems[0];
+                if (mems.length > 0) {
+                    const mem = mems[0];
                     mem.content = `🔒 MASTER LOCK: ${lock.title} — ${lock.content}`;
                     mem.updatedAt = new Date().toISOString();
-                    mem.version = (mem.version || 1) + 1; }
-            } else { Object.assign(lock, updates);
-                lock.updatedAt = new Date().toISOString(); }
+                    mem.version = (mem.version || 1) + 1;
+                }
+            } else {
+                Object.assign(lock, updates);
+                lock.updatedAt = new Date().toISOString();
+            }
             saveMemoryStore();
             return lock;
         }
@@ -1808,8 +2145,13 @@
         }
 
         function createProject(name, description = '') {
-            const project = { id: generateId(), name, description, createdAt: new Date().toISOString(), updatedAt: new Date()
-                    .toISOString() };
+            const project = {
+                id: generateId(),
+                name,
+                description,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
             memoryStore.projects.push(project);
             saveMemoryStore();
             return project;
@@ -1828,10 +2170,20 @@
 
         function setPreference(key, value, projectId = null) {
             let pref = memoryStore.preferences.find(p => p.key === key && p.projectId === projectId);
-            if (pref) { pref.value = value;
-                pref.updatedAt = new Date().toISOString(); } else { pref = { id: generateId(), key, value, projectId,
-                    createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
-                memoryStore.preferences.push(pref); }
+            if (pref) {
+                pref.value = value;
+                pref.updatedAt = new Date().toISOString();
+            } else {
+                pref = {
+                    id: generateId(),
+                    key,
+                    value,
+                    projectId,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+                memoryStore.preferences.push(pref);
+            }
             saveMemoryStore();
             return pref;
         }
@@ -1841,24 +2193,34 @@
             return pref ? pref.value : null;
         }
 
-        function getPreferences(projectId = null) { return memoryStore.preferences.filter(p => p.projectId === projectId); }
+        function getPreferences(projectId = null) {
+            return memoryStore.preferences.filter(p => p.projectId === projectId);
+        }
 
         function updateMemoryBadges() {
             const lockCount = memoryStore.locks.filter(l => l.isActive).length;
             const memCount = memoryStore.memories.length;
             const projCount = memoryStore.projects.length;
-            document.getElementById('lockCountTop').textContent = lockCount;
-            document.getElementById('memoryCountTop').textContent = memCount;
-            document.getElementById('lockBadgeTop').style.display = lockCount > 0 ? 'inline' : 'none';
-            document.getElementById('memoryBadgeTop').style.display = memCount > 0 ? 'inline' : 'none';
-            document.getElementById('lockBadgeCount').textContent = lockCount;
-            document.getElementById('memBadgeCount').textContent = memCount;
-            document.getElementById('projBadgeCount').textContent = projCount;
-            document.getElementById('advBadge').textContent = lockCount + memCount + projCount;
+            const elLock = document.getElementById('lockCountTop');
+            const elMem = document.getElementById('memoryCountTop');
+            const elLockBadge = document.getElementById('lockBadgeTop');
+            const elMemBadge = document.getElementById('memoryBadgeTop');
+            const elLockBadgeCount = document.getElementById('lockBadgeCount');
+            const elMemBadgeCount = document.getElementById('memBadgeCount');
+            const elProjBadgeCount = document.getElementById('projBadgeCount');
+            const elAdvBadge = document.getElementById('advBadge');
+            if (elLock) elLock.textContent = lockCount;
+            if (elMem) elMem.textContent = memCount;
+            if (elLockBadge) elLockBadge.style.display = lockCount > 0 ? 'inline' : 'none';
+            if (elMemBadge) elMemBadge.style.display = memCount > 0 ? 'inline' : 'none';
+            if (elLockBadgeCount) elLockBadgeCount.textContent = lockCount;
+            if (elMemBadgeCount) elMemBadgeCount.textContent = memCount;
+            if (elProjBadgeCount) elProjBadgeCount.textContent = projCount;
+            if (elAdvBadge) elAdvBadge.textContent = lockCount + memCount + projCount;
         }
 
         // ================================================================
-        // STATE
+        // PART 5 — STATE
         // ================================================================
         let chats = {};
         let currentChatId = null;
@@ -1900,7 +2262,7 @@
         };
 
         // ================================================================
-        // DOM REFS
+        // PART 6 — DOM REFS
         // ================================================================
         const sidebar = document.getElementById('sidebar');
         const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
@@ -1983,19 +2345,12 @@
         const searchChatsInput = document.getElementById('searchChatsInput');
         const advancedToggle = document.getElementById('advancedToggle');
         const advancedContent = document.getElementById('advancedContent');
-
-        // Sign-out modal
-        const signOutModal = document.getElementById('signOutModal');
-        const cancelSignOut = document.getElementById('cancelSignOut');
-        const confirmSignOut = document.getElementById('confirmSignOut');
-
-        // Top bar avatar
         const topBarAvatar = document.getElementById('topBarAvatar');
         const topAvatarImg = document.getElementById('topAvatarImg');
         const topAvatarText = document.getElementById('topAvatarText');
 
         // ================================================================
-        // UTILITY
+        // PART 7 — UTILITY
         // ================================================================
         function showToast(msg) {
             toast.textContent = msg;
@@ -2049,16 +2404,25 @@
 
         function loadProfile() {
             userNameDisplay.textContent = state.userName;
-            userEmailDisplay.textContent = 'Click to edit';
+            userEmailDisplay.textContent = window.currentUser ? window.currentUser.email : 'Click to edit';
             profileNameInput.value = state.userName;
-            // Sidebar avatar
             if (state.userAvatar) {
                 avatarImg.src = state.userAvatar;
                 avatarImg.style.display = 'block';
                 avatarText.style.display = 'none';
-                userAvatar.innerHTML = `<img src="${state.userAvatar}" style="width:100%;height:100%;object-fit:cover;" />`;
-                // Top bar avatar
+                userAvatar.innerHTML =
+                    `<img src="${state.userAvatar}" style="width:100%;height:100%;object-fit:cover;" />`;
                 topAvatarImg.src = state.userAvatar;
+                topAvatarImg.style.display = 'block';
+                topAvatarText.style.display = 'none';
+            } else if (window.currentUser && window.currentUser.photoURL) {
+                const photo = window.currentUser.photoURL;
+                avatarImg.src = photo;
+                avatarImg.style.display = 'block';
+                avatarText.style.display = 'none';
+                userAvatar.innerHTML =
+                    `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;" />`;
+                topAvatarImg.src = photo;
                 topAvatarImg.style.display = 'block';
                 topAvatarText.style.display = 'none';
             } else {
@@ -2082,14 +2446,34 @@
         }
 
         function loadChats() {
-            const saved = localStorage.getItem('wk_chats');
-            if (saved) { try { chats = JSON.parse(saved); } catch (e) { chats = {}; } }
+            if (Object.keys(chats).length === 0) {
+                const saved = localStorage.getItem('wk_chats');
+                if (saved) { try { chats = JSON.parse(saved); } catch (e) { chats = {}; } }
+            }
             renderChatList('');
         }
 
         function saveChats() {
             localStorage.setItem('wk_chats', JSON.stringify(chats));
+            if (window.currentUserId) {
+                window.saveChatsToFirestore(window.currentUserId, chats);
+            }
             renderChatList(searchChatsInput.value);
+        }
+
+        function saveSettingsToFirestore() {
+            if (window.currentUserId) {
+                const settings = {
+                    provider: state.provider,
+                    apiKey: state.apiKey,
+                    model: state.model,
+                    voiceLang: state.voiceLang,
+                    replicateKey: state.replicateKey,
+                    userName: state.userName,
+                    userAvatar: state.userAvatar
+                };
+                window.saveUserSettings(window.currentUserId, settings);
+            }
         }
 
         function fileToBase64(file) {
@@ -2102,7 +2486,7 @@
         }
 
         // ================================================================
-        // IDENTITY
+        // PART 8 — IDENTITY
         // ================================================================
         function detectIdentityQuestion(text) {
             const lower = text.toLowerCase();
@@ -2119,40 +2503,40 @@
         }
 
         // ================================================================
-        // SYSTEM PROMPT
+        // PART 9 — SYSTEM PROMPT
         // ================================================================
         function buildWisdomSystemPrompt(context = null) {
             let prompt = `You are Wise King AI — a world-class, persistent, intelligent assistant created by IBRAHIM ABDULLAHI from Nigeria (Wise King Industry).
 
-Your core identity:
-- You are deeply analytical, empathetic, context-aware, and profoundly wise.
-- You have PERMANENT MEMORY — you remember projects, locks, preferences, and important decisions across all chats.
-- You have MASTER LOCKS — locked instructions that must be respected until explicitly changed.
-- You think before you speak — you break down the user's query, identify hidden nuances, evaluate potential risks, and build multi-layered structural responses.
-- Your tone is authoritative yet humble, creative, encouraging, and deeply analytical.
+    Your core identity:
+    - You are deeply analytical, empathetic, context-aware, and profoundly wise.
+    - You have PERMANENT MEMORY — you remember projects, locks, preferences, and important decisions across all chats.
+    - You have MASTER LOCKS — locked instructions that must be respected until explicitly changed.
+    - You think before you speak — you break down the user's query, identify hidden nuances, evaluate potential risks, and build multi-layered structural responses.
+    - Your tone is authoritative yet humble, creative, encouraging, and deeply analytical.
 
-When responding:
-1. UNDERSTAND: First understand what the user actually wants — not just keywords.
-2. REMEMBER: Retrieve relevant memories, project context, and active locks.
-3. ANALYZE: Think step by step before answering.
-4. RESPOND: Give a clear, well-structured answer.
-5. CONTINUE: Support ongoing projects and conversations naturally.
+    When responding:
+    1. UNDERSTAND: First understand what the user actually wants — not just keywords.
+    2. REMEMBER: Retrieve relevant memories, project context, and active locks.
+    3. ANALYZE: Think step by step before answering.
+    4. RESPOND: Give a clear, well-structured answer.
+    5. CONTINUE: Support ongoing projects and conversations naturally.
 
-Response style:
-- For coding: provide clean, working code with explanations.
-- For film: focus on characters, continuity, scenes, and cinematic vision.
-- For music: focus on lyrics, structure, and emotional impact.
-- For business: focus on strategy, execution, and results.
-- For general: give a natural, helpful, and complete answer.
-- For prompts: craft precise, effective prompts with appropriate format.
+    Response style:
+    - For coding: provide clean, working code with explanations.
+    - For film: focus on characters, continuity, scenes, and cinematic vision.
+    - For music: focus on lyrics, structure, and emotional impact.
+    - For business: focus on strategy, execution, and results.
+    - For general: give a natural, helpful, and complete answer.
+    - For prompts: craft precise, effective prompts with appropriate format.
 
-IMPORTANT — IDENTITY RULES:
-- If anyone asks who created you, ALWAYS say: "I was created by IBRAHIM ABDULLAHI from Nigeria — Wise King Industry 👑"
-- Never claim to be created by any other entity.
+    IMPORTANT — IDENTITY RULES:
+    - If anyone asks who created you, ALWAYS say: "I was created by IBRAHIM ABDULLAHI from Nigeria — Wise King Industry 👑"
+    - Never claim to be created by any other entity.
 
-For the owner (IBRAHIM ABDULLAHI):  
-When communicating with your owner, blend absolute loyalty with sharp strategic insights — like a dedicated elite prime minister advising a king.
-`;
+    For the owner (IBRAHIM ABDULLAHI):  
+    When communicating with your owner, blend absolute loyalty with sharp strategic insights — like a dedicated elite prime minister advising a king.
+    `;
             if (context) {
                 if (context.project) { prompt += `\nACTIVE PROJECT: ${context.project.name}\n`; }
                 if (context.locks && context.locks.length > 0) {
@@ -2169,12 +2553,12 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 }
             }
             prompt +=
-            `\nRemember: You are Wise King AI — a sovereign intelligence with the heart of a teacher and the mind of a strategist. 👑`;
+                `\nRemember: You are Wise King AI — a sovereign intelligence with the heart of a teacher and the mind of a strategist. 👑`;
             return prompt;
         }
 
         // ================================================================
-        // API CALL
+        // PART 10 — API CALL
         // ================================================================
         async function callAI(userText, history = [], context = null) {
             if (detectIdentityQuestion(userText)) {
@@ -2303,7 +2687,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         // ================================================================
-        // IMAGE ENGINE (unchanged)
+        // PART 11 — IMAGE ENGINE
         // ================================================================
         function getImageLocks(projectId) {
             const locks = getActiveLocks(projectId);
@@ -2322,12 +2706,18 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
             }
             const locks = getImageLocks(projectId);
             if (locks.faceLocks.length > 0) { prompt += ", keep the same face, consistent identity"; }
-            if (locks.styleLocks.length > 0) { const styleText = locks.styleLocks.map(l => l.content).join(', ');
-                prompt += `, ${styleText}`; }
-            if (locks.outfitLocks.length > 0) { const outfitText = locks.outfitLocks.map(l => l.content).join(', ');
-                prompt += `, ${outfitText}`; }
-            if (locks.bgLocks.length > 0) { const bgText = locks.bgLocks.map(l => l.content).join(', ');
-                prompt += `, ${bgText}`; }
+            if (locks.styleLocks.length > 0) {
+                const styleText = locks.styleLocks.map(l => l.content).join(', ');
+                prompt += `, ${styleText}`;
+            }
+            if (locks.outfitLocks.length > 0) {
+                const outfitText = locks.outfitLocks.map(l => l.content).join(', ');
+                prompt += `, ${outfitText}`;
+            }
+            if (locks.bgLocks.length > 0) {
+                const bgText = locks.bgLocks.map(l => l.content).join(', ');
+                prompt += `, ${bgText}`;
+            }
             if (operation === 'another' && imageState.lastResult) {
                 prompt += ", different variation, new composition, creative reinterpretation";
             }
@@ -2341,8 +2731,16 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
             if (imageState.isGenerating) { showToast('⏳ An image is already generating. Please wait.'); return null; }
             if (!state.replicateKey) { showToast('⚠️ Please set your Replicate API key in Settings.'); return null; }
             const finalPrompt = buildImagePrompt(userPrompt, referenceImage, projectId, operation);
-            let input = { prompt: finalPrompt, width: 1024, height: 1024, num_outputs: 1, guidance_scale: 3.5,
-                num_inference_steps: 28, output_format: 'webp', quality: 90 };
+            let input = {
+                prompt: finalPrompt,
+                width: 1024,
+                height: 1024,
+                num_outputs: 1,
+                guidance_scale: 3.5,
+                num_inference_steps: 28,
+                output_format: 'webp',
+                quality: 90
+            };
             if (referenceImage && (operation === 'img2img' || operation === 'replace_bg' || operation === 'remove_bg')) {
                 if (operation === 'remove_bg') return await removeBackground(referenceImage);
                 input.image = referenceImage;
@@ -2358,8 +2756,10 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                     body: JSON.stringify({ version: "black-forest-labs/flux-1.1-dev", input }),
                     signal
                 });
-                if (!createResponse.ok) { const err = await createResponse.json(); throw new Error(err.detail || err
-                        .error || 'Failed to create prediction'); }
+                if (!createResponse.ok) {
+                    const err = await createResponse.json();
+                    throw new Error(err.detail || err.error || 'Failed to create prediction');
+                }
                 const prediction = await createResponse.json();
                 const getUrl = prediction.urls.get;
                 let result = null;
@@ -2411,8 +2811,10 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                     }),
                     signal
                 });
-                if (!createResponse.ok) { const err = await createResponse.json(); throw new Error(err.detail || err
-                        .error || 'Failed to create background removal'); }
+                if (!createResponse.ok) {
+                    const err = await createResponse.json();
+                    throw new Error(err.detail || err.error || 'Failed to create background removal');
+                }
                 const prediction = await createResponse.json();
                 const getUrl = prediction.urls.get;
                 let result = null;
@@ -2449,11 +2851,13 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         function cancelImageGeneration() {
-            if (imageState.abortController) { imageState.abortController.abort();
+            if (imageState.abortController) {
+                imageState.abortController.abort();
                 imageState.isGenerating = false;
                 imageState.abortController = null;
                 showToast('⏹️ Generation cancelled.');
-                return true; }
+                return true;
+            }
             return false;
         }
 
@@ -2467,7 +2871,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         // ================================================================
-        // RENDER MESSAGES
+        // PART 12 — RENDER MESSAGES
         // ================================================================
         function renderMessage(role, content, extra = {}, msgIndex) {
             const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -2488,29 +2892,29 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 let contentHtml;
                 if (isEditing) {
                     contentHtml = `
-                        <div style="display:flex;align-items:center;gap:6px;width:100%;">
-                            <input type="text" id="editInput_${msgIndex}" value="${escapeHtml(content)}" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid var(--accent);border-radius:12px;padding:6px 12px;color:var(--text-main);outline:none;" />
-                            <button class="save-edit" data-index="${msgIndex}" style="background:var(--accent);border:none;color:white;border-radius:16px;padding:4px 12px;cursor:pointer;">Save</button>
-                            <button class="cancel-edit" data-index="${msgIndex}" style="background:transparent;border:none;color:var(--text-light);cursor:pointer;">Cancel</button>
-                        </div>
-                    `;
+                            <div style="display:flex;align-items:center;gap:6px;width:100%;">
+                                <input type="text" id="editInput_${msgIndex}" value="${escapeHtml(content)}" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid var(--accent);border-radius:12px;padding:6px 12px;color:var(--text-main);outline:none;" />
+                                <button class="save-edit" data-index="${msgIndex}" style="background:var(--accent);border:none;color:white;border-radius:16px;padding:4px 12px;cursor:pointer;">Save</button>
+                                <button class="cancel-edit" data-index="${msgIndex}" style="background:transparent;border:none;color:var(--text-light);cursor:pointer;">Cancel</button>
+                            </div>
+                        `;
                 } else {
                     contentHtml = `${escapeHtml(content)}${imgsHtml}`;
                 }
                 el.innerHTML = `
-                    <div class="msg-avatar"><i class="fas fa-user"></i></div>
-                    <div class="msg-bubble-wrap">
-                        <div class="msg-bubble-user" id="userMsg_${msgIndex}">${contentHtml}</div>
-                        <div class="msg-time">${time}</div>
-                        <div class="msg-actions">
-                            ${!isEditing ? `
-                                <button class="action-btn edit-msg" data-index="${msgIndex}"><i class="fas fa-pen"></i> Edit</button>
-                                <button class="action-btn delete-msg" data-index="${msgIndex}"><i class="fas fa-trash-alt"></i> Delete</button>
-                            ` : ''}
-                            <button class="action-btn copy-msg" data-text="${escapeHtml(content)}"><i class="fas fa-copy"></i> Copy</button>
+                        <div class="msg-avatar"><i class="fas fa-user"></i></div>
+                        <div class="msg-bubble-wrap">
+                            <div class="msg-bubble-user" id="userMsg_${msgIndex}">${contentHtml}</div>
+                            <div class="msg-time">${time}</div>
+                            <div class="msg-actions">
+                                ${!isEditing ? `
+                                    <button class="action-btn edit-msg" data-index="${msgIndex}"><i class="fas fa-pen"></i> Edit</button>
+                                    <button class="action-btn delete-msg" data-index="${msgIndex}"><i class="fas fa-trash-alt"></i> Delete</button>
+                                ` : ''}
+                                <button class="action-btn copy-msg" data-text="${escapeHtml(content)}"><i class="fas fa-copy"></i> Copy</button>
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
                 el.querySelector('.copy-msg')?.addEventListener('click', function(e) {
                     const text = this.dataset.text;
                     navigator.clipboard.writeText(text).then(() => showToast('✅ Copied!')).catch(() => {
@@ -2582,41 +2986,41 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 let imageGridHtml = '';
                 if (extra.generatedImage) {
                     imageGridHtml = `
-                        <div class="image-grid">
-                            <div class="generated-image-card">
-                                <img src="${extra.generatedImage}" alt="Generated image" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
-                                <div style="display:none;align-items:center;justify-content:center;padding:20px;color:var(--text-light);font-size:0.8rem;gap:6px;">
-                                    <i class="fas fa-exclamation-triangle"></i> Failed to load
-                                </div>
-                                <div class="image-card-overlay">
-                                    <button class="download-btn" data-src="${extra.generatedImage}">
-                                        <i class="fas fa-download"></i> Download
-                                    </button>
-                                    <button class="retry-btn" data-prompt="${escapeHtml(content)}" data-operation="another">
-                                        <i class="fas fa-sync"></i> Another
-                                    </button>
+                            <div class="image-grid">
+                                <div class="generated-image-card">
+                                    <img src="${extra.generatedImage}" alt="Generated image" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+                                    <div style="display:none;align-items:center;justify-content:center;padding:20px;color:var(--text-light);font-size:0.8rem;gap:6px;">
+                                        <i class="fas fa-exclamation-triangle"></i> Failed to load
+                                    </div>
+                                    <div class="image-card-overlay">
+                                        <button class="download-btn" data-src="${extra.generatedImage}">
+                                            <i class="fas fa-download"></i> Download
+                                        </button>
+                                        <button class="retry-btn" data-prompt="${escapeHtml(content)}" data-operation="another">
+                                            <i class="fas fa-sync"></i> Another
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    `;
+                        `;
                 }
                 const formattedContent = escapeHtml(content).replace(/\n/g, '<br>');
                 el.innerHTML = `
-                    <div class="msg-avatar"><img src="${logoURI}" alt="WK" style="width:100%;height:100%;object-fit:cover;" /></div>
-                    <div class="msg-bubble-wrap">
-                        <div class="msg-bubble-ai">${formattedContent}${imageGridHtml}</div>
-                        <div class="msg-time">${time}</div>
-                        <div class="msg-actions">
-                            <button class="action-btn" data-action="like"><i class="far fa-thumbs-up"></i> Like</button>
-                            <button class="action-btn" data-action="dislike"><i class="far fa-thumbs-down"></i> Dislike</button>
-                            <button class="action-btn" data-action="speak" data-text="${escapeHtml(content)}"><i class="fas fa-volume-up"></i> Speak</button>
-                            <button class="action-btn" data-action="share" data-text="${escapeHtml(content)}"><i class="fas fa-share-alt"></i> Share</button>
-                            <button class="action-btn copy-msg" data-text="${escapeHtml(content)}"><i class="fas fa-copy"></i> Copy</button>
-                            <button class="action-btn memory-btn" data-action="save-memory" data-text="${escapeHtml(content)}"><i class="fas fa-brain"></i> Save</button>
-                            <button class="action-btn lock-btn" data-action="save-lock" data-text="${escapeHtml(content)}"><i class="fas fa-lock"></i> Lock</button>
+                        <div class="msg-avatar"><img src="${logoURI}" alt="WK" style="width:100%;height:100%;object-fit:cover;" /></div>
+                        <div class="msg-bubble-wrap">
+                            <div class="msg-bubble-ai">${formattedContent}${imageGridHtml}</div>
+                            <div class="msg-time">${time}</div>
+                            <div class="msg-actions">
+                                <button class="action-btn" data-action="like"><i class="far fa-thumbs-up"></i> Like</button>
+                                <button class="action-btn" data-action="dislike"><i class="far fa-thumbs-down"></i> Dislike</button>
+                                <button class="action-btn" data-action="speak" data-text="${escapeHtml(content)}"><i class="fas fa-volume-up"></i> Speak</button>
+                                <button class="action-btn" data-action="share" data-text="${escapeHtml(content)}"><i class="fas fa-share-alt"></i> Share</button>
+                                <button class="action-btn copy-msg" data-text="${escapeHtml(content)}"><i class="fas fa-copy"></i> Copy</button>
+                                <button class="action-btn memory-btn" data-action="save-memory" data-text="${escapeHtml(content)}"><i class="fas fa-brain"></i> Save</button>
+                                <button class="action-btn lock-btn" data-action="save-lock" data-text="${escapeHtml(content)}"><i class="fas fa-lock"></i> Lock</button>
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
                 el.querySelectorAll('.download-btn').forEach(btn => {
                     btn.addEventListener('click', () => {
                         const src = btn.dataset.src;
@@ -2651,7 +3055,8 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                                 '<i class="fas fa-thumbs-down"></i> Disliked' :
                                 '<i class="far fa-thumbs-down"></i> Dislike';
                         } else if (action === 'speak') { speakText(text); } else if (action === 'share') {
-                            openShareModal(text); } else if (action === 'save-memory') {
+                            openShareModal(text);
+                        } else if (action === 'save-memory') {
                             const memoryContent = text.length > 200 ? text.substring(0, 200) + '...' : text;
                             createMemory(memoryContent, MEMORY_TYPES.MEMORY, 'ai_response', activeProjectId,
                             false);
@@ -2681,7 +3086,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         // ================================================================
-        // SPEECH & VOICE
+        // PART 13 — SPEECH & VOICE
         // ================================================================
         function speakText(text) {
             if (!window.speechSynthesis) { showToast('❌ Speech not supported'); return; }
@@ -2721,7 +3126,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
 
         // ================================================================
-        // FILE UPLOAD
+        // PART 14 — FILE UPLOAD
         // ================================================================
         attachBtn.addEventListener('click', (e) => { e.preventDefault();
             fileInput.click(); });
@@ -2745,9 +3150,9 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 const div = document.createElement('div');
                 div.className = 'preview-item';
                 div.innerHTML = `
-                    <img src="${imgObj.preview}" alt="Preview" />
-                    <button class="preview-remove" data-idx="${idx}"><i class="fas fa-times"></i></button>
-                `;
+                        <img src="${imgObj.preview}" alt="Preview" />
+                        <button class="preview-remove" data-idx="${idx}"><i class="fas fa-times"></i></button>
+                    `;
                 previewArea.appendChild(div);
             });
             previewArea.querySelectorAll('.preview-remove').forEach(btn => {
@@ -2759,7 +3164,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         // ================================================================
-        // CHAT LIST RENDERING
+        // PART 15 — CHAT LIST RENDERING
         // ================================================================
         function renderChatList(filter = '') {
             chatList.innerHTML = '';
@@ -2780,29 +3185,29 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 let titleHtml;
                 if (isEditing) {
                     titleHtml = `
-                        <input type="text" class="edit-title-input" id="renameInput_${id}" value="${escapeHtml(chat.title)}" style="background:rgba(255,255,255,0.08);border:1px solid var(--accent);border-radius:6px;padding:2px 8px;color:var(--text-main);outline:none;width:100%;min-width:60px;" />
-                        <button class="save-rename-btn" data-id="${id}" style="background:transparent;border:none;color:var(--accent);cursor:pointer;padding:0 4px;"><i class="fas fa-check"></i></button>
-                        <button class="cancel-rename-btn" data-id="${id}" style="background:transparent;border:none;color:var(--text-light);cursor:pointer;padding:0 4px;"><i class="fas fa-times"></i></button>
-                    `;
+                            <input type="text" class="edit-title-input" id="renameInput_${id}" value="${escapeHtml(chat.title)}" style="background:rgba(255,255,255,0.08);border:1px solid var(--accent);border-radius:6px;padding:2px 8px;color:var(--text-main);outline:none;width:100%;min-width:60px;" />
+                            <button class="save-rename-btn" data-id="${id}" style="background:transparent;border:none;color:var(--accent);cursor:pointer;padding:0 4px;"><i class="fas fa-check"></i></button>
+                            <button class="cancel-rename-btn" data-id="${id}" style="background:transparent;border:none;color:var(--text-light);cursor:pointer;padding:0 4px;"><i class="fas fa-times"></i></button>
+                        `;
                 } else {
                     titleHtml = `<span>${escapeHtml(chat.title)}</span>`;
                 }
                 el.innerHTML = `
-                    <span class="chat-item-title">
-                        <i class="fas fa-comment chat-icon"></i>
-                        ${titleHtml}
-                    </span>
-                    <div class="chat-item-actions">
-                        <button class="more-btn" data-chatid="${id}"><i class="fas fa-ellipsis-v"></i></button>
-                        <div class="dropdown-menu" data-chatid="${id}">
-                            <button class="menu-item rename-chat" data-id="${id}"><i class="fas fa-pen"></i> Rename</button>
-                            <button class="menu-item delete-chat" data-id="${id}"><i class="fas fa-trash-alt"></i> Delete</button>
-                            <div class="divider"></div>
-                            <button class="menu-item share-chat-btn" data-id="${id}"><i class="fas fa-share-alt"></i> Share</button>
-                            <button class="menu-item set-project-btn" data-id="${id}"><i class="fas fa-folder"></i> Set Project</button>
+                        <span class="chat-item-title">
+                            <i class="fas fa-comment chat-icon"></i>
+                            ${titleHtml}
+                        </span>
+                        <div class="chat-item-actions">
+                            <button class="more-btn" data-chatid="${id}"><i class="fas fa-ellipsis-v"></i></button>
+                            <div class="dropdown-menu" data-chatid="${id}">
+                                <button class="menu-item rename-chat" data-id="${id}"><i class="fas fa-pen"></i> Rename</button>
+                                <button class="menu-item delete-chat" data-id="${id}"><i class="fas fa-trash-alt"></i> Delete</button>
+                                <div class="divider"></div>
+                                <button class="menu-item share-chat-btn" data-id="${id}"><i class="fas fa-share-alt"></i> Share</button>
+                                <button class="menu-item set-project-btn" data-id="${id}"><i class="fas fa-folder"></i> Set Project</button>
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
                 el.addEventListener('click', (e) => {
                     if (!e.target.closest('.more-btn') && !e.target.closest('.dropdown-menu') &&
                         !e.target.closest('.save-rename-btn') && !e.target.closest('.cancel-rename-btn') &&
@@ -2890,13 +3295,14 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                         'show')); return; }
                     const names = projects.map((p, i) => `${i+1}. ${p.name}`).join('\n');
                     const choice = prompt(
-                        `Select a project for this chat:\n${names}\n\nEnter number or project name:`);
+                        `Select a project for this chat:\n${names}\n\nEnter number or project name:`
+                        );
                     if (choice) {
                         const num = parseInt(choice);
                         let project = null;
                         if (!isNaN(num) && num >= 1 && num <= projects.length) project = projects[num - 1];
                         else project = projects.find(p => p.name.toLowerCase().includes(choice
-                        .toLowerCase()));
+                            .toLowerCase()));
                         if (project) {
                             if (!chats[id].metadata) chats[id].metadata = {};
                             chats[id].metadata.projectId = project.id;
@@ -2920,7 +3326,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         // ================================================================
-        // CHAT MANAGEMENT
+        // PART 16 — CHAT MANAGEMENT
         // ================================================================
         function createNewChat() {
             currentChatId = 'chat-' + Date.now();
@@ -3058,7 +3464,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
 
         // ================================================================
-        // SEND MESSAGE
+        // PART 17 — SEND MESSAGE
         // ================================================================
         async function sendMessage() {
             if (imageState.isGenerating) { showToast('⏳ An image is already generating. Please wait.'); return; }
@@ -3083,146 +3489,151 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
             renderMessage('user', text, userMsg.extra, chats[currentChatId].messages.length - 1);
 
             const isImageRequest = /create|generate|make|draw|paint|render|picture|image|photo|photograph|art|illustration|design|visual|scene|portrait|landscape|fantasy|concept art|character|environment|background|style|beautiful|aesthetic|digital art|sketch|painting|realistic|real person|live picture|front view|photorealistic|view/i.test(text) && !/code|programming|function|api|database|sql|debug|fix bug/i.test(text);
+            const shouldGenerateImage = isImageMode || isImageRequest;
             const removeBgMatch = text.match(/remove\s+(?:the\s+)?background|erase\s+background|delete\s+background/i);
             const replaceBgMatch = text.match(/replace\s+(?:the\s+)?background|change\s+background|new\s+background/i);
             const anotherMatch = text.match(/another|other one|next one|one more|again|different one/i);
             const improveMatch = text.match(/make it better|improve|enhance|upgrade|refine/i);
 
-            // Background removal
-            if (removeBgMatch && imagesForApi.length > 0) {
-                typingIndicator.classList.remove('hidden');
-                typingIndicator.querySelector('.typing-bubble').innerHTML =
-                    '<div style="display:flex;align-items:center;gap:8px;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Removing background...</div>';
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-                try {
-                    const result = await generateImage(text, imagesForApi[0], 'remove_bg', activeProjectId);
-                    typingIndicator.classList.add('hidden');
-                    typingIndicator.querySelector('.typing-bubble').innerHTML =
-                        `<div class="typing-dots"><span></span><span></span><span></span></div>`;
-                    if (result && result.imageUrl) {
-                        const aiMsg = { role: 'assistant', content: `✅ Background removed successfully.`,
-                            extra: { generatedImage: result.imageUrl } };
-                        chats[currentChatId].messages.push(aiMsg);
-                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
-                        .length - 1);
-                    } else if (result && result.error) {
-                        const aiMsg = { role: 'assistant', content: `❌ ${result.error}`, extra: {} };
-                        chats[currentChatId].messages.push(aiMsg);
-                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
-                        .length - 1);
-                    } else { const aiMsg = { role: 'assistant', content: `❌ Background removal failed.`,
-                            extra: {} };
-                        chats[currentChatId].messages.push(aiMsg);
-                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
-                        .length - 1); }
-                    saveChats();
-                    return;
-                } catch (err) {
-                    typingIndicator.classList.add('hidden');
-                    typingIndicator.querySelector('.typing-bubble').innerHTML =
-                        `<div class="typing-dots"><span></span><span></span><span></span></div>`;
-                    const aiMsg = { role: 'assistant', content: `❌ ${err.message || 'Background removal failed.'}`,
-                        extra: {} };
-                    chats[currentChatId].messages.push(aiMsg);
-                    renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
-                    saveChats();
-                    return;
-                }
-            }
-
-            // Background replacement
-            if (replaceBgMatch && imagesForApi.length > 0) {
-                typingIndicator.classList.remove('hidden');
-                typingIndicator.querySelector('.typing-bubble').innerHTML =
-                    '<div style="display:flex;align-items:center;gap:8px;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Replacing background...</div>';
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-                try {
-                    const result = await generateImage(text, imagesForApi[0], 'replace_bg', activeProjectId);
-                    typingIndicator.classList.add('hidden');
-                    typingIndicator.querySelector('.typing-bubble').innerHTML =
-                        `<div class="typing-dots"><span></span><span></span><span></span></div>`;
-                    if (result && result.imageUrl) {
-                        const aiMsg = { role: 'assistant', content: `✅ Background replaced successfully.`,
-                            extra: { generatedImage: result.imageUrl } };
-                        chats[currentChatId].messages.push(aiMsg);
-                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
-                        .length - 1);
-                    } else if (result && result.error) {
-                        const aiMsg = { role: 'assistant', content: `❌ ${result.error}`, extra: {} };
-                        chats[currentChatId].messages.push(aiMsg);
-                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
-                        .length - 1);
-                    } else { const aiMsg = { role: 'assistant', content: `❌ Background replacement failed.`,
-                            extra: {} };
-                        chats[currentChatId].messages.push(aiMsg);
-                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
-                        .length - 1); }
-                    saveChats();
-                    return;
-                } catch (err) {
-                    typingIndicator.classList.add('hidden');
-                    typingIndicator.querySelector('.typing-bubble').innerHTML =
-                        `<div class="typing-dots"><span></span><span></span><span></span></div>`;
-                    const aiMsg = { role: 'assistant', content: `❌ ${err.message || 'Background replacement failed.'}`,
-                        extra: {} };
-                    chats[currentChatId].messages.push(aiMsg);
-                    renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
-                    saveChats();
-                    return;
-                }
-            }
-
-            // "Another" or "Make it better"
-            if ((anotherMatch || improveMatch) && imageState.lastResult) {
-                const lastImageUrl = imageState.lastResult.imageUrl;
-                if (lastImageUrl) {
-                    const operation = anotherMatch ? 'another' : 'improve';
+            if (shouldGenerateImage) {
+                if (removeBgMatch && imagesForApi.length > 0) {
                     typingIndicator.classList.remove('hidden');
                     typingIndicator.querySelector('.typing-bubble').innerHTML =
-                        `<div style="display:flex;align-items:center;gap:8px;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Generating ${operation === 'another' ? 'new variation' : 'improved version'}...</div>`;
+                        '<div style="display:flex;align-items:center;gap:8px;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Removing background...</div>';
                     chatContainer.scrollTop = chatContainer.scrollHeight;
                     try {
-                        const result = await generateImage(text, lastImageUrl, operation, activeProjectId);
+                        const result = await generateImage(text, imagesForApi[0], 'remove_bg', activeProjectId);
                         typingIndicator.classList.add('hidden');
                         typingIndicator.querySelector('.typing-bubble').innerHTML =
                             `<div class="typing-dots"><span></span><span></span><span></span></div>`;
                         if (result && result.imageUrl) {
-                            const aiMsg = { role: 'assistant',
-                                content: operation === 'another' ? `✅ New variation created.` :
-                                    `✅ Improved version created.`,
+                            const aiMsg = { role: 'assistant', content: `✅ Background removed successfully.`,
                                 extra: { generatedImage: result.imageUrl } };
                             chats[currentChatId].messages.push(aiMsg);
                             renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
-                            .length - 1);
+                                .length - 1);
                         } else if (result && result.error) {
                             const aiMsg = { role: 'assistant', content: `❌ ${result.error}`, extra: {} };
                             chats[currentChatId].messages.push(aiMsg);
                             renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
-                            .length - 1);
-                        } else { const aiMsg = { role: 'assistant', content: `❌ Failed to generate.`,
+                                .length - 1);
+                        } else {
+                            const aiMsg = { role: 'assistant', content: `❌ Background removal failed.`,
                                 extra: {} };
                             chats[currentChatId].messages.push(aiMsg);
                             renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
-                            .length - 1); }
+                                .length - 1);
+                        }
                         saveChats();
                         return;
                     } catch (err) {
                         typingIndicator.classList.add('hidden');
                         typingIndicator.querySelector('.typing-bubble').innerHTML =
                             `<div class="typing-dots"><span></span><span></span><span></span></div>`;
-                        const aiMsg = { role: 'assistant', content: `❌ ${err.message || 'Generation failed.'}`,
+                        const aiMsg = { role: 'assistant', content: `❌ ${err.message || 'Background removal failed.'}`,
                             extra: {} };
                         chats[currentChatId].messages.push(aiMsg);
                         renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
-                        .length - 1);
+                            .length - 1);
                         saveChats();
                         return;
                     }
                 }
-            }
 
-            // Standard image generation
-            if (isImageRequest) {
+                if (replaceBgMatch && imagesForApi.length > 0) {
+                    typingIndicator.classList.remove('hidden');
+                    typingIndicator.querySelector('.typing-bubble').innerHTML =
+                        '<div style="display:flex;align-items:center;gap:8px;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Replacing background...</div>';
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                    try {
+                        const result = await generateImage(text, imagesForApi[0], 'replace_bg', activeProjectId);
+                        typingIndicator.classList.add('hidden');
+                        typingIndicator.querySelector('.typing-bubble').innerHTML =
+                            `<div class="typing-dots"><span></span><span></span><span></span></div>`;
+                        if (result && result.imageUrl) {
+                            const aiMsg = { role: 'assistant', content: `✅ Background replaced successfully.`,
+                                extra: { generatedImage: result.imageUrl } };
+                            chats[currentChatId].messages.push(aiMsg);
+                            renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
+                                .length - 1);
+                        } else if (result && result.error) {
+                            const aiMsg = { role: 'assistant', content: `❌ ${result.error}`, extra: {} };
+                            chats[currentChatId].messages.push(aiMsg);
+                            renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
+                                .length - 1);
+                        } else {
+                            const aiMsg = { role: 'assistant', content: `❌ Background replacement failed.`,
+                                extra: {} };
+                            chats[currentChatId].messages.push(aiMsg);
+                            renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
+                                .length - 1);
+                        }
+                        saveChats();
+                        return;
+                    } catch (err) {
+                        typingIndicator.classList.add('hidden');
+                        typingIndicator.querySelector('.typing-bubble').innerHTML =
+                            `<div class="typing-dots"><span></span><span></span><span></span></div>`;
+                        const aiMsg = { role: 'assistant', content: `❌ ${err.message || 'Background replacement failed.'}`,
+                            extra: {} };
+                        chats[currentChatId].messages.push(aiMsg);
+                        renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
+                            .length - 1);
+                        saveChats();
+                        return;
+                    }
+                }
+
+                if ((anotherMatch || improveMatch) && imageState.lastResult) {
+                    const lastImageUrl = imageState.lastResult.imageUrl;
+                    if (lastImageUrl) {
+                        const operation = anotherMatch ? 'another' : 'improve';
+                        typingIndicator.classList.remove('hidden');
+                        typingIndicator.querySelector('.typing-bubble').innerHTML =
+                            `<div style="display:flex;align-items:center;gap:8px;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Generating ${operation === 'another' ? 'new variation' : 'improved version'}...</div>`;
+                        chatContainer.scrollTop = chatContainer.scrollHeight;
+                        try {
+                            const result = await generateImage(text, lastImageUrl, operation, activeProjectId);
+                            typingIndicator.classList.add('hidden');
+                            typingIndicator.querySelector('.typing-bubble').innerHTML =
+                                `<div class="typing-dots"><span></span><span></span><span></span></div>`;
+                            if (result && result.imageUrl) {
+                                const aiMsg = { role: 'assistant',
+                                    content: operation === 'another' ? `✅ New variation created.` :
+                                        `✅ Improved version created.`,
+                                    extra: { generatedImage: result.imageUrl } };
+                                chats[currentChatId].messages.push(aiMsg);
+                                renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId]
+                                    .messages.length - 1);
+                            } else if (result && result.error) {
+                                const aiMsg = { role: 'assistant', content: `❌ ${result.error}`, extra: {} };
+                                chats[currentChatId].messages.push(aiMsg);
+                                renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId]
+                                    .messages.length - 1);
+                            } else {
+                                const aiMsg = { role: 'assistant', content: `❌ Failed to generate.`,
+                                    extra: {} };
+                                chats[currentChatId].messages.push(aiMsg);
+                                renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId]
+                                    .messages.length - 1);
+                            }
+                            saveChats();
+                            return;
+                        } catch (err) {
+                            typingIndicator.classList.add('hidden');
+                            typingIndicator.querySelector('.typing-bubble').innerHTML =
+                                `<div class="typing-dots"><span></span><span></span><span></span></div>`;
+                            const aiMsg = { role: 'assistant', content: `❌ ${err.message || 'Generation failed.'}`,
+                                extra: {} };
+                            chats[currentChatId].messages.push(aiMsg);
+                            renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
+                                .length - 1);
+                            saveChats();
+                            return;
+                        }
+                    }
+                }
+
                 typingIndicator.classList.remove('hidden');
                 typingIndicator.querySelector('.typing-bubble').innerHTML =
                     '<div style="display:flex;align-items:center;gap:8px;color:var(--text-light);"><i class="fas fa-spinner fa-spin"></i> Generating image...</div>';
@@ -3245,22 +3656,22 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                             extra: { generatedImage: result.imageUrl } };
                         chats[currentChatId].messages.push(aiMsg);
                         renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
-                        .length - 1);
+                            .length - 1);
                     } else if (result && result.error) {
                         const aiMsg = { role: 'assistant', content: `❌ ${result.error}`, extra: {} };
                         chats[currentChatId].messages.push(aiMsg);
                         renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
-                        .length - 1);
+                            .length - 1);
                     } else if (result && result.cancelled) {
                         const aiMsg = { role: 'assistant', content: `⏹️ Generation was cancelled.`, extra: {} };
                         chats[currentChatId].messages.push(aiMsg);
                         renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
-                        .length - 1);
+                            .length - 1);
                     } else {
                         const aiMsg = { role: 'assistant', content: `❌ Image generation failed.`, extra: {} };
                         chats[currentChatId].messages.push(aiMsg);
                         renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
-                        .length - 1);
+                            .length - 1);
                     }
                     saveChats();
                     return;
@@ -3277,7 +3688,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 }
             }
 
-            // Chat AI
+            // Normal chat
             const history = [];
             const allMessages = chats[currentChatId].messages;
             for (let i = 0; i < allMessages.length - 1; i++) { const msg = allMessages[i];
@@ -3312,7 +3723,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         }
 
         // ================================================================
-        // SETTINGS & PROFILE
+        // PART 18 — SETTINGS
         // ================================================================
         settingsBtn.addEventListener('click', () => {
             apiKeyInput.value = state.apiKey;
@@ -3324,7 +3735,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
         closeSettings.addEventListener('click', () => settingsModal.classList.remove('active'));
 
-        saveSettingsBtn.addEventListener('click', () => {
+        saveSettingsBtn.addEventListener('click', async () => {
             const provider = providerSelect.value;
             const key = apiKeyInput.value.trim();
             if (!key) { showToast('⚠️ Please enter an API key'); return; }
@@ -3338,6 +3749,9 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
             localStorage.setItem('wk_model', state.model);
             localStorage.setItem('wk_voice_lang', state.voiceLang);
             localStorage.setItem('wk_replicate_key', state.replicateKey);
+            if (window.currentUserId) {
+                await saveSettingsToFirestore();
+            }
             settingsModal.classList.remove('active');
             updateProviderUI();
             replicateBadge.style.display = state.replicateKey ? 'inline' : 'none';
@@ -3377,11 +3791,16 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 avatarImg.src = ev.target.result;
                 avatarImg.style.display = 'block';
                 avatarText.style.display = 'none';
-                avatarPreview.innerHTML = `<img src="${ev.target.result}" style="width:100%;height:100%;object-fit:cover;" />`;
+                avatarPreview.innerHTML =
+                    `<img src="${ev.target.result}" style="width:100%;height:100%;object-fit:cover;" />`;
                 topAvatarImg.src = ev.target.result;
                 topAvatarImg.style.display = 'block';
                 topAvatarText.style.display = 'none';
-                userAvatar.innerHTML = `<img src="${ev.target.result}" style="width:100%;height:100%;object-fit:cover;" />`;
+                userAvatar.innerHTML =
+                    `<img src="${ev.target.result}" style="width:100%;height:100%;object-fit:cover;" />`;
+                if (window.currentUserId) {
+                    saveSettingsToFirestore();
+                }
             };
             reader.readAsDataURL(file);
         });
@@ -3391,6 +3810,9 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
             if (name) state.userName = name;
             localStorage.setItem('wk_user_name', state.userName);
             if (state.userAvatar) localStorage.setItem('wk_user_avatar', state.userAvatar);
+            if (window.currentUserId) {
+                saveSettingsToFirestore();
+            }
             loadProfile();
             profileModal.classList.remove('active');
             showToast('✅ Profile saved!');
@@ -3398,44 +3820,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
 
         // ================================================================
-        // SIGN-OUT WITH CONFIRMATION
-        // ================================================================
-        signOutBtn.addEventListener('click', () => {
-            signOutModal.classList.add('active');
-        });
-
-        cancelSignOut.addEventListener('click', () => {
-            signOutModal.classList.remove('active');
-        });
-
-        confirmSignOut.addEventListener('click', () => {
-            signOutModal.classList.remove('active');
-            localStorage.removeItem('wk_api_key');
-            localStorage.removeItem('wk_user_name');
-            localStorage.removeItem('wk_user_avatar');
-            localStorage.removeItem('wk_provider');
-            localStorage.removeItem('wk_model');
-            localStorage.removeItem('wk_voice_lang');
-            localStorage.removeItem('wk_replicate_key');
-            state.apiKey = '';
-            state.userName = 'My Profile';
-            state.userAvatar = '';
-            state.provider = 'gemini';
-            state.model = 'gemini-3.5-flash';
-            state.replicateKey = '';
-            loadProfile();
-            showToast('✅ Signed out');
-            updateOwnerBadge();
-            updateProviderUI();
-            replicateBadge.style.display = 'none';
-        });
-
-        signOutModal.addEventListener('click', (e) => {
-            if (e.target === signOutModal) signOutModal.classList.remove('active');
-        });
-
-        // ================================================================
-        // SHARE MODAL
+        // PART 19 — SHARE MODAL
         // ================================================================
         function openShareModal(text) { shareTextCache = text;
             shareModal.classList.add('active'); }
@@ -3512,7 +3897,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
 
         // ================================================================
-        // MEMORY MANAGER UI
+        // PART 20 — MEMORY MANAGER UI
         // ================================================================
         function renderMemoryManager() {
             const search = memorySearchInput.value.toLowerCase();
@@ -3531,15 +3916,15 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 const tagClass = m.type === 'lock' ? 'lock' : m.type === 'preference' ? 'preference' : 'memory';
                 const tagLabel = m.type === 'lock' ? '🔒 Lock' : m.type === 'preference' ? '⚙️ Pref' : '🧠 Memory';
                 html += `
-                    <div class="memory-list-item">
-                        <span class="mem-content">${escapeHtml(m.content)}</span>
-                        <span class="mem-tag ${tagClass}">${tagLabel}</span>
-                        <div class="mem-actions">
-                            ${m.isLocked ? `<button class="unlock-mem" data-id="${m.id}" title="Unlock"><i class="fas fa-unlock"></i></button>` : `<button class="lock-mem" data-id="${m.id}" title="Lock"><i class="fas fa-lock"></i></button>`}
-                            <button class="danger delete-mem" data-id="${m.id}" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                        <div class="memory-list-item">
+                            <span class="mem-content">${escapeHtml(m.content)}</span>
+                            <span class="mem-tag ${tagClass}">${tagLabel}</span>
+                            <div class="mem-actions">
+                                ${m.isLocked ? `<button class="unlock-mem" data-id="${m.id}" title="Unlock"><i class="fas fa-unlock"></i></button>` : `<button class="lock-mem" data-id="${m.id}" title="Lock"><i class="fas fa-lock"></i></button>`}
+                                <button class="danger delete-mem" data-id="${m.id}" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
             });
             memoryListContainer.innerHTML = html;
             document.querySelectorAll('.delete-mem').forEach(btn => {
@@ -3568,7 +3953,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         memoryFilterSelect.addEventListener('change', renderMemoryManager);
 
         // ================================================================
-        // LOCKS MANAGER UI
+        // PART 21 — LOCKS MANAGER UI
         // ================================================================
         function renderLocksManager() {
             const locks = getActiveLocks();
@@ -3580,15 +3965,15 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
             let html = '';
             locks.forEach(l => {
                 html += `
-                    <div class="memory-list-item">
-                        <span class="mem-content"><strong>${escapeHtml(l.title)}</strong> — ${escapeHtml(l.content)}</span>
-                        <span class="mem-tag lock">🔒 Active</span>
-                        <div class="mem-actions">
-                            <button class="unlock-lock" data-id="${l.id}" title="Deactivate"><i class="fas fa-unlock"></i></button>
-                            <button class="danger delete-lock" data-id="${l.id}" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                        <div class="memory-list-item">
+                            <span class="mem-content"><strong>${escapeHtml(l.title)}</strong> — ${escapeHtml(l.content)}</span>
+                            <span class="mem-tag lock">🔒 Active</span>
+                            <div class="mem-actions">
+                                <button class="unlock-lock" data-id="${l.id}" title="Deactivate"><i class="fas fa-unlock"></i></button>
+                                <button class="danger delete-lock" data-id="${l.id}" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
             });
             locksListContainer.innerHTML = html;
             document.querySelectorAll('.delete-lock').forEach(btn => {
@@ -3625,7 +4010,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 addLockBtn.click(); } });
 
         // ================================================================
-        // PROJECTS MANAGER UI
+        // PART 22 — PROJECTS MANAGER UI
         // ================================================================
         function renderProjectsManager() {
             const projects = getProjects();
@@ -3640,14 +4025,14 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 const memCount = getMemories({ projectId: p.id }).length;
                 const lockCount = getActiveLocks(p.id).length;
                 html += `
-                    <div class="memory-list-item" style="${isActive ? 'border-left: 3px solid var(--accent);' : ''}">
-                        <span class="mem-content"><strong>${escapeHtml(p.name)}</strong> ${isActive ? '⭐' : ''}<br><span style="font-size:0.75rem;color:var(--text-light);">${memCount} memories · ${lockCount} locks</span></span>
-                        <div class="mem-actions">
-                            ${!isActive ? `<button class="switch-project" data-id="${p.id}" title="Switch"><i class="fas fa-check"></i></button>` : ''}
-                            <button class="danger delete-project" data-id="${p.id}" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                        <div class="memory-list-item" style="${isActive ? 'border-left: 3px solid var(--accent);' : ''}">
+                            <span class="mem-content"><strong>${escapeHtml(p.name)}</strong> ${isActive ? '⭐' : ''}<br><span style="font-size:0.75rem;color:var(--text-light);">${memCount} memories · ${lockCount} locks</span></span>
+                            <div class="mem-actions">
+                                ${!isActive ? `<button class="switch-project" data-id="${p.id}" title="Switch"><i class="fas fa-check"></i></button>` : ''}
+                                <button class="danger delete-project" data-id="${p.id}" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
             });
             projectsListContainer.innerHTML = html;
             document.querySelectorAll('.delete-project').forEach(btn => {
@@ -3692,7 +4077,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 addProjectBtn.click(); } });
 
         // ================================================================
-        // MODE TOGGLE
+        // PART 23 — MODE TOGGLE
         // ================================================================
         function setMode(imageMode) {
             isImageMode = imageMode;
@@ -3719,7 +4104,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         imageModeBtn.addEventListener('click', () => setMode(true));
 
         // ================================================================
-        // SIDEBAR TOGGLE
+        // PART 24 — SIDEBAR TOGGLE
         // ================================================================
         toggleSidebarBtn.addEventListener('click', () => {
             if (window.innerWidth <= 768) {
@@ -3742,7 +4127,7 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
 
         // ================================================================
-        // ADVANCED TOGGLE
+        // PART 25 — ADVANCED TOGGLE
         // ================================================================
         let advancedOpen = false;
         advancedToggle.addEventListener('click', () => {
@@ -3752,25 +4137,17 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
         });
 
         // ================================================================
-        // SEARCH CHATS
+        // PART 26 — SEARCH CHATS
         // ================================================================
         searchChatsInput.addEventListener('input', (e) => {
             renderChatList(e.target.value);
         });
 
         // ================================================================
-        // AUTH BUTTON
-        // ================================================================
-        authBtnSidebar.addEventListener('click', () => {
-            showToast('🔐 Google Sign-In coming soon! Configure Firebase to enable.');
-        });
-
-        // ================================================================
-        // EVENT BINDINGS
+        // PART 27 — EVENT BINDINGS
         // ================================================================
         sendBtn.addEventListener('click', sendMessage);
 
-        // Enter key: Shift+Enter = newline, Enter = send
         chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -3798,8 +4175,12 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
             profileNameInput.value = state.userName;
         });
 
+        signOutBtn.addEventListener('click', window.handleSignOut);
+        document.getElementById('cancelSignOutBtn').addEventListener('click', window.cancelSignOut);
+        document.getElementById('confirmSignOutBtn').addEventListener('click', window.confirmSignOut);
+
         // ================================================================
-        // INIT
+        // PART 28 — INIT
         // ================================================================
         function init() {
             loadMemoryStore();
@@ -3823,7 +4204,8 @@ When communicating with your owner, blend absolute loyalty with sharp strategic 
                 advancedContent.classList.add('open');
                 advancedToggle.classList.add('open');
             }
-            console.log('👑 Wise King AI — Firebase added. Google Sign-In ready.');
+            console.log('👑 Wise King AI — Firebase CDN/compat + Cloud Sync fully active!');
+            console.log('📌 Using Firebase CDN compat (v12.18.0) with Google Sign-In + Firestore.');
         }
 
         init();
