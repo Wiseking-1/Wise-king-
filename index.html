@@ -9,13 +9,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
     <!-- ================================================================
-    FIREBASE SDK (CDN / COMPAT v12.18.0)
+    FIREBASE SDK (ES Modules v10.13.0)
     ================================================================ -->
-    <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js">
-    </script>
-    <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js">
-    </script>
-    <script src="https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore-compat.js">
+    <script type="importmap">
+        {
+            "imports": {
+                "firebase/app": "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js",
+                "firebase/auth": "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js",
+                "firebase/firestore": "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js"
+            }
+        }
     </script>
 
     <style>
@@ -1697,12 +1700,14 @@
     <div class="toast" id="toast"></div>
 
     <!-- ================================================================ -->
-    <!-- APPLICATION JAVASCRIPT (Firebase CDN/compat + all app logic)    -->
+    <!-- FIREBASE MODULE SCRIPT + APP LOGIC                               -->
     <!-- ================================================================ -->
-    <script>
-        // ================================================================
-        // PART 0 — FIREBASE INIT (CDN compat)
-        // ================================================================
+    <script type="module">
+        // ---- Firebase Imports ----
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
         const firebaseConfig = {
             apiKey: "AIzaSyBnl42BZB5BdiRnIUXgfmktAGUTMghROVQ",
             authDomain: "wise-king-ai.firebaseapp.com",
@@ -1713,210 +1718,78 @@
             measurementId: "G-NB6RJYX54K"
         };
 
-        // Initialize Firebase (compat)
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        const provider = new firebase.auth.GoogleAuthProvider();
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
 
-        // Expose globally for inline handlers
-        window.firebaseAuth = auth;
-        window.firebaseDb = db;
-        window.firebaseProvider = provider;
-
-        console.log('🔥 Firebase initialized (CDN compat)');
-
-        // ================================================================
-        // PART 1 — AUTH FUNCTIONS
-        // ================================================================
-        function showLoginModal() {
-            document.getElementById('loginModal').classList.add('active');
-        }
-
-        function hideLoginModal() {
-            document.getElementById('loginModal').classList.remove('active');
-        }
-
-        // Sign in with popup
-        window.handleGoogleSignIn = async function() {
+        // ---- Expose Firebase functions to window for the rest of the app ----
+        window.handleGoogleSignIn = async () => {
             try {
-                const result = await auth.signInWithPopup(provider);
-                const user = result.user;
-                console.log('✅ Signed in:', user.displayName);
+                const res = await signInWithPopup(auth, provider);
                 hideLoginModal();
-                showToast('👋 Welcome ' + user.displayName + '!');
-                // Reload to trigger auth state change
+                showToast(`👋 Sannu da zuwa ${res.user.displayName}!`);
                 location.reload();
-            } catch (error) {
-                console.error('Sign-in error:', error);
-                if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
-                    // Fallback to redirect
-                    try {
-                        await auth.signInWithRedirect(provider);
-                    } catch (redirectErr) {
-                        console.error('Redirect error:', redirectErr);
-                        showToast('❌ Sign-in failed: ' + redirectErr.message);
-                    }
-                } else {
-                    showToast('❌ Sign-in failed: ' + error.message);
-                }
+            } catch (e) {
+                showToast(`Sign-in failed: ${e.message}`);
             }
         };
 
-        // Handle redirect result (for mobile / fallback)
-        async function handleRedirectResult() {
+        window.confirmSignOut = async () => {
             try {
-                const result = await auth.getRedirectResult();
-                if (result && result.user) {
-                    console.log('✅ Signed in via redirect:', result.user.displayName);
-                    hideLoginModal();
-                    showToast('👋 Welcome ' + result.user.displayName + '!');
-                    location.reload();
-                }
-            } catch (error) {
-                console.error('Redirect result error:', error);
-            }
-        }
-
-        // Sign out
-        window.handleSignOut = function() {
-            document.getElementById('signOutModal').classList.add('active');
-        };
-
-        window.confirmSignOut = async function() {
-            try {
-                await auth.signOut();
-                document.getElementById('signOutModal').classList.remove('active');
-                showToast('✅ Signed out successfully');
-                localStorage.removeItem('wk_chats');
-                localStorage.removeItem('wk_memory_store');
+                await signOut(auth);
+                localStorage.clear();
                 location.reload();
-            } catch (error) {
-                console.error('Sign-out error:', error);
-                showToast('❌ Sign-out failed: ' + error.message);
+            } catch (e) {
+                showToast(`Sign-out failed: ${e.message}`);
             }
         };
 
-        window.cancelSignOut = function() {
-            document.getElementById('signOutModal').classList.remove('active');
-        };
-
-        // ================================================================
-        // PART 2 — FIRESTORE DATA FUNCTIONS
-        // ================================================================
-        window.saveUserSettings = async function(userId, settings) {
+        window.saveChatsToFirestore = async (uid, chats) => {
             try {
-                await db.collection('users').doc(userId).set({ settings }, { merge: true });
-                console.log('✅ Settings saved to Firestore');
+                await setDoc(doc(db, 'users', uid), { chats }, { merge: true });
                 return true;
-            } catch (error) {
-                console.error('Error saving settings:', error);
-                showToast('❌ Failed to save settings: ' + error.message);
+            } catch (e) {
                 return false;
             }
         };
 
-        window.loadUserSettings = async function(userId) {
+        window.loadChatsFromFirestore = async (uid) => {
             try {
-                const doc = await db.collection('users').doc(userId).get();
-                if (doc.exists) {
-                    return doc.data().settings || {};
-                }
-                return {};
-            } catch (error) {
-                console.error('Error loading settings:', error);
+                const snap = await getDoc(doc(db, 'users', uid));
+                return snap.exists() ? snap.data().chats || {} : {};
+            } catch (e) {
                 return {};
             }
         };
 
-        window.saveChatsToFirestore = async function(userId, chats) {
+        window.saveUserSettings = async (uid, settings) => {
             try {
-                await db.collection('users').doc(userId).set({ chats }, { merge: true });
-                console.log('✅ Chats saved to Firestore');
+                await setDoc(doc(db, 'users', uid), { settings }, { merge: true });
                 return true;
-            } catch (error) {
-                console.error('Error saving chats:', error);
+            } catch (e) {
                 return false;
             }
         };
 
-        window.loadChatsFromFirestore = async function(userId) {
+        window.loadUserSettings = async (uid) => {
             try {
-                const doc = await db.collection('users').doc(userId).get();
-                if (doc.exists) {
-                    return doc.data().chats || {};
-                }
-                return {};
-            } catch (error) {
-                console.error('Error loading chats:', error);
+                const snap = await getDoc(doc(db, 'users', uid));
+                return snap.exists() ? snap.data().settings || {} : {};
+            } catch (e) {
                 return {};
             }
         };
 
-        // ================================================================
-        // PART 3 — AUTH STATE OBSERVER
-        // ================================================================
-        auth.onAuthStateChanged(async (user) => {
+        // ---- Auth State Observer ----
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // USER IS SIGNED IN
-                console.log('👤 User signed in:', user.displayName);
-                hideLoginModal();
-
-                // Update UI with user info
-                const userNameDisplay = document.getElementById('userNameDisplay');
-                const userEmailDisplay = document.getElementById('userEmailDisplay');
-                const userAvatar = document.getElementById('userAvatar');
-                const topAvatarImg = document.getElementById('topAvatarImg');
-                const topAvatarText = document.getElementById('topAvatarText');
-                const authTextSidebar = document.getElementById('authTextSidebar');
-
-                if (userNameDisplay) userNameDisplay.textContent = user.displayName || 'User';
-                if (userEmailDisplay) userEmailDisplay.textContent = user.email || '';
-                if (authTextSidebar) {
-                    authTextSidebar.innerHTML = `<i class="fas fa-user-circle"></i> ${user.displayName || 'User'}`;
-                }
-
-                if (user.photoURL) {
-                    if (userAvatar) {
-                        userAvatar.innerHTML =
-                            `<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
-                    }
-                    if (topAvatarImg) {
-                        topAvatarImg.src = user.photoURL;
-                        topAvatarImg.style.display = 'block';
-                        if (topAvatarText) topAvatarText.style.display = 'none';
-                    }
-                    const avatarImg = document.getElementById('avatarImg');
-                    const avatarText = document.getElementById('avatarText');
-                    if (avatarImg) {
-                        avatarImg.src = user.photoURL;
-                        avatarImg.style.display = 'block';
-                        if (avatarText) avatarText.style.display = 'none';
-                    }
-                }
-
                 window.currentUserId = user.uid;
                 window.currentUser = user;
-
-                // --- LOAD CHATS FROM FIRESTORE ---
-                const chats = await window.loadChatsFromFirestore(user.uid);
-                if (Object.keys(chats).length > 0) {
-                    window.chats = chats;
-                } else {
-                    const localChats = localStorage.getItem('wk_chats');
-                    if (localChats) {
-                        try {
-                            const parsed = JSON.parse(localChats);
-                            if (Object.keys(parsed).length > 0) {
-                                window.chats = parsed;
-                                await window.saveChatsToFirestore(user.uid, parsed);
-                            }
-                        } catch (e) {}
-                    }
-                }
-
-                // --- LOAD SETTINGS FROM FIRESTORE ---
+                // Load chats from Firestore (or localStorage fallback)
+                await window.loadChats();
+                // Load settings from Firestore
                 const settings = await window.loadUserSettings(user.uid);
                 if (settings && Object.keys(settings).length > 0) {
                     if (settings.provider) window.state.provider = settings.provider;
@@ -1933,71 +1806,69 @@
                     localStorage.setItem('wk_replicate_key', window.state.replicateKey);
                     localStorage.setItem('wk_user_name', window.state.userName);
                     localStorage.setItem('wk_user_avatar', window.state.userAvatar);
-                } else {
-                    window.state.provider = localStorage.getItem('wk_provider') || 'gemini';
-                    window.state.apiKey = localStorage.getItem('wk_api_key') || '';
-                    window.state.model = localStorage.getItem('wk_model') || 'gemini-3.5-flash';
-                    window.state.voiceLang = localStorage.getItem('wk_voice_lang') || 'ha-NG';
-                    window.state.replicateKey = localStorage.getItem('wk_replicate_key') || '';
-                    window.state.userName = localStorage.getItem('wk_user_name') || 'My Profile';
-                    window.state.userAvatar = localStorage.getItem('wk_user_avatar') || '';
                 }
-
+                // Update UI
                 window.loadProfile();
                 window.updateProviderUI();
                 window.renderChatList('');
                 window.renderMessages();
                 window.updateMemoryBadges();
                 window.updateBackButton();
-
-                const authBtn = document.getElementById('authBtnSidebar');
-                if (authBtn) {
-                    authBtn.style.display = 'none';
-                }
-
+                document.getElementById('authBtnSidebar').style.display = 'none';
                 window.updateOwnerBadge();
-
-                console.log('✅ All data loaded from Firestore');
-
+                hideLoginModal();
             } else {
-                // USER IS SIGNED OUT
-                console.log('👤 User signed out');
                 window.currentUserId = null;
                 window.currentUser = null;
-
                 showLoginModal();
-
                 const authBtn = document.getElementById('authBtnSidebar');
-                if (authBtn) {
-                    authBtn.style.display = 'flex';
-                    authBtn.innerHTML = `<i class="fas fa-sign-in-alt"></i><span>Sign in with Google</span>`;
-                    authBtn.onclick = window.handleGoogleSignIn;
-                }
-
-                const userAvatar = document.getElementById('userAvatar');
-                if (userAvatar) userAvatar.innerHTML = 'WK';
-                const topAvatarImg = document.getElementById('topAvatarImg');
-                if (topAvatarImg) topAvatarImg.style.display = 'none';
-                const topAvatarText = document.getElementById('topAvatarText');
-                if (topAvatarText) {
-                    topAvatarText.style.display = 'block';
-                    topAvatarText.textContent = 'WK';
-                }
-                const userNameDisplay = document.getElementById('userNameDisplay');
-                if (userNameDisplay) userNameDisplay.textContent = 'My Profile';
-                const userEmailDisplay = document.getElementById('userEmailDisplay');
-                if (userEmailDisplay) userEmailDisplay.textContent = 'Click to edit';
+                authBtn.style.display = 'flex';
+                authBtn.innerHTML = `<i class="fas fa-sign-in-alt"></i><span>Sign in with Google</span>`;
+                authBtn.onclick = window.handleGoogleSignIn;
+                // Reset UI
+                document.getElementById('userAvatar').innerHTML = 'WK';
+                document.getElementById('topAvatarImg').style.display = 'none';
+                document.getElementById('topAvatarText').style.display = 'block';
+                document.getElementById('topAvatarText').textContent = 'WK';
+                document.getElementById('userNameDisplay').textContent = 'My Profile';
+                document.getElementById('userEmailDisplay').textContent = 'Click to edit';
             }
         });
 
-        // Handle redirect result after returning from Google
-        handleRedirectResult();
-
-        // Attach login button in modal
+        // ---- Attach login button in modal ----
         document.getElementById('googleSignInBtn')?.addEventListener('click', window.handleGoogleSignIn);
 
+        // ---- Import / re-export all app functions that need to be global ----
+        // (Most of the app logic is in the regular <script> below, but we need to
+        //  expose these module functions to the global scope for the inline event handlers.)
+
+        // ---- Make showToast, hideLoginModal, etc. available ----
+        window.showToast = (msg) => {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => toast.classList.remove('show'), 4000);
+        };
+
+        window.hideLoginModal = () => {
+            document.getElementById('loginModal').classList.remove('active');
+        };
+
+        window.showLoginModal = () => {
+            document.getElementById('loginModal').classList.add('active');
+        };
+
+        // ---- The rest of the app (chat, memory, settings, etc.) is loaded from the regular script below ----
+        console.log('🔥 Firebase module loaded successfully.');
+    </script>
+
+    <!-- ================================================================ -->
+    <!-- REGULAR SCRIPT (App Logic – unchanged except for save/load hooks) -->
+    <!-- ================================================================ -->
+    <script>
         // ================================================================
-        // PART 4 — MEMORY SYSTEM
+        // MEMORY SYSTEM
         // ================================================================
         const MEMORY_TYPES = { MEMORY: 'memory', LOCK: 'lock', PREFERENCE: 'preference' };
         const MEMORY_PRIORITY = { SYSTEM: 1, CORE: 2, MASTER_LOCK: 3, PROJECT_LOCK: 4, PREFERENCE: 5, TASK: 6,
@@ -2220,7 +2091,7 @@
         }
 
         // ================================================================
-        // PART 5 — STATE
+        // STATE
         // ================================================================
         let chats = {};
         let currentChatId = null;
@@ -2262,7 +2133,7 @@
         };
 
         // ================================================================
-        // PART 6 — DOM REFS
+        // DOM REFS
         // ================================================================
         const sidebar = document.getElementById('sidebar');
         const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
@@ -2350,7 +2221,7 @@
         const topAvatarText = document.getElementById('topAvatarText');
 
         // ================================================================
-        // PART 7 — UTILITY
+        // UTILITY
         // ================================================================
         function showToast(msg) {
             toast.textContent = msg;
@@ -2445,23 +2316,39 @@
             }
         }
 
-        function loadChats() {
-            if (Object.keys(chats).length === 0) {
-                const saved = localStorage.getItem('wk_chats');
-                if (saved) { try { chats = JSON.parse(saved); } catch (e) { chats = {}; } }
-            }
-            renderChatList('');
-        }
+        // ---- Override loadChats and saveChats to use Firestore ----
+        window.loadChats = async function() {
+            const local = localStorage.getItem('wk_chats');
+            let localChats = local ? JSON.parse(local) : {};
 
-        function saveChats() {
-            localStorage.setItem('wk_chats', JSON.stringify(chats));
             if (window.currentUserId) {
-                window.saveChatsToFirestore(window.currentUserId, chats);
+                const remote = await window.loadChatsFromFirestore(window.currentUserId);
+                if (Object.keys(remote).length > 0) {
+                    chats = remote;
+                    localStorage.setItem('wk_chats', JSON.stringify(remote));
+                } else if (Object.keys(localChats).length > 0) {
+                    chats = localChats;
+                    await window.saveChatsToFirestore(window.currentUserId, chats);
+                } else {
+                    chats = {};
+                }
+            } else {
+                chats = localChats;
             }
             renderChatList(searchChatsInput.value);
-        }
+            renderMessages();
+        };
 
-        function saveSettingsToFirestore() {
+        window.saveChats = async function() {
+            localStorage.setItem('wk_chats', JSON.stringify(chats));
+            renderChatList(searchChatsInput.value);
+            if (window.currentUserId) {
+                await window.saveChatsToFirestore(window.currentUserId, chats);
+            }
+        };
+
+        // ---- Override saveSettings to also save to Firestore ----
+        async function saveSettingsToFirestore() {
             if (window.currentUserId) {
                 const settings = {
                     provider: state.provider,
@@ -2472,9 +2359,12 @@
                     userName: state.userName,
                     userAvatar: state.userAvatar
                 };
-                window.saveUserSettings(window.currentUserId, settings);
+                await window.saveUserSettings(window.currentUserId, settings);
             }
         }
+
+        // ---- Override the original saveSettings listener ----
+        // We'll keep the original but add Firestore saving.
 
         function fileToBase64(file) {
             return new Promise((resolve, reject) => {
@@ -2486,7 +2376,7 @@
         }
 
         // ================================================================
-        // PART 8 — IDENTITY
+        // IDENTITY
         // ================================================================
         function detectIdentityQuestion(text) {
             const lower = text.toLowerCase();
@@ -2503,7 +2393,7 @@
         }
 
         // ================================================================
-        // PART 9 — SYSTEM PROMPT
+        // SYSTEM PROMPT
         // ================================================================
         function buildWisdomSystemPrompt(context = null) {
             let prompt = `You are Wise King AI — a world-class, persistent, intelligent assistant created by IBRAHIM ABDULLAHI from Nigeria (Wise King Industry).
@@ -2558,7 +2448,7 @@
         }
 
         // ================================================================
-        // PART 10 — API CALL
+        // API CALL
         // ================================================================
         async function callAI(userText, history = [], context = null) {
             if (detectIdentityQuestion(userText)) {
@@ -2687,7 +2577,7 @@
         }
 
         // ================================================================
-        // PART 11 — IMAGE ENGINE
+        // IMAGE ENGINE
         // ================================================================
         function getImageLocks(projectId) {
             const locks = getActiveLocks(projectId);
@@ -2871,7 +2761,7 @@
         }
 
         // ================================================================
-        // PART 12 — RENDER MESSAGES
+        // RENDER MESSAGES
         // ================================================================
         function renderMessage(role, content, extra = {}, msgIndex) {
             const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -2935,7 +2825,7 @@
                     if (!msg || msg.role !== 'user') return;
                     if (!msg.extra) msg.extra = {};
                     msg.extra._editing = true;
-                    saveChats();
+                    window.saveChats();
                     renderMessages();
                 });
                 el.querySelector('.delete-msg')?.addEventListener('click', function(e) {
@@ -2945,7 +2835,7 @@
                     if (!chat) return;
                     if (idx >= 0 && idx < chat.messages.length) {
                         chat.messages.splice(idx, 1);
-                        saveChats();
+                        window.saveChats();
                         renderMessages();
                         showToast('🗑️ Message deleted');
                     }
@@ -2965,7 +2855,7 @@
                             if (!msg) return;
                             msg.content = newText;
                             if (msg.extra) delete msg.extra._editing;
-                            saveChats();
+                            window.saveChats();
                             renderMessages();
                             showToast('✅ Message updated');
                         });
@@ -2977,7 +2867,7 @@
                             if (!chat) return;
                             const msg = chat.messages[idx];
                             if (msg && msg.extra) delete msg.extra._editing;
-                            saveChats();
+                            window.saveChats();
                             renderMessages();
                         });
                     }
@@ -3086,7 +2976,7 @@
         }
 
         // ================================================================
-        // PART 13 — SPEECH & VOICE
+        // SPEECH & VOICE
         // ================================================================
         function speakText(text) {
             if (!window.speechSynthesis) { showToast('❌ Speech not supported'); return; }
@@ -3126,7 +3016,7 @@
         });
 
         // ================================================================
-        // PART 14 — FILE UPLOAD
+        // FILE UPLOAD
         // ================================================================
         attachBtn.addEventListener('click', (e) => { e.preventDefault();
             fileInput.click(); });
@@ -3164,7 +3054,7 @@
         }
 
         // ================================================================
-        // PART 15 — CHAT LIST RENDERING
+        // CHAT LIST RENDERING
         // ================================================================
         function renderChatList(filter = '') {
             chatList.innerHTML = '';
@@ -3226,7 +3116,7 @@
                         if (save) {
                             const newTitle = input.value.trim();
                             if (newTitle && chats[id]) { chats[id].title = newTitle;
-                                saveChats();
+                                window.saveChats();
                                 showToast('✅ Chat renamed'); }
                         }
                         editingChatId = null;
@@ -3306,7 +3196,7 @@
                         if (project) {
                             if (!chats[id].metadata) chats[id].metadata = {};
                             chats[id].metadata.projectId = project.id;
-                            saveChats();
+                            window.saveChats();
                             activeProjectId = project.id;
                             showToast(`📁 Project set to: ${project.name}`);
                         } else showToast('❌ Project not found.');
@@ -3326,12 +3216,12 @@
         }
 
         // ================================================================
-        // PART 16 — CHAT MANAGEMENT
+        // CHAT MANAGEMENT
         // ================================================================
         function createNewChat() {
             currentChatId = 'chat-' + Date.now();
             chats[currentChatId] = { title: 'New Chat', messages: [], createdAt: new Date().toISOString(), metadata: {} };
-            saveChats();
+            window.saveChats();
             switchToChat(currentChatId);
             chatInput.focus();
             if (window.innerWidth <= 768) sidebar.classList.remove('open');
@@ -3352,7 +3242,7 @@
             delete chats[id];
             if (currentChatId === id) { currentChatId = null;
                 showWelcomeScreen(); }
-            saveChats();
+            window.saveChats();
             updateBackButton();
             showToast('🗑️ Chat deleted');
             renderChatList(searchChatsInput.value);
@@ -3464,7 +3354,7 @@
         });
 
         // ================================================================
-        // PART 17 — SEND MESSAGE
+        // SEND MESSAGE
         // ================================================================
         async function sendMessage() {
             if (imageState.isGenerating) { showToast('⏳ An image is already generating. Please wait.'); return; }
@@ -3524,7 +3414,7 @@
                             renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
                                 .length - 1);
                         }
-                        saveChats();
+                        window.saveChats();
                         return;
                     } catch (err) {
                         typingIndicator.classList.add('hidden');
@@ -3535,7 +3425,7 @@
                         chats[currentChatId].messages.push(aiMsg);
                         renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
                             .length - 1);
-                        saveChats();
+                        window.saveChats();
                         return;
                     }
                 }
@@ -3568,7 +3458,7 @@
                             renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
                                 .length - 1);
                         }
-                        saveChats();
+                        window.saveChats();
                         return;
                     } catch (err) {
                         typingIndicator.classList.add('hidden');
@@ -3579,7 +3469,7 @@
                         chats[currentChatId].messages.push(aiMsg);
                         renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
                             .length - 1);
-                        saveChats();
+                        window.saveChats();
                         return;
                     }
                 }
@@ -3617,7 +3507,7 @@
                                 renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId]
                                     .messages.length - 1);
                             }
-                            saveChats();
+                            window.saveChats();
                             return;
                         } catch (err) {
                             typingIndicator.classList.add('hidden');
@@ -3628,7 +3518,7 @@
                             chats[currentChatId].messages.push(aiMsg);
                             renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
                                 .length - 1);
-                            saveChats();
+                            window.saveChats();
                             return;
                         }
                     }
@@ -3673,7 +3563,7 @@
                         renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages
                             .length - 1);
                     }
-                    saveChats();
+                    window.saveChats();
                     return;
                 } catch (err) {
                     typingIndicator.classList.add('hidden');
@@ -3683,7 +3573,7 @@
                         extra: {} };
                     chats[currentChatId].messages.push(aiMsg);
                     renderMessage('assistant', aiMsg.content, aiMsg.extra, chats[currentChatId].messages.length - 1);
-                    saveChats();
+                    window.saveChats();
                     return;
                 }
             }
@@ -3699,7 +3589,7 @@
             const aiMsg = { role: 'assistant', content: reply, extra: {} };
             chats[currentChatId].messages.push(aiMsg);
             renderMessage('assistant', reply, {}, chats[currentChatId].messages.length - 1);
-            saveChats();
+            window.saveChats();
         }
 
         function buildContext(userText, history, projectId) {
@@ -3723,7 +3613,7 @@
         }
 
         // ================================================================
-        // PART 18 — SETTINGS
+        // SETTINGS
         // ================================================================
         settingsBtn.addEventListener('click', () => {
             apiKeyInput.value = state.apiKey;
@@ -3820,7 +3710,7 @@
         });
 
         // ================================================================
-        // PART 19 — SHARE MODAL
+        // SHARE MODAL
         // ================================================================
         function openShareModal(text) { shareTextCache = text;
             shareModal.classList.add('active'); }
@@ -3897,7 +3787,7 @@
         });
 
         // ================================================================
-        // PART 20 — MEMORY MANAGER UI
+        // MEMORY MANAGER UI
         // ================================================================
         function renderMemoryManager() {
             const search = memorySearchInput.value.toLowerCase();
@@ -3953,7 +3843,7 @@
         memoryFilterSelect.addEventListener('change', renderMemoryManager);
 
         // ================================================================
-        // PART 21 — LOCKS MANAGER UI
+        // LOCKS MANAGER UI
         // ================================================================
         function renderLocksManager() {
             const locks = getActiveLocks();
@@ -4010,7 +3900,7 @@
                 addLockBtn.click(); } });
 
         // ================================================================
-        // PART 22 — PROJECTS MANAGER UI
+        // PROJECTS MANAGER UI
         // ================================================================
         function renderProjectsManager() {
             const projects = getProjects();
@@ -4052,7 +3942,7 @@
                     if (currentChatId && chats[currentChatId]) {
                         if (!chats[currentChatId].metadata) chats[currentChatId].metadata = {};
                         chats[currentChatId].metadata.projectId = activeProjectId;
-                        saveChats();
+                        window.saveChats();
                     }
                     renderProjectsManager();
                     showToast('📁 Project switched');
@@ -4077,7 +3967,7 @@
                 addProjectBtn.click(); } });
 
         // ================================================================
-        // PART 23 — MODE TOGGLE
+        // MODE TOGGLE
         // ================================================================
         function setMode(imageMode) {
             isImageMode = imageMode;
@@ -4104,7 +3994,7 @@
         imageModeBtn.addEventListener('click', () => setMode(true));
 
         // ================================================================
-        // PART 24 — SIDEBAR TOGGLE
+        // SIDEBAR TOGGLE
         // ================================================================
         toggleSidebarBtn.addEventListener('click', () => {
             if (window.innerWidth <= 768) {
@@ -4127,7 +4017,7 @@
         });
 
         // ================================================================
-        // PART 25 — ADVANCED TOGGLE
+        // ADVANCED TOGGLE
         // ================================================================
         let advancedOpen = false;
         advancedToggle.addEventListener('click', () => {
@@ -4137,14 +4027,14 @@
         });
 
         // ================================================================
-        // PART 26 — SEARCH CHATS
+        // SEARCH CHATS
         // ================================================================
         searchChatsInput.addEventListener('input', (e) => {
             renderChatList(e.target.value);
         });
 
         // ================================================================
-        // PART 27 — EVENT BINDINGS
+        // EVENT BINDINGS
         // ================================================================
         sendBtn.addEventListener('click', sendMessage);
 
@@ -4180,11 +4070,11 @@
         document.getElementById('confirmSignOutBtn').addEventListener('click', window.confirmSignOut);
 
         // ================================================================
-        // PART 28 — INIT
+        // INIT
         // ================================================================
-        function init() {
+        async function init() {
             loadMemoryStore();
-            loadChats();
+            await window.loadChats(); // now async and uses Firestore
             loadProfile();
             apiKeyInput.value = state.apiKey;
             providerSelect.value = state.provider;
@@ -4204,8 +4094,7 @@
                 advancedContent.classList.add('open');
                 advancedToggle.classList.add('open');
             }
-            console.log('👑 Wise King AI — Firebase CDN/compat + Cloud Sync fully active!');
-            console.log('📌 Using Firebase CDN compat (v12.18.0) with Google Sign-In + Firestore.');
+            console.log('👑 Wise King AI — Firebase ES module integration complete.');
         }
 
         init();
